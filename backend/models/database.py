@@ -12,8 +12,18 @@ from sqlalchemy import (
     Index,
 )
 from sqlalchemy.orm import declarative_base, sessionmaker
-from datetime import datetime
+from datetime import datetime, timezone
 import os
+
+
+def utcnow() -> datetime:
+    """Naive UTC timestamp.
+
+    Replaces the deprecated ``datetime.utcnow`` (removed in a future Python)
+    while preserving the existing naive-UTC storage semantics so persisted
+    timestamps stay comparable with historical rows.
+    """
+    return datetime.now(timezone.utc).replace(tzinfo=None)
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DB_PATH = os.path.join(BASE_DIR, "..", "data", "reqcluster.db")
@@ -31,7 +41,7 @@ class Session(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
     filename = Column(String, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow)
     status = Column(String, default="uploaded")  # uploaded, processing, done, error
     total_requirements = Column(Integer, default=0)
     total_clusters = Column(Integer, default=0)
@@ -106,8 +116,8 @@ class EnrichedRequirement(Base):
     quality_report_json = Column(JSON, nullable=True)
     status = Column(String(20), default="pending", index=True)
     error_message = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
 
 
 class RefinementSuggestion(Base):
@@ -149,8 +159,8 @@ class RefinementSuggestion(Base):
     metadata_json = Column(JSON, nullable=True)
 
     # Timestamps
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
     applied_at = Column(DateTime, nullable=True)
 
 
@@ -168,7 +178,7 @@ class RefinementAuditLog(Base):
     before_state_json = Column(JSON, nullable=True)
     after_state_json = Column(JSON, nullable=True)
     applied_by = Column(String, nullable=True)  # placeholder for Phase 4 user identity
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow)
 
 
 class FeedbackCorrection(Base):
@@ -187,8 +197,8 @@ class FeedbackCorrection(Base):
     comments = Column(Text, nullable=True)
     applied_by = Column(String, nullable=True)
     status = Column(String(20), default="pending", index=True)  # pending, approved, rejected
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
 
 
 class ConstraintPair(Base):
@@ -204,7 +214,7 @@ class ConstraintPair(Base):
     requirement_b_id = Column(Integer, nullable=False, index=True)
     constraint_type = Column(String(20), nullable=False)  # must-link / cannot-link
     feedback_id = Column(Integer, nullable=False, index=True)  # Links to FeedbackCorrection
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=utcnow)
 
 
 def get_db():

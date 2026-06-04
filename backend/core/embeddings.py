@@ -26,12 +26,14 @@ except (OSError, ImportError) as e:
         ) -> np.ndarray:
             vectors = []
             for text in sentences:
-                # Generate deterministic mock vector using SHA-256 hash of the text
+                # Deterministic mock vector seeded from the text's SHA-256.
+                # A seeded RNG is used (rather than reinterpreting hash bytes as
+                # float32, which frequently yields NaN/Inf bit patterns that
+                # break downstream UMAP/cosine math).
                 digest = hashlib.sha256(str(text).encode("utf-8")).digest()
-                # Repeat digest bytes to fill 384 float dimensions (384 * 4 = 1536 bytes)
-                raw = (digest * 48)[:384 * 4]
-                vector = np.frombuffer(raw, dtype=np.float32).copy()
-                # Normalize
+                seed = int.from_bytes(digest[:8], "big", signed=False)
+                rng = np.random.default_rng(seed)
+                vector = rng.standard_normal(384).astype(np.float32)
                 norm = np.linalg.norm(vector)
                 if norm > 0:
                     vector = vector / norm
@@ -78,8 +80,18 @@ def generate_embeddings(
     cache_file = _cache_path(cache_key)
 
     if use_cache and os.path.exists(cache_file):
-        embeddings = np.load(cache_file)
-        if embeddings.shape[0] == len(texts):
+        try:
+            embeddings = np.load(cache_file, allow_pickle=False)
+        except Exception:
+            embeddings = None
+        # Only trust the cache if it matches the request and is numerically sound;
+        # otherwise fall through and re-encode (and overwrite the stale file).
+        if (
+            isinstance(embeddings, np.ndarray)
+            and embeddings.ndim == 2
+            and embeddings.shape[0] == len(texts)
+            and np.all(np.isfinite(embeddings))
+        ):
             if progress_callback:
                 progress_callback(len(texts), len(texts))
             return embeddings

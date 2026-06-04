@@ -7,6 +7,17 @@ const api = axios.create({
   timeout: 300000, // 5 min for long pipeline runs
 })
 
+// Backend timestamps are naive UTC (no timezone suffix). new Date() would
+// otherwise parse them as local time, so append 'Z' to force UTC parsing.
+export const formatTimestamp = (value) => {
+  if (!value) return ''
+  let iso = String(value)
+  const hasTz = /[zZ]|[+-]\d{2}:?\d{2}$/.test(iso)
+  if (iso.includes('T') && !hasTz) iso += 'Z'
+  const d = new Date(iso)
+  return Number.isNaN(d.getTime()) ? String(value) : d.toLocaleString()
+}
+
 export const getErrorMessage = (error, fallback = 'Request failed.') => {
   const detail = error?.response?.data?.detail
   let message = fallback

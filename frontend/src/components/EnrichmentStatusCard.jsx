@@ -1,4 +1,5 @@
 import { AlertTriangle, CheckCircle, Clock, Loader, XCircle } from 'lucide-react'
+import { formatTimestamp } from '../utils/api.js'
 
 function statusStyle(status) {
   if (status === 'complete') return { icon: CheckCircle, label: 'Complete', color: 'text-emerald-400', border: 'border-emerald-900/40 bg-emerald-950/10' }
@@ -73,7 +74,7 @@ export default function EnrichmentStatusCard({ status, loading = false, error = 
 
       {status?.latest_run_created_at && (
         <div className="text-xs text-gray-500 mt-3">
-          Latest run: {new Date(status.latest_run_created_at).toLocaleString()}
+          Latest run: {formatTimestamp(status.latest_run_created_at)}
         </div>
       )}
 

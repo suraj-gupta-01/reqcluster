@@ -392,7 +392,7 @@ export default function ReviewQueuePage() {
                       {/* Expanded requirement text view */}
                       {isExpanded && (
                         <tr>
-                          <td colSpan={activeTab === 'pending' ? 6 : 6} className="px-6 py-4 bg-slate-950/40">
+                          <td colSpan={6} className="px-6 py-4 bg-slate-950/40">
                             <div className="space-y-2 text-sm">
                               <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                                 Requirement Text

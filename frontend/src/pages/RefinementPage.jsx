@@ -8,6 +8,7 @@ import {
   getAuditLog,
   getClusters,
   getErrorMessage,
+  formatTimestamp,
 } from '../utils/api.js'
 import SuggestionCard from '../components/SuggestionCard.jsx'
 
@@ -289,7 +290,7 @@ export default function RefinementPage() {
                       Suggestion #{entry.suggestion_id} — <span className="font-medium capitalize">{entry.action}</span>
                     </div>
                     <div className="text-xs text-gray-500">
-                      {entry.created_at ? new Date(entry.created_at).toLocaleString() : 'Unknown time'}
+                      {entry.created_at ? formatTimestamp(entry.created_at) : 'Unknown time'}
                     </div>
                   </div>
                 </div>

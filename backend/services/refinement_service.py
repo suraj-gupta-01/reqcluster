@@ -33,6 +33,7 @@ from models.database import (
     RefinementSuggestion,
     Requirement,
     Session,
+    utcnow,
 )
 
 logger = logging.getLogger(__name__)
@@ -378,7 +379,7 @@ def apply_suggestion(db: DBSession, request: Any) -> dict:
 
     if action == "reject":
         suggestion.status = "rejected"
-        suggestion.updated_at = datetime.utcnow()
+        suggestion.updated_at = utcnow()
 
         audit = RefinementAuditLog(
             session_id=session_id,
@@ -454,10 +455,6 @@ def apply_suggestion(db: DBSession, request: Any) -> dict:
             cluster_a_row.keywords = new_info[cluster_a]["keywords"]
             cluster_a_row.size = len(merged_texts)
 
-        # Update session totals
-        remaining_clusters = db.query(Cluster).filter(Cluster.session_id == session_id).count()
-        session.total_clusters = remaining_clusters
-
         affected_clusters = [cluster_a, cluster_b]
 
     elif suggestion.suggestion_type == "split":
@@ -532,9 +529,6 @@ def apply_suggestion(db: DBSession, request: Any) -> dict:
             )
             db.add(new_cluster)
 
-        # Update session totals
-        session.total_clusters = db.query(Cluster).filter(Cluster.session_id == session_id).count() + 1
-
         affected_clusters = [cluster_id, new_cluster_id]
 
     else:
@@ -543,6 +537,9 @@ def apply_suggestion(db: DBSession, request: Any) -> dict:
     # Capture after state
     db.flush()
     after_clusters = db.query(Cluster).filter(Cluster.session_id == session_id).all()
+    # Recompute the cluster total from the flushed rows (covers both merge and
+    # split without relying on autoflush timing).
+    session.total_clusters = len(after_clusters)
     after_state = {
         "clusters": [
             {"cluster_id": c.cluster_id, "label": c.label, "size": c.size}
@@ -555,8 +552,8 @@ def apply_suggestion(db: DBSession, request: Any) -> dict:
     }
 
     suggestion.status = "applied"
-    suggestion.applied_at = datetime.utcnow()
-    suggestion.updated_at = datetime.utcnow()
+    suggestion.applied_at = utcnow()
+    suggestion.updated_at = utcnow()
 
     audit = RefinementAuditLog(
         session_id=session_id,

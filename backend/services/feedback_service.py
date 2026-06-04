@@ -16,7 +16,7 @@ from sqlalchemy.orm import Session as DBSession
 
 from core.feedback_bridge import generate_constraints_for_correction
 from llm_services.feedback_analyst import FeedbackAnalyst
-from models.database import Cluster, ConstraintPair, FeedbackCorrection, Requirement
+from models.database import Cluster, ConstraintPair, FeedbackCorrection, Requirement, utcnow
 
 
 def submit_feedback(db: DBSession, request: Any) -> FeedbackCorrection:
@@ -148,7 +148,7 @@ def review_feedback(
 
     if status == "approved":
         correction.status = "approved"
-        correction.updated_at = datetime.utcnow()
+        correction.updated_at = utcnow()
         db.commit()
     else:
         # Rollback cluster assignment
@@ -184,7 +184,7 @@ def review_feedback(
         ).delete()
 
         correction.status = "rejected"
-        correction.updated_at = datetime.utcnow()
+        correction.updated_at = utcnow()
         db.commit()
 
     return correction

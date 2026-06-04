@@ -19,8 +19,11 @@ except (OSError, ImportError) as e:
     import types
     import numpy as np
 
-    # Mock torch
+    # Mock torch. scipy's array-api-compat probes `torch.Tensor` unconditionally
+    # (via getattr) whenever scipy is imported, so the attribute must exist even
+    # in the mock or collection blows up with AttributeError.
     torch_mock = types.ModuleType("torch")
+    torch_mock.Tensor = type("Tensor", (), {})
     sys.modules["torch"] = torch_mock
 
     # Mock sentence_transformers
