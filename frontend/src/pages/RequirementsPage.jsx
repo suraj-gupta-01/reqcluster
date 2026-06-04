@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Loader, Search, ChevronRight, ArrowUpDown, Sparkles, AlertTriangle, ChevronDown } from 'lucide-react'
-import { getRequirements, getClusters, getEnrichmentResults } from '../utils/api.js'
+import { getRequirements, getClusters, getEnrichmentResults, submitFeedback } from '../utils/api.js'
 import { getClusterColor } from '../utils/colors.js'
+import MoveToClusterModal from '../components/MoveToClusterModal.jsx'
 
 const PAGE_SIZE = 50
 
@@ -36,6 +37,31 @@ export default function RequirementsPage() {
   const [sortDir, setSortDir] = useState('asc')
   const [page, setPage] = useState(1)
   const [expandedEnrichment, setExpandedEnrichment] = useState({})
+  
+  const [selectedRequirement, setSelectedRequirement] = useState(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+
+  const handleReassignSubmit = async (payload) => {
+    if (!selectedRequirement) return
+    try {
+      await submitFeedback({
+        session_id: parseInt(sessionId, 10),
+        requirement_id: selectedRequirement.id,
+        ...payload
+      })
+      // Reload requirements and clusters to keep all sizes and labels in sync
+      const [reqs, clus] = await Promise.all([
+        getRequirements(parseInt(sessionId)),
+        getClusters(parseInt(sessionId)),
+      ])
+      setRequirements(reqs)
+      setClusters(clus)
+      setIsModalOpen(false)
+      setSelectedRequirement(null)
+    } catch (err) {
+      alert(err?.response?.data?.detail || 'Failed to reassign cluster.')
+    }
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -190,10 +216,10 @@ export default function RequirementsPage() {
                 <th className="text-left px-4 py-3 w-48">
                   {renderSortHeader('cluster_id', 'Cluster')}
                 </th>
-                <th className="text-left px-4 py-3 w-32">
+                 <th className="text-left px-4 py-3 w-32">
                   {renderSortHeader('membership_prob', 'Membership')}
                 </th>
-                <th className="w-8 px-4 py-3" />
+                <th className="w-40 px-4 py-3 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-800/50">
@@ -294,10 +320,28 @@ export default function RequirementsPage() {
                         : <MembershipDot prob={r.membership_prob} />
                       }
                     </td>
-                    <td className="px-4 py-3">
-                      {!r.is_noise && (
-                        <ChevronRight size={14} className="text-gray-700 group-hover:text-gray-400 transition-colors" />
-                      )}
+                    <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedRequirement(r)
+                            setIsModalOpen(true)
+                          }}
+                          className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 text-xs transition-colors"
+                        >
+                          Reassign
+                        </button>
+                        {!r.is_noise && (
+                          <button
+                            type="button"
+                            onClick={() => navigate(`/cluster/${sessionId}/${r.cluster_id}`)}
+                            className="p-1 rounded hover:bg-slate-800 text-slate-500 hover:text-slate-300 transition-colors"
+                          >
+                            <ChevronRight size={14} />
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 )
@@ -321,6 +365,17 @@ export default function RequirementsPage() {
           </div>
         )}
       </div>
+
+      <MoveToClusterModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false)
+          setSelectedRequirement(null)
+        }}
+        requirement={selectedRequirement}
+        clusters={clusters}
+        onSubmit={handleReassignSubmit}
+      />
     </div>
   )
 }

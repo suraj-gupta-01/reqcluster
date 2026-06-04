@@ -12,6 +12,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from models.database import Base, Session, Requirement, Cluster, RefinementSuggestion, RefinementAuditLog, get_db
+from api.routes import get_db as route_get_db
 from main import app
 
 
@@ -30,6 +31,7 @@ def override_get_db():
 
 
 app.dependency_overrides[get_db] = override_get_db
+app.dependency_overrides[route_get_db] = override_get_db
 
 
 @pytest.fixture(autouse=True)

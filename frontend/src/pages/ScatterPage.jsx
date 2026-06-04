@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Loader, Info } from 'lucide-react'
-import { getRequirements, getClusters } from '../utils/api.js'
+import { getRequirements, getClusters, getFeedbackQueue } from '../utils/api.js'
 import { getClusterColor } from '../utils/colors.js'
 
 export default function ScatterPage() {
@@ -11,6 +11,7 @@ export default function ScatterPage() {
 
   const [requirements, setRequirements] = useState([])
   const [clusters, setClusters] = useState([])
+  const [corrections, setCorrections] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [selected, setSelected] = useState(null)
@@ -23,13 +24,15 @@ export default function ScatterPage() {
     let cancelled = false
     const load = async () => {
       try {
-        const [reqs, clus] = await Promise.all([
+        const [reqs, clus, queue] = await Promise.all([
           getRequirements(parseInt(sessionId)),
           getClusters(parseInt(sessionId)),
+          getFeedbackQueue(parseInt(sessionId)),
         ])
         if (!cancelled) {
           setRequirements(reqs)
           setClusters(clus)
+          setCorrections(queue)
           const storedMode = localStorage.getItem(`reqcluster:lastEmbeddingMode:${sessionId}`)
           setLatestMode(storedMode || 'latest')
           setViewMode(storedMode || 'latest')
@@ -43,6 +46,14 @@ export default function ScatterPage() {
     load()
     return () => { cancelled = true }
   }, [sessionId])
+
+  const correctionMap = useMemo(() => {
+    const map = {}
+    corrections.forEach(c => {
+      map[c.requirement_id] = c
+    })
+    return map
+  }, [corrections])
 
   // Build Plotly traces once data is ready
   useEffect(() => {
@@ -77,6 +88,25 @@ export default function ScatterPage() {
         const color = getClusterColor(cid)
         const name = cid === -1 ? 'Noise' : (clusterLabelMap[cid] || `Cluster ${cid}`)
 
+        const sizes = reqs.map(r => {
+          const hasCorrection = !!correctionMap[r.id]
+          if (hasCorrection) return cid === -1 ? 10 : 12
+          return cid === -1 ? 5 : 8
+        })
+        const linewidths = reqs.map(r => {
+          const hasCorrection = !!correctionMap[r.id]
+          return hasCorrection ? 2.5 : 1
+        })
+        const linecolors = reqs.map(r => {
+          const corr = correctionMap[r.id]
+          if (corr) {
+            if (corr.status === 'pending') return '#3b82f6'
+            if (corr.status === 'approved') return '#10b981'
+            if (corr.status === 'rejected') return '#ef4444'
+          }
+          return 'rgba(0,0,0,0.3)'
+        })
+
         traces.push({
           type: 'scatter',
           mode: 'markers',
@@ -91,6 +121,7 @@ export default function ScatterPage() {
             module: r.module,
             cluster_id: r.cluster_id,
             prob: r.membership_prob,
+            correction: correctionMap[r.id] || null,
           })),
           hovertemplate:
             '<b>%{customdata.req_id}</b><br>' +
@@ -101,9 +132,9 @@ export default function ScatterPage() {
             '<extra></extra>',
           marker: {
             color,
-            size: cid === -1 ? 5 : 8,
+            size: sizes,
             opacity: cid === -1 ? 0.4 : 0.85,
-            line: { width: 1, color: 'rgba(0,0,0,0.3)' },
+            line: { width: linewidths, color: linecolors },
           },
         })
       })
@@ -162,7 +193,7 @@ export default function ScatterPage() {
     loadPlotly()
 
     return () => { disposed = true }
-  }, [loading, requirements, clusters, filterCluster, showNoise])
+  }, [loading, requirements, clusters, filterCluster, showNoise, correctionMap])
 
   // Purge Plotly (frees the WebGL context + listeners) only on unmount.
   useEffect(() => {
@@ -277,6 +308,25 @@ export default function ScatterPage() {
                 <span className="text-gray-300">{selected.prob?.toFixed(3) ?? '—'}</span>
               </div>
             </div>
+
+            {selected.correction && (
+              <div className={`p-2.5 rounded text-xs border ${
+                selected.correction.status === 'pending'
+                  ? 'bg-blue-950/20 border-blue-900/50 text-blue-300'
+                  : selected.correction.status === 'approved'
+                  ? 'bg-emerald-950/20 border-emerald-900/50 text-emerald-300'
+                  : 'bg-red-950/20 border-red-900/50 text-red-300'
+              }`}>
+                <div className="font-semibold uppercase tracking-wider text-[10px] opacity-80 mb-1">
+                  Correction: {selected.correction.status}
+                </div>
+                <p className="italic mb-1">"{selected.correction.comments || 'No comment'}"</p>
+                <div className="text-[10px] opacity-60">
+                  By: {selected.correction.applied_by} (Conf: {Math.round(selected.correction.confidence_score * 100)}%)
+                </div>
+              </div>
+            )}
+
             {selected.cluster_id !== -1 && (
               <button
                 onClick={() => navigate(`/cluster/${sessionId}/${selected.cluster_id}`)}
