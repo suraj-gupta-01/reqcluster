@@ -7,11 +7,13 @@ venv/
 env/
 
 # Database & generated artifacts
-data/*.db
-data/*.sqlite
-data/*.sqlite3
+*.db
+*.sqlite
+*.sqlite3
 embeddings/
 outputs/
+backend/cache/
+.pytest_cache/
 *.json
 # Node
 node_modules/

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { Layers, Hash, AlertTriangle, ChevronRight, Loader, Tag, Sparkles } from 'lucide-react'
-import { getSession, getClusters, getEnrichmentStatus } from '../utils/api.js'
+import { Layers, Hash, AlertTriangle, ChevronRight, Loader, Tag, Sparkles, Wrench } from 'lucide-react'
+import { getSession, getClusters, getEnrichmentStatus, getSuggestions } from '../utils/api.js'
 import { getClusterColor } from '../utils/colors.js'
 
 function StatCard({ icon: Icon, label, value, color = 'text-white' }) {
@@ -69,6 +69,7 @@ export default function OverviewPage({ onStatusChange }) {
   const [session, setSession] = useState(null)
   const [clusters, setClusters] = useState([])
   const [enrichmentStatus, setEnrichmentStatus] = useState(null)
+  const [refinementSuggestions, setRefinementSuggestions] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -82,6 +83,9 @@ export default function OverviewPage({ onStatusChange }) {
         ])
         getEnrichmentStatus(parseInt(sessionId))
           .then(status => { if (!cancelled) setEnrichmentStatus(status) })
+          .catch(() => {})
+        getSuggestions(parseInt(sessionId))
+          .then(sugs => { if (!cancelled) setRefinementSuggestions(sugs) })
           .catch(() => {})
         if (!cancelled) {
           setSession(sess)
@@ -157,10 +161,15 @@ export default function OverviewPage({ onStatusChange }) {
           <span>Enrichment</span>
           <ChevronRight size={14} />
         </Link>
+        <Link to="/refinement" className="btn-secondary flex items-center gap-2 text-sm">
+          <Wrench size={14} />
+          <span>Refinement</span>
+          <ChevronRight size={14} />
+        </Link>
       </div>
 
       {/* Phase 2 enrichment summary */}
-      <div className="card p-4 mb-8">
+      <div className="card p-4 mb-4">
         <div className="flex items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
@@ -185,6 +194,43 @@ export default function OverviewPage({ onStatusChange }) {
             <div>
               <div className="text-lg font-semibold text-brand-400">{enrichmentStatus?.status || 'not_started'}</div>
               <div className="text-xs text-gray-500">Status</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Phase 3 refinement summary */}
+      <div className="card p-4 mb-8">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <Wrench size={15} className="text-orange-400" />
+              <h2 className="text-sm font-semibold text-gray-300">Phase 3 Refinement</h2>
+            </div>
+            <p className="text-sm text-gray-500 mt-1">
+              {refinementSuggestions.length > 0
+                ? `${refinementSuggestions.length} suggestion${refinementSuggestions.length !== 1 ? 's' : ''} generated for cluster boundary correction.`
+                : 'No refinement suggestions generated yet.'}
+            </p>
+          </div>
+          <div className="flex gap-3 text-right">
+            <div>
+              <div className="text-lg font-semibold text-amber-400">
+                {refinementSuggestions.filter(s => s.status === 'pending').length}
+              </div>
+              <div className="text-xs text-gray-500">Pending</div>
+            </div>
+            <div>
+              <div className="text-lg font-semibold text-emerald-400">
+                {refinementSuggestions.filter(s => s.status === 'applied').length}
+              </div>
+              <div className="text-xs text-gray-500">Applied</div>
+            </div>
+            <div>
+              <div className="text-lg font-semibold text-red-400">
+                {refinementSuggestions.filter(s => s.status === 'rejected').length}
+              </div>
+              <div className="text-xs text-gray-500">Rejected</div>
             </div>
           </div>
         </div>

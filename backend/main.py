@@ -30,8 +30,8 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="ReqCluster API",
-    description="Requirement clustering with Phase 2 LLM enrichment and hybrid embedding support.",
-    version="2.0.0",
+    description="Requirement clustering with Phase 2 LLM enrichment, hybrid embeddings, and Phase 3 ClusterLLM refinement.",
+    version="3.0.0",
     lifespan=lifespan,
 )
 
@@ -55,7 +55,7 @@ app.include_router(router, prefix="/api")
 def root():
     return {
         "name": "ReqCluster",
-        "version": "2.0.0",
+        "version": "3.0.0",
         "status": "running",
         "docs": "/docs",
     }

@@ -13,6 +13,9 @@ from models.schemas import (
     SessionOut, RequirementOut, ClusterOut, ClusterDetail, GraphOut,
     EnrichmentRequest, EnrichmentResponse, EnrichmentStatusResponse,
     EnrichmentResultOut,
+    RefinementSuggestRequest, RefinementSuggestResponse,
+    RefinementSuggestionOut, ApplySuggestionRequest, ApplySuggestionResponse,
+    AuditLogEntry,
 )
 from core.preprocessing import preprocess_requirements
 from core.pipeline import run_pipeline
@@ -22,6 +25,13 @@ from services.enrichment_service import (
     get_enrichment_results,
     get_enrichment_status,
     run_and_persist_enrichment,
+)
+from services.refinement_service import (
+    RefinementServiceError,
+    generate_and_persist_suggestions,
+    apply_suggestion,
+    get_suggestions,
+    get_audit_log,
 )
 
 logger = logging.getLogger(__name__)
@@ -400,3 +410,61 @@ def get_requirements(
         query = query.filter(Requirement.cluster_id == cluster_id)
     reqs = query.all()
     return reqs
+
+
+# --- Phase 3: Refinement endpoints ---
+
+
+@router.post("/suggestions/generate", response_model=RefinementSuggestResponse)
+async def generate_suggestions_endpoint(
+    request: RefinementSuggestRequest,
+    db: DBSession = Depends(get_db),
+):
+    """Analyze clusters and generate merge/split refinement suggestions."""
+    try:
+        return await run_in_threadpool(generate_and_persist_suggestions, db, request)
+    except RefinementServiceError as exc:
+        raise HTTPException(exc.status_code, exc.message)
+    except Exception:
+        logger.exception("Refinement suggestion generation error")
+        raise HTTPException(500, "Failed to generate refinement suggestions.")
+
+
+@router.get("/suggestions", response_model=List[RefinementSuggestionOut])
+def list_suggestions_endpoint(
+    session_id: int = Query(..., ge=1),
+    status: Optional[str] = Query(default=None),
+    db: DBSession = Depends(get_db),
+):
+    """List refinement suggestions for a session, optionally filtered by status."""
+    try:
+        return get_suggestions(db, session_id, status)
+    except RefinementServiceError as exc:
+        raise HTTPException(exc.status_code, exc.message)
+
+
+@router.post("/suggestions/apply", response_model=ApplySuggestionResponse)
+async def apply_suggestion_endpoint(
+    request: ApplySuggestionRequest,
+    db: DBSession = Depends(get_db),
+):
+    """Accept or reject a refinement suggestion."""
+    try:
+        return apply_suggestion(db, request)
+    except RefinementServiceError as exc:
+        raise HTTPException(exc.status_code, exc.message)
+    except Exception:
+        logger.exception("Suggestion apply error")
+        raise HTTPException(500, "Failed to apply suggestion.")
+
+
+@router.get("/suggestions/audit", response_model=List[AuditLogEntry])
+def get_audit_log_endpoint(
+    session_id: int = Query(..., ge=1),
+    db: DBSession = Depends(get_db),
+):
+    """Get audit log of applied refinements for a session."""
+    try:
+        return get_audit_log(db, session_id)
+    except RefinementServiceError as exc:
+        raise HTTPException(exc.status_code, exc.message)

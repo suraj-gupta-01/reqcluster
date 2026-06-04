@@ -1,0 +1,21 @@
+[project]
+name = "reqcluster"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10.11"
+dependencies = [
+    "fastapi==0.111.0",
+    "hdbscan==0.8.38.post1",
+    "numpy==1.26.4",
+    "openpyxl==3.1.2",
+    "pandas==2.2.2",
+    "pydantic==2.7.1",
+    "pytest>=9.0.3",
+    "python-multipart==0.0.9",
+    "scikit-learn==1.5.0",
+    "sentence-transformers==3.0.1",
+    "sqlalchemy==2.0.30",
+    "umap-learn==0.5.6",
+    "uvicorn[standard]==0.30.1",
+]

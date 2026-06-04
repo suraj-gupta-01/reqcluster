@@ -95,4 +95,28 @@ export const getRequirements = async (sessionId, clusterId = null) => {
   return res.data
 }
 
+// Phase 3: Refinement helpers
+
+export const generateSuggestions = async (payload) => {
+  const res = await api.post('/suggestions/generate', payload)
+  return res.data
+}
+
+export const getSuggestions = async (sessionId, status = null) => {
+  let url = `/suggestions?session_id=${sessionId}`
+  if (status) url += `&status=${status}`
+  const res = await api.get(url)
+  return res.data
+}
+
+export const applySuggestion = async (payload) => {
+  const res = await api.post('/suggestions/apply', payload)
+  return res.data
+}
+
+export const getAuditLog = async (sessionId) => {
+  const res = await api.get(`/suggestions/audit?session_id=${sessionId}`)
+  return res.data
+}
+
 export default api

@@ -114,6 +114,11 @@ REQ-003,"Battery shall provide 8 hours runtime",Power,Endurance
 | GET | `/api/cluster/{cluster_id}?session_id=` | Get cluster details |
 | GET | `/api/graph?session_id=` | Get similarity graph |
 | GET | `/api/requirements?session_id=` | Get requirements |
+| POST | `/api/suggestions/generate` | Generate merge/split refinement suggestions |
+| GET | `/api/suggestions?session_id=` | List refinement suggestions for a session |
+| POST | `/api/suggestions/apply` | Accept/reject a suggestion and log the audit entry |
+| GET | `/api/suggestions/audit?session_id=` | List applied/rejected suggestion audit logs |
+
 
 ## Clustering Request Fields
 
@@ -172,13 +177,14 @@ npm run build
 
 ## Documentation
 
-Phase 2 details are documented in:
+Phases 2 and 3 details are documented in:
 
 ```text
 docs/PHASE2_EMBEDDINGS.md
 docs/PHASE2_LLM_ENRICHMENT.md
 docs/PHASE2_ENRICHMENT_API_DB.md
 docs/PHASE2_FRONTEND_ENRICHMENT_UI.md
+docs/PHASE3_CLUSTER_REFINEMENT.md
 ```
 
 ## Notes
