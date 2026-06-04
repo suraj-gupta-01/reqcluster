@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Loader, Search, Filter, ChevronRight, ArrowUpDown } from 'lucide-react'
-import { getRequirements, getClusters } from '../utils/api.js'
+import { Loader, Search, ChevronRight, ArrowUpDown, Sparkles, AlertTriangle, ChevronDown } from 'lucide-react'
+import { getRequirements, getClusters, getEnrichmentResults } from '../utils/api.js'
 import { getClusterColor } from '../utils/colors.js'
 
 const PAGE_SIZE = 50
@@ -25,6 +25,7 @@ export default function RequirementsPage() {
 
   const [requirements, setRequirements] = useState([])
   const [clusters, setClusters] = useState([])
+  const [enrichmentRows, setEnrichmentRows] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -34,6 +35,7 @@ export default function RequirementsPage() {
   const [sortField, setSortField] = useState('req_id')
   const [sortDir, setSortDir] = useState('asc')
   const [page, setPage] = useState(1)
+  const [expandedEnrichment, setExpandedEnrichment] = useState({})
 
   useEffect(() => {
     let cancelled = false
@@ -43,6 +45,9 @@ export default function RequirementsPage() {
           getRequirements(parseInt(sessionId)),
           getClusters(parseInt(sessionId)),
         ])
+        getEnrichmentResults(parseInt(sessionId))
+          .then(rows => { if (!cancelled) setEnrichmentRows(rows) })
+          .catch(() => {})
         if (!cancelled) { setRequirements(reqs); setClusters(clus) }
       } catch {
         if (!cancelled) setError('Failed to load requirements.')
@@ -59,6 +64,12 @@ export default function RequirementsPage() {
     clusters.forEach(c => { m[c.cluster_id] = c.label })
     return m
   }, [clusters])
+
+  const enrichmentMap = useMemo(() => {
+    const map = {}
+    enrichmentRows.forEach(row => { map[row.requirement_id] = row })
+    return map
+  }, [enrichmentRows])
 
   const filtered = useMemo(() => {
     let list = requirements
@@ -104,10 +115,10 @@ export default function RequirementsPage() {
     setPage(1)
   }
 
-  const SortHeader = ({ field, children }) => (
+  const renderSortHeader = (field, label) => (
     <button onClick={() => handleSort(field)}
       className="flex items-center gap-1 hover:text-gray-200 transition-colors group">
-      {children}
+      {label}
       <ArrowUpDown size={11} className={`${sortField === field ? 'text-brand-400' : 'text-gray-700 group-hover:text-gray-500'}`} />
     </button>
   )
@@ -168,19 +179,19 @@ export default function RequirementsPage() {
             <thead className="sticky top-0 bg-gray-900 border-b border-gray-800 z-10">
               <tr className="text-xs font-medium text-gray-500 uppercase tracking-wider">
                 <th className="text-left px-4 py-3 w-28">
-                  <SortHeader field="req_id">ID</SortHeader>
+                  {renderSortHeader('req_id', 'ID')}
                 </th>
                 <th className="text-left px-4 py-3">
-                  <SortHeader field="text">Requirement Text</SortHeader>
+                  {renderSortHeader('text', 'Requirement Text')}
                 </th>
                 <th className="text-left px-4 py-3 w-32">
-                  <SortHeader field="module">Module</SortHeader>
+                  {renderSortHeader('module', 'Module')}
                 </th>
                 <th className="text-left px-4 py-3 w-48">
-                  <SortHeader field="cluster_id">Cluster</SortHeader>
+                  {renderSortHeader('cluster_id', 'Cluster')}
                 </th>
                 <th className="text-left px-4 py-3 w-32">
-                  <SortHeader field="membership_prob">Membership</SortHeader>
+                  {renderSortHeader('membership_prob', 'Membership')}
                 </th>
                 <th className="w-8 px-4 py-3" />
               </tr>
@@ -197,6 +208,9 @@ export default function RequirementsPage() {
                 const clusterLabel = r.is_noise
                   ? 'Noise'
                   : (clusterLabelMap[r.cluster_id] || `Cluster ${r.cluster_id}`)
+                const enrichment = enrichmentMap[r.req_id]
+                const enrichmentOpen = !!expandedEnrichment[r.req_id]
+                const warningCount = enrichment?.warnings?.length || 0
                 return (
                   <tr key={r.id}
                     className="hover:bg-gray-800/40 transition-colors group cursor-pointer"
@@ -208,6 +222,56 @@ export default function RequirementsPage() {
                       <p className="text-gray-200 leading-relaxed line-clamp-2">{r.text}</p>
                       {r.section && (
                         <span className="text-xs text-gray-600 mt-0.5 block">{r.section}</span>
+                      )}
+                      {enrichment && (
+                        <div className="mt-2">
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation()
+                              setExpandedEnrichment(prev => ({ ...prev, [r.req_id]: !prev[r.req_id] }))
+                            }}
+                            className="inline-flex items-center gap-1.5 text-xs text-brand-300 hover:text-brand-200"
+                          >
+                            <Sparkles size={12} />
+                            Enriched available
+                            <span className={`badge ${enrichment.confidence >= 0.7 ? 'bg-emerald-500/15 text-emerald-300' : 'bg-amber-500/15 text-amber-300'}`}>
+                              {enrichment.confidence === null || enrichment.confidence === undefined ? '-' : enrichment.confidence.toFixed(2)}
+                            </span>
+                            {warningCount > 0 && (
+                              <span className="badge bg-amber-500/15 text-amber-300">
+                                {warningCount} warnings
+                              </span>
+                            )}
+                            <ChevronDown size={12} className={`transition-transform ${enrichmentOpen ? 'rotate-180' : ''}`} />
+                          </button>
+                          {enrichmentOpen && (
+                            <div
+                              className="mt-2 rounded-lg border border-gray-800 bg-gray-950/50 p-3"
+                              onClick={event => event.stopPropagation()}
+                            >
+                              <div className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Expanded Text</div>
+                              <p className="text-sm text-gray-300 leading-relaxed">{enrichment.expanded_text || '-'}</p>
+                              {enrichment.domain_terms?.length > 0 && (
+                                <div className="flex flex-wrap gap-1.5 mt-2">
+                                  {enrichment.domain_terms.slice(0, 8).map(term => (
+                                    <span key={term} className="badge bg-brand-600/15 text-brand-300 border border-brand-500/20">{term}</span>
+                                  ))}
+                                </div>
+                              )}
+                              {warningCount > 0 && (
+                                <div className="mt-2 space-y-1">
+                                  {enrichment.warnings.slice(0, 3).map(warning => (
+                                    <div key={warning} className="flex items-start gap-1.5 text-xs text-amber-300">
+                                      <AlertTriangle size={11} className="mt-0.5 flex-shrink-0" />
+                                      <span>{warning}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       )}
                     </td>
                     <td className="px-4 py-3">

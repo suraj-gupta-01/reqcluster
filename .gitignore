@@ -12,7 +12,7 @@ data/*.sqlite
 data/*.sqlite3
 embeddings/
 outputs/
-
+*.json
 # Node
 node_modules/
 frontend/dist/

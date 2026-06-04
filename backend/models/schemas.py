@@ -1,5 +1,6 @@
 from pydantic import BaseModel
-from typing import Optional, List, Any
+from pydantic import Field
+from typing import Optional, List, Any, Literal, Dict
 from datetime import datetime
 
 
@@ -70,10 +71,66 @@ class UploadResponse(BaseModel):
 
 
 class ClusterRequest(BaseModel):
+    session_id: int = Field(..., ge=1)
+    min_cluster_size: Optional[int] = Field(default=None, ge=2, le=10000)
+    min_samples: Optional[int] = Field(default=3, ge=1, le=1000)
+    similarity_threshold: Optional[float] = Field(default=0.65, ge=0.0, le=1.0)
+    embedding_mode: Literal["base", "enriched", "hybrid"] = "base"
+    enable_embedding_comparison: bool = False
+    run_ablation: bool = False
+
+
+class EnrichmentRequest(BaseModel):
+    session_id: int = Field(..., ge=1)
+    provider_name: Literal["mock", "openai_compatible", "local"] = "mock"
+    embedding_mode: Literal["enriched", "hybrid"] = "hybrid"
+    batch_size: int = Field(default=8, ge=1, le=64)
+    max_concurrency: int = Field(default=4, ge=1, le=16)
+    timeout_seconds: float = Field(default=30, ge=1, le=120)
+    force_refresh: bool = False
+    fail_fast: bool = False
+    use_cache: bool = True
+
+
+class EnrichmentResponse(BaseModel):
     session_id: int
-    min_cluster_size: Optional[int] = None
-    min_samples: Optional[int] = 3
-    similarity_threshold: Optional[float] = 0.65
+    status: str
+    total: int
+    succeeded: int
+    failed: int
+    provider: Optional[str]
+    model: Optional[str]
+    prompt_version: Optional[str]
+    domain_vocabulary: List[str]
+    quality_report: Dict[str, Any]
+    warnings: List[str]
+    duration_ms: float
+
+
+class EnrichmentStatusResponse(BaseModel):
+    session_id: int
+    status: str
+    total: int
+    succeeded: int
+    failed: int
+    pending: int
+    latest_run_created_at: Optional[datetime]
+    provider: Optional[str]
+    model: Optional[str]
+    warnings: List[str]
+
+
+class EnrichmentResultOut(BaseModel):
+    requirement_id: Optional[str]
+    expanded_text: Optional[str]
+    domain_terms: List[str]
+    functional_intent: Optional[str]
+    mentioned_components: List[str]
+    assumptions: List[str]
+    confidence: Optional[float]
+    warnings: List[str]
+    quality_report: Optional[Dict[str, Any]]
+    status: str
 
 
 class ClusterResponse(BaseModel):
@@ -82,6 +139,10 @@ class ClusterResponse(BaseModel):
     noise_count: int
     clusters: List[ClusterOut]
     status: str
+    embedding_mode: Optional[Literal["base", "enriched", "hybrid"]] = None
+    warnings: Optional[List[str]] = None
+    embedding_comparison: Optional[Dict[str, Any]] = None
+    ablation_report: Optional[Dict[str, Any]] = None
 
 
 class ProgressUpdate(BaseModel):

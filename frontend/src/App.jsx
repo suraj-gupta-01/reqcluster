@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, NavLink, useLocation } from 'react-router-dom'
-import { Upload, LayoutDashboard, Network, Database, Activity, Layers } from 'lucide-react'
+import { Upload, LayoutDashboard, Network, Database, Activity, Layers, Sparkles } from 'lucide-react'
 
 import { getSession } from './utils/api.js'
 import UploadPage from './pages/UploadPage.jsx'
@@ -9,11 +9,13 @@ import ScatterPage from './pages/ScatterPage.jsx'
 import ClusterDetailPage from './pages/ClusterDetailPage.jsx'
 import GraphPage from './pages/GraphPage.jsx'
 import RequirementsPage from './pages/RequirementsPage.jsx'
+import EnrichmentPage from './pages/EnrichmentPage.jsx'
 
 function Sidebar({ sessionId, sessionStatus }) {
   const done = sessionStatus === 'done'
   const navItems = [
     { to: '/', icon: Upload, label: 'Upload', exact: true, disabled: false },
+    { to: '/enrichment', icon: Sparkles, label: 'Enrichment', disabled: false },
     { to: `/overview/${sessionId}`, icon: LayoutDashboard, label: 'Overview', disabled: !sessionId },
     { to: `/scatter/${sessionId}`, icon: Activity, label: 'Scatter Plot', disabled: !sessionId || !done },
     { to: `/graph/${sessionId}`, icon: Network, label: 'Similarity Graph', disabled: !sessionId || !done },
@@ -28,7 +30,7 @@ function Sidebar({ sessionId, sessionStatus }) {
           </div>
           <div>
             <div className="text-sm font-bold text-white tracking-tight">ReqCluster</div>
-            <div className="text-xs text-gray-500">Phase 1 MVP</div>
+          <div className="text-xs text-gray-500">Phase 2 Workflow</div>
           </div>
         </div>
       </div>
@@ -70,7 +72,7 @@ function AppContent() {
 
   // Keep the sidebar's status in sync when navigating directly to a session URL.
   useEffect(() => {
-    if (!sessionId) { setSessionStatus(null); return }
+    if (!sessionId) return
     let cancelled = false
     getSession(sessionId)
       .then(s => { if (!cancelled) setSessionStatus(s.status) })
@@ -84,6 +86,7 @@ function AppContent() {
       <main className="flex-1 overflow-auto min-w-0">
         <Routes>
           <Route path="/" element={<UploadPage onSessionCreated={(id, status) => { setUploadSessionId(id); setSessionStatus(status) }} />} />
+          <Route path="/enrichment" element={<EnrichmentPage />} />
           <Route path="/overview/:sessionId" element={<OverviewPage onStatusChange={setSessionStatus} />} />
           <Route path="/scatter/:sessionId" element={<ScatterPage />} />
           <Route path="/cluster/:sessionId/:clusterId" element={<ClusterDetailPage />} />

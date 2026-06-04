@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Loader, Info } from 'lucide-react'
 import { getRequirements, getClusters } from '../utils/api.js'
-import { getClusterColor, NOISE_COLOR } from '../utils/colors.js'
+import { getClusterColor } from '../utils/colors.js'
 
 export default function ScatterPage() {
   const { sessionId } = useParams()
@@ -16,6 +16,8 @@ export default function ScatterPage() {
   const [selected, setSelected] = useState(null)
   const [filterCluster, setFilterCluster] = useState('all')
   const [showNoise, setShowNoise] = useState(true)
+  const [viewMode, setViewMode] = useState('latest')
+  const [latestMode, setLatestMode] = useState('latest')
 
   useEffect(() => {
     let cancelled = false
@@ -28,8 +30,11 @@ export default function ScatterPage() {
         if (!cancelled) {
           setRequirements(reqs)
           setClusters(clus)
+          const storedMode = localStorage.getItem(`reqcluster:lastEmbeddingMode:${sessionId}`)
+          setLatestMode(storedMode || 'latest')
+          setViewMode(storedMode || 'latest')
         }
-      } catch (err) {
+      } catch {
         if (!cancelled) setError('Failed to load data.')
       } finally {
         if (!cancelled) setLoading(false)
@@ -179,17 +184,35 @@ export default function ScatterPage() {
 
   if (error) return <div className="p-8 text-red-400">{error}</div>
 
+  const beforeAfterUnavailable = viewMode !== 'latest' && viewMode !== latestMode
+
   return (
     <div className="p-6 h-screen flex flex-col gap-4">
       {/* Header */}
       <div className="flex items-center justify-between flex-shrink-0">
         <div>
           <h1 className="text-xl font-bold text-white">UMAP Scatter Plot</h1>
+          <div className="flex items-center gap-2 mt-2">
+            <span className="badge bg-gray-800 text-gray-400">Latest mode: {latestMode}</span>
+            <span className="text-xs text-gray-600">Latest clustering result only</span>
+          </div>
           <p className="text-sm text-gray-400 mt-0.5">
             {requirements.length} requirements · click a point to inspect
           </p>
         </div>
         <div className="flex items-center gap-3">
+          <label htmlFor="scatter-view-mode" className="text-sm text-gray-400">View</label>
+          <select
+            id="scatter-view-mode"
+            value={viewMode}
+            onChange={e => setViewMode(e.target.value)}
+            className="input text-sm py-1.5"
+          >
+            <option value="latest">Latest result</option>
+            <option value="base">Base</option>
+            <option value="enriched">Enriched</option>
+            <option value="hybrid">Hybrid</option>
+          </select>
           <select
             value={filterCluster}
             onChange={e => setFilterCluster(e.target.value)}
@@ -211,6 +234,13 @@ export default function ScatterPage() {
           </label>
         </div>
       </div>
+
+      {beforeAfterUnavailable && (
+        <div className="card p-3 border-amber-900/30 bg-amber-950/10 text-sm text-amber-300">
+          Before/after embedding visualization requires both base and enriched/hybrid clustering results.
+          The backend currently persists the latest clustering result only. Re-run clustering from Enrichment with the selected mode to update this view.
+        </div>
+      )}
 
       {/* Main content */}
       <div className="flex gap-4 flex-1 min-h-0">

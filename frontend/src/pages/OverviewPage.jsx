@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { Layers, Hash, AlertTriangle, ChevronRight, Loader, Tag } from 'lucide-react'
-import { getSession, getClusters } from '../utils/api.js'
+import { Layers, Hash, AlertTriangle, ChevronRight, Loader, Tag, Sparkles } from 'lucide-react'
+import { getSession, getClusters, getEnrichmentStatus } from '../utils/api.js'
 import { getClusterColor } from '../utils/colors.js'
 
 function StatCard({ icon: Icon, label, value, color = 'text-white' }) {
@@ -16,7 +16,7 @@ function StatCard({ icon: Icon, label, value, color = 'text-white' }) {
   )
 }
 
-function ClusterRow({ cluster, sessionId, index }) {
+function ClusterRow({ cluster, sessionId }) {
   const navigate = useNavigate()
   const color = getClusterColor(cluster.cluster_id)
   const maxSize = 40 // for bar scaling
@@ -68,6 +68,7 @@ export default function OverviewPage({ onStatusChange }) {
   const { sessionId } = useParams()
   const [session, setSession] = useState(null)
   const [clusters, setClusters] = useState([])
+  const [enrichmentStatus, setEnrichmentStatus] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -79,12 +80,15 @@ export default function OverviewPage({ onStatusChange }) {
           getSession(parseInt(sessionId)),
           getClusters(parseInt(sessionId)),
         ])
+        getEnrichmentStatus(parseInt(sessionId))
+          .then(status => { if (!cancelled) setEnrichmentStatus(status) })
+          .catch(() => {})
         if (!cancelled) {
           setSession(sess)
           setClusters(clus)
           onStatusChange?.(sess.status)
         }
-      } catch (err) {
+      } catch {
         if (!cancelled) setError('Failed to load session data.')
       } finally {
         if (!cancelled) setLoading(false)
@@ -92,7 +96,7 @@ export default function OverviewPage({ onStatusChange }) {
     }
     load()
     return () => { cancelled = true }
-  }, [sessionId])
+  }, [sessionId, onStatusChange])
 
   if (loading) return (
     <div className="flex items-center justify-center h-64">
@@ -148,6 +152,42 @@ export default function OverviewPage({ onStatusChange }) {
           <span>All Requirements</span>
           <ChevronRight size={14} />
         </Link>
+        <Link to="/enrichment" className="btn-secondary flex items-center gap-2 text-sm">
+          <Sparkles size={14} />
+          <span>Enrichment</span>
+          <ChevronRight size={14} />
+        </Link>
+      </div>
+
+      {/* Phase 2 enrichment summary */}
+      <div className="card p-4 mb-8">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <Sparkles size={15} className="text-brand-400" />
+              <h2 className="text-sm font-semibold text-gray-300">Phase 2 Enrichment</h2>
+            </div>
+            <p className="text-sm text-gray-500 mt-1">
+              {enrichmentStatus
+                ? `${enrichmentStatus.succeeded || 0} of ${enrichmentStatus.total || 0} requirements enriched with ${enrichmentStatus.provider || 'no provider yet'}.`
+                : 'No enrichment status is available yet.'}
+            </p>
+          </div>
+          <div className="flex gap-3 text-right">
+            <div>
+              <div className="text-lg font-semibold text-emerald-400">{enrichmentStatus?.succeeded ?? 0}</div>
+              <div className="text-xs text-gray-500">Enriched</div>
+            </div>
+            <div>
+              <div className="text-lg font-semibold text-amber-400">{enrichmentStatus?.warnings?.length ?? 0}</div>
+              <div className="text-xs text-gray-500">Warnings</div>
+            </div>
+            <div>
+              <div className="text-lg font-semibold text-brand-400">{enrichmentStatus?.status || 'not_started'}</div>
+              <div className="text-xs text-gray-500">Status</div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Cluster list */}
@@ -162,8 +202,8 @@ export default function OverviewPage({ onStatusChange }) {
               No clusters found. Try adjusting parameters and re-running.
             </div>
           ) : (
-            clusters.map((c, i) => (
-              <ClusterRow key={c.id} cluster={c} sessionId={sessionId} index={i} />
+            clusters.map((c) => (
+              <ClusterRow key={c.id} cluster={c} sessionId={sessionId} />
             ))
           )}
         </div>

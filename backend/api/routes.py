@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, Path, Query
 from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session as DBSession
@@ -10,10 +10,19 @@ import logging
 from models.database import get_db, Session, Requirement, Cluster, Graph
 from models.schemas import (
     UploadResponse, ClusterRequest, ClusterResponse,
-    SessionOut, RequirementOut, ClusterOut, ClusterDetail, GraphOut
+    SessionOut, RequirementOut, ClusterOut, ClusterDetail, GraphOut,
+    EnrichmentRequest, EnrichmentResponse, EnrichmentStatusResponse,
+    EnrichmentResultOut,
 )
 from core.preprocessing import preprocess_requirements
 from core.pipeline import run_pipeline
+from services.enrichment_service import (
+    EnrichmentServiceError,
+    build_enriched_texts_for_pipeline,
+    get_enrichment_results,
+    get_enrichment_status,
+    run_and_persist_enrichment,
+)
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -85,6 +94,67 @@ async def upload_requirements(
     )
 
 
+@router.post("/enrich", response_model=EnrichmentResponse)
+async def enrich_requirements_endpoint(
+    request: EnrichmentRequest,
+    db: DBSession = Depends(get_db),
+):
+    """Run Phase 2 requirement enrichment and persist results for a session."""
+    session_id = request.session_id
+    pipeline_progress[session_id] = {
+        "step": "loading_requirements",
+        "progress": 0,
+        "message": "Starting enrichment...",
+    }
+
+    def progress_callback(step: str, pct: int, msg: str):
+        pipeline_progress[session_id] = {"step": step, "progress": pct, "message": msg}
+
+    try:
+        return await run_and_persist_enrichment(
+            db,
+            request,
+            progress_callback=progress_callback,
+        )
+    except EnrichmentServiceError as exc:
+        pipeline_progress[session_id] = {
+            "step": "failed",
+            "progress": 0,
+            "message": exc.message,
+        }
+        raise HTTPException(exc.status_code, exc.message)
+    except Exception:
+        logger.exception("Enrichment error")
+        pipeline_progress[session_id] = {
+            "step": "failed",
+            "progress": 0,
+            "message": "Enrichment failed.",
+        }
+        raise HTTPException(500, "Enrichment failed.")
+
+
+@router.get("/enrich/status/{session_id}", response_model=EnrichmentStatusResponse)
+def get_enrichment_status_endpoint(
+    session_id: int = Path(..., ge=1),
+    db: DBSession = Depends(get_db),
+):
+    try:
+        return get_enrichment_status(db, session_id)
+    except EnrichmentServiceError as exc:
+        raise HTTPException(exc.status_code, exc.message)
+
+
+@router.get("/enrich/results", response_model=List[EnrichmentResultOut])
+def get_enrichment_results_endpoint(
+    session_id: int = Query(..., ge=1),
+    db: DBSession = Depends(get_db),
+):
+    try:
+        return get_enrichment_results(db, session_id)
+    except EnrichmentServiceError as exc:
+        raise HTTPException(exc.status_code, exc.message)
+
+
 @router.post("/cluster", response_model=ClusterResponse)
 async def cluster_requirements_endpoint(
     request: ClusterRequest,
@@ -101,13 +171,23 @@ async def cluster_requirements_endpoint(
     # Load requirements
     reqs = db.query(Requirement).filter(
         Requirement.session_id == request.session_id
-    ).all()
+    ).order_by(Requirement.id.asc()).all()
 
     if not reqs:
         raise HTTPException(400, "No requirements found for this session.")
 
     texts = [r.text for r in reqs]
     req_ids = [r.req_id for r in reqs]
+    enriched_texts = None
+    if request.embedding_mode != "base":
+        try:
+            enriched_texts = build_enriched_texts_for_pipeline(
+                db,
+                request.session_id,
+                request.embedding_mode,
+            )
+        except EnrichmentServiceError as exc:
+            raise HTTPException(exc.status_code, exc.message)
 
     session.status = "processing"
     db.commit()
@@ -127,9 +207,17 @@ async def cluster_requirements_endpoint(
             texts=texts,
             req_ids=req_ids,
             min_cluster_size=request.min_cluster_size,
-            min_samples=request.min_samples or 3,
-            similarity_threshold=request.similarity_threshold or 0.65,
+            min_samples=request.min_samples if request.min_samples is not None else 3,
+            similarity_threshold=(
+                request.similarity_threshold
+                if request.similarity_threshold is not None
+                else 0.65
+            ),
             progress_callback=progress_callback,
+            embedding_mode=request.embedding_mode,
+            enriched_texts=enriched_texts,
+            enable_embedding_comparison=request.enable_embedding_comparison,
+            run_ablation=request.run_ablation,
         )
 
         labels = results["labels"]
@@ -200,6 +288,10 @@ async def cluster_requirements_endpoint(
                 for c in clusters_out
             ],
             status="done",
+            embedding_mode=results.get("embedding_mode"),
+            warnings=results.get("warnings"),
+            embedding_comparison=results.get("embedding_comparison"),
+            ablation_report=results.get("ablation_report"),
         )
 
     except Exception as e:
