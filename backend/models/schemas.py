@@ -1,5 +1,6 @@
 from pydantic import BaseModel
-from typing import Optional, List, Any
+from pydantic import Field
+from typing import Optional, List, Any, Literal
 from datetime import datetime
 
 
@@ -70,10 +71,13 @@ class UploadResponse(BaseModel):
 
 
 class ClusterRequest(BaseModel):
-    session_id: int
-    min_cluster_size: Optional[int] = None
-    min_samples: Optional[int] = 3
-    similarity_threshold: Optional[float] = 0.65
+    session_id: int = Field(..., ge=1)
+    min_cluster_size: Optional[int] = Field(default=None, ge=2, le=10000)
+    min_samples: Optional[int] = Field(default=3, ge=1, le=1000)
+    similarity_threshold: Optional[float] = Field(default=0.65, ge=0.0, le=1.0)
+    embedding_mode: Literal["base", "enriched", "hybrid"] = "base"
+    enable_embedding_comparison: bool = False
+    run_ablation: bool = False
 
 
 class ClusterResponse(BaseModel):

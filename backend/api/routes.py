@@ -109,6 +109,16 @@ async def cluster_requirements_endpoint(
     texts = [r.text for r in reqs]
     req_ids = [r.req_id for r in reqs]
 
+    if request.embedding_mode != "base":
+        raise HTTPException(
+            400,
+            (
+                f"embedding_mode='{request.embedding_mode}' requires enriched requirement text, "
+                "but no enriched text is persisted for this session yet. Run base mode or "
+                "connect the Phase 2 enrichment service before using enriched or hybrid embeddings."
+            ),
+        )
+
     session.status = "processing"
     db.commit()
 
@@ -127,9 +137,17 @@ async def cluster_requirements_endpoint(
             texts=texts,
             req_ids=req_ids,
             min_cluster_size=request.min_cluster_size,
-            min_samples=request.min_samples or 3,
-            similarity_threshold=request.similarity_threshold or 0.65,
+            min_samples=request.min_samples if request.min_samples is not None else 3,
+            similarity_threshold=(
+                request.similarity_threshold
+                if request.similarity_threshold is not None
+                else 0.65
+            ),
             progress_callback=progress_callback,
+            embedding_mode=request.embedding_mode,
+            enriched_texts=None,
+            enable_embedding_comparison=request.enable_embedding_comparison,
+            run_ablation=request.run_ablation,
         )
 
         labels = results["labels"]

@@ -149,8 +149,13 @@ Full interactive docs available at `/docs` (Swagger UI).
 | `min_cluster_size`    | `max(5, N/50)` | Minimum requirements to form a cluster          |
 | `min_samples`         | `3`            | HDBSCAN density sensitivity                     |
 | `similarity_threshold`| `0.65`         | Cosine similarity cutoff for graph edges        |
+| `embedding_mode`      | `base`         | Phase 2 embedding mode: `base`, `enriched`, or `hybrid` |
+| `enable_embedding_comparison` | `false` | Include base-vs-selected embedding comparison in internal pipeline results |
+| `run_ablation`        | `false`        | Run the read-only base-vs-selected embedding ablation report |
 
 Tune `min_cluster_size` smaller to capture more clusters (fewer noise points), or larger to get broader, more general clusters.
+
+See `docs/PHASE2_EMBEDDINGS.md` for Phase 2 embedding mode details. Public API use of `enriched` and `hybrid` modes requires enriched text persistence from the upcoming enrichment service.
 
 ---
 
