@@ -238,3 +238,47 @@ class AuditLogEntry(BaseModel):
     applied_by: Optional[str] = None
     created_at: Optional[datetime] = None
 
+
+class FeedbackSubmitRequest(BaseModel):
+    session_id: int = Field(..., ge=1)
+    requirement_id: int = Field(..., ge=1)
+    new_cluster_id: Optional[int] = None
+    confidence_score: float = Field(1.0, ge=0.0, le=1.0)
+    comments: Optional[str] = None
+    applied_by: Optional[str] = None
+
+
+class FeedbackCorrectionOut(BaseModel):
+    id: int
+    session_id: int
+    requirement_id: int
+    previous_cluster_id: Optional[int] = None
+    new_cluster_id: Optional[int] = None
+    confidence_score: float
+    comments: Optional[str] = None
+    applied_by: Optional[str] = None
+    status: str
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class FeedbackReviewRequest(BaseModel):
+    session_id: int = Field(..., ge=1)
+    feedback_id: int = Field(..., ge=1)
+    status: Literal["approved", "rejected"]
+
+
+class ConstraintPairOut(BaseModel):
+    id: int
+    session_id: int
+    requirement_a_id: int
+    requirement_b_id: int
+    constraint_type: str
+    feedback_id: int
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+

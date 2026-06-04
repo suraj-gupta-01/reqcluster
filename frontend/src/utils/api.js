@@ -119,4 +119,33 @@ export const getAuditLog = async (sessionId) => {
   return res.data
 }
 
+// Phase 4: Human-in-the-Loop helpers
+
+export const submitFeedback = async (payload) => {
+  const res = await api.post('/feedback/submit', payload)
+  return res.data
+}
+
+export const getFeedbackQueue = async (sessionId, status = null) => {
+  let url = `/feedback/queue?session_id=${sessionId}`
+  if (status) url += `&status=${status}`
+  const res = await api.get(url)
+  return res.data
+}
+
+export const reviewFeedback = async (payload) => {
+  const res = await api.post('/feedback/review', payload)
+  return res.data
+}
+
+export const getConstraints = async (sessionId) => {
+  const res = await api.get(`/feedback/constraints?session_id=${sessionId}`)
+  return res.data
+}
+
+export const getFeedbackExportUrl = (sessionId, format = 'csv') => {
+  return `${BASE_URL}/feedback/export?session_id=${sessionId}&format=${format}`
+}
+
 export default api
+

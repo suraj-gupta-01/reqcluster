@@ -2,7 +2,7 @@
 
 ReqCluster is an AI-assisted requirements clustering platform. It ingests CSV or XLSX requirement files, preprocesses and stores cleaned requirements, clusters them with SBERT + UMAP + HDBSCAN, labels clusters with c-TF-IDF, builds a similarity graph, and exposes the workflow through a FastAPI backend and React dashboard.
 
-Phase 2 adds LLM semantic enrichment on top of the Phase 1 clustering pipeline:
+Phase 2 adds LLM semantic enrichment, Phase 3 introduces ClusterLLM automated refinement suggestion generation, and Phase 4 implements human-in-the-loop overrides with machine-learning constraints:
 
 ```text
 Upload requirements
@@ -12,6 +12,8 @@ Persist enriched requirement text and quality metadata
 Cluster with base, enriched, or hybrid embeddings
 Inspect comparison and ablation metrics
 Review scatter, graph, requirements, overview, and cluster detail views
+Generate automated merge/split suggestions (Phase 3)
+Apply human-in-the-loop cluster overrides and generate ML constraints (Phase 4)
 ```
 
 Base clustering remains the default Phase 1 behavior. Enriched and hybrid clustering require persisted enrichment from `POST /api/enrich`.
@@ -118,6 +120,11 @@ REQ-003,"Battery shall provide 8 hours runtime",Power,Endurance
 | GET | `/api/suggestions?session_id=` | List refinement suggestions for a session |
 | POST | `/api/suggestions/apply` | Accept/reject a suggestion and log the audit entry |
 | GET | `/api/suggestions/audit?session_id=` | List applied/rejected suggestion audit logs |
+| POST | `/api/feedback/submit` | Submit human cluster reassignment and extract constraints |
+| GET | `/api/feedback/queue` | Retrieve pending/reviewed human adjustments |
+| POST | `/api/feedback/review` | Approve/reject adjustments (rejection rolls back) |
+| GET | `/api/feedback/constraints` | Get active constraints and cycle/conflict validation report |
+| GET | `/api/feedback/export` | Export review logs as CSV or JSON |
 
 
 ## Clustering Request Fields
@@ -177,7 +184,7 @@ npm run build
 
 ## Documentation
 
-Phases 2 and 3 details are documented in:
+Phases 2, 3, and 4 details are documented in:
 
 ```text
 docs/PHASE2_EMBEDDINGS.md
@@ -185,6 +192,7 @@ docs/PHASE2_LLM_ENRICHMENT.md
 docs/PHASE2_ENRICHMENT_API_DB.md
 docs/PHASE2_FRONTEND_ENRICHMENT_UI.md
 docs/PHASE3_CLUSTER_REFINEMENT.md
+docs/PHASE4_HUMAN_IN_THE_LOOP.md
 ```
 
 ## Notes

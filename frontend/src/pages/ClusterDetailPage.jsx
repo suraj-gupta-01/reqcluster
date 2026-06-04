@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { ChevronLeft, Loader, Tag } from 'lucide-react'
-import { getClusterDetail, getClusters } from '../utils/api.js'
+import { getClusterDetail, getClusters, submitFeedback } from '../utils/api.js'
 import { getClusterColor } from '../utils/colors.js'
+import MoveToClusterModal from '../components/MoveToClusterModal.jsx'
 
 function MembershipBar({ prob }) {
   const pct = Math.round((prob ?? 0) * 100)
@@ -27,6 +28,31 @@ export default function ClusterDetailPage() {
   const [error, setError] = useState(null)
   const [search, setSearch] = useState('')
   const [sortBy, setSortBy] = useState('prob_desc')
+
+  const [selectedRequirement, setSelectedRequirement] = useState(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+
+  const handleReassignSubmit = async (payload) => {
+    if (!selectedRequirement) return
+    try {
+      await submitFeedback({
+        session_id: parseInt(sessionId, 10),
+        requirement_id: selectedRequirement.id,
+        ...payload
+      })
+      // Reload cluster detail and all clusters
+      const [d, clus] = await Promise.all([
+        getClusterDetail(parseInt(sessionId), parseInt(clusterId)),
+        getClusters(parseInt(sessionId)),
+      ])
+      setDetail(d)
+      setAllClusters(clus)
+      setIsModalOpen(false)
+      setSelectedRequirement(null)
+    } catch (err) {
+      alert(err?.response?.data?.detail || 'Failed to reassign cluster.')
+    }
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -193,8 +219,20 @@ export default function ClusterDetailPage() {
                       </div>
                     )}
                   </div>
-                  <div className="w-28 flex-shrink-0 pt-1">
-                    <MembershipBar prob={r.membership_prob} />
+                  <div className="flex items-center gap-4 flex-shrink-0">
+                    <div className="w-28 pt-1">
+                      <MembershipBar prob={r.membership_prob} />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedRequirement({ ...r, cluster_id: cluster?.cluster_id })
+                        setIsModalOpen(true)
+                      }}
+                      className="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 text-xs transition-colors"
+                    >
+                      Reassign
+                    </button>
                   </div>
                 </div>
               </div>
@@ -202,6 +240,17 @@ export default function ClusterDetailPage() {
           )}
         </div>
       </div>
+
+      <MoveToClusterModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false)
+          setSelectedRequirement(null)
+        }}
+        requirement={selectedRequirement}
+        clusters={allClusters}
+        onSubmit={handleReassignSubmit}
+      />
     </div>
   )
 }

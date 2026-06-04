@@ -171,6 +171,42 @@ class RefinementAuditLog(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
+class FeedbackCorrection(Base):
+    __tablename__ = "feedback_corrections"
+    __table_args__ = (
+        Index("ix_feedback_session_status", "session_id", "status"),
+        Index("ix_feedback_session_requirement", "session_id", "requirement_id"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(Integer, nullable=False, index=True)
+    requirement_id = Column(Integer, nullable=False, index=True)
+    previous_cluster_id = Column(Integer, nullable=True)
+    new_cluster_id = Column(Integer, nullable=True)
+    confidence_score = Column(Float, nullable=False, default=1.0)
+    comments = Column(Text, nullable=True)
+    applied_by = Column(String, nullable=True)
+    status = Column(String(20), default="pending", index=True)  # pending, approved, rejected
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class ConstraintPair(Base):
+    __tablename__ = "constraint_pairs"
+    __table_args__ = (
+        Index("ix_constraint_session", "session_id"),
+        Index("ix_constraint_feedback", "feedback_id"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(Integer, nullable=False, index=True)
+    requirement_a_id = Column(Integer, nullable=False, index=True)
+    requirement_b_id = Column(Integer, nullable=False, index=True)
+    constraint_type = Column(String(20), nullable=False)  # must-link / cannot-link
+    feedback_id = Column(Integer, nullable=False, index=True)  # Links to FeedbackCorrection
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 def get_db():
     db = SessionLocal()
     try:

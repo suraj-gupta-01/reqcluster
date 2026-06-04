@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, Path, Query
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, Path, Query, Response
 from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session as DBSession
@@ -16,6 +16,8 @@ from models.schemas import (
     RefinementSuggestRequest, RefinementSuggestResponse,
     RefinementSuggestionOut, ApplySuggestionRequest, ApplySuggestionResponse,
     AuditLogEntry,
+    FeedbackSubmitRequest, FeedbackCorrectionOut, FeedbackReviewRequest,
+    ConstraintPairOut,
 )
 from core.preprocessing import preprocess_requirements
 from core.pipeline import run_pipeline
@@ -33,6 +35,14 @@ from services.refinement_service import (
     get_suggestions,
     get_audit_log,
 )
+from services.feedback_service import (
+    submit_feedback,
+    review_feedback,
+    get_feedback_queue,
+    export_feedback_csv,
+    export_feedback_json,
+)
+from core.feedback_bridge import detect_constraints_conflicts
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -468,3 +478,125 @@ def get_audit_log_endpoint(
         return get_audit_log(db, session_id)
     except RefinementServiceError as exc:
         raise HTTPException(exc.status_code, exc.message)
+
+
+# --- Phase 4: Human-in-the-Loop endpoints ---
+
+
+@router.post("/feedback/submit", response_model=FeedbackCorrectionOut)
+def submit_feedback_endpoint(
+    request: FeedbackSubmitRequest,
+    db: DBSession = Depends(get_db),
+):
+    """Submit a manual cluster correction for a requirement."""
+    try:
+        return submit_feedback(db, request)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
+    except Exception as exc:
+        logger.exception("Feedback submit error")
+        raise HTTPException(500, f"Failed to submit feedback: {str(exc)}")
+
+
+@router.get("/feedback/queue", response_model=List[FeedbackCorrectionOut])
+def get_feedback_queue_endpoint(
+    session_id: int = Query(..., ge=1),
+    status: Optional[str] = Query(default=None),
+    db: DBSession = Depends(get_db),
+):
+    """Retrieve the human feedback review queue for a session."""
+    try:
+        return get_feedback_queue(db, session_id, status)
+    except Exception as exc:
+        logger.exception("Get feedback queue error")
+        raise HTTPException(500, "Failed to retrieve feedback queue.")
+
+
+@router.post("/feedback/review", response_model=FeedbackCorrectionOut)
+def review_feedback_endpoint(
+    request: FeedbackReviewRequest,
+    db: DBSession = Depends(get_db),
+):
+    """Approve or reject a pending cluster correction."""
+    try:
+        return review_feedback(db, request.session_id, request.feedback_id, request.status)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
+    except Exception as exc:
+        logger.exception("Review feedback error")
+        raise HTTPException(500, "Failed to review feedback.")
+
+
+@router.get("/feedback/constraints")
+def get_constraints_endpoint(
+    session_id: int = Query(..., ge=1),
+    db: DBSession = Depends(get_db),
+):
+    """Get active constraint pairs and detect conflicts in the constraint network."""
+    try:
+        from models.database import ConstraintPair, FeedbackCorrection
+        # Fetch active constraints (where status != rejected)
+        pairs = (
+            db.query(ConstraintPair)
+            .join(FeedbackCorrection, ConstraintPair.feedback_id == FeedbackCorrection.id)
+            .filter(
+                ConstraintPair.session_id == session_id,
+                FeedbackCorrection.status != "rejected"
+            )
+            .all()
+        )
+        serialized_pairs = [
+            {
+                "id": p.id,
+                "session_id": p.session_id,
+                "requirement_a_id": p.requirement_a_id,
+                "requirement_b_id": p.requirement_b_id,
+                "constraint_type": p.constraint_type,
+                "feedback_id": p.feedback_id,
+                "created_at": p.created_at,
+            }
+            for p in pairs
+        ]
+        conflicts = detect_constraints_conflicts(db, session_id)
+        return {
+            "session_id": session_id,
+            "constraint_pairs": serialized_pairs,
+            "conflicts": conflicts,
+            "has_conflicts": len(conflicts) > 0,
+        }
+    except Exception as exc:
+        logger.exception("Get constraints error")
+        raise HTTPException(500, "Failed to retrieve constraints and conflicts.")
+
+
+@router.get("/feedback/export")
+def export_feedback_endpoint(
+    session_id: int = Query(..., ge=1),
+    format: str = Query(default="csv"),
+    db: DBSession = Depends(get_db),
+):
+    """Export the human feedback queue as CSV or JSON."""
+    try:
+        fmt = format.strip().lower()
+        if fmt == "csv":
+            csv_content = export_feedback_csv(db, session_id)
+            return Response(
+                content=csv_content,
+                media_type="text/csv",
+                headers={"Content-Disposition": f"attachment; filename=feedback_session_{session_id}.csv"}
+            )
+        elif fmt == "json":
+            json_content = export_feedback_json(db, session_id)
+            return Response(
+                content=json_content,
+                media_type="application/json",
+                headers={"Content-Disposition": f"attachment; filename=feedback_session_{session_id}.json"}
+            )
+        else:
+            raise HTTPException(400, "Unsupported export format. Use 'csv' or 'json'.")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("Feedback export error")
+        raise HTTPException(500, "Failed to export feedback data.")
+
