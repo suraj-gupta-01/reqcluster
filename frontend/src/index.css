@@ -5,19 +5,82 @@
 @layer base {
   body {
     @apply bg-gray-950 text-gray-100 antialiased;
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
   }
-  ::-webkit-scrollbar { width: 6px; height: 6px; }
-  ::-webkit-scrollbar-track { @apply bg-gray-900; }
-  ::-webkit-scrollbar-thumb { @apply bg-gray-700 rounded-full; }
-  ::-webkit-scrollbar-thumb:hover { @apply bg-gray-600; }
+
+  /* Subtle fixed depth layer so glass surfaces have something to refract.
+     Low-intensity teal, no purple, no animation. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(60rem 40rem at 18% -8%, rgba(20, 160, 143, 0.10), transparent 60%),
+      radial-gradient(50rem 38rem at 100% 0%, rgba(13, 129, 117, 0.08), transparent 55%),
+      linear-gradient(180deg, #0a0d0c 0%, #090b0b 100%);
+  }
+
+  ::selection { background: rgba(20, 160, 143, 0.30); }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { @apply bg-gray-700/60 rounded-full; border: 2px solid transparent; background-clip: padding-box; }
+  ::-webkit-scrollbar-thumb:hover { @apply bg-brand-600/70; }
 }
 
 @layer components {
-  .card { @apply bg-gray-900 border border-gray-800 rounded-xl; }
-  .btn-primary { @apply bg-brand-600 hover:bg-brand-500 text-white font-medium px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed; }
-  .btn-secondary { @apply bg-gray-800 hover:bg-gray-700 text-gray-200 font-medium px-4 py-2 rounded-lg transition-colors; }
+  /* Frosted glass surface (not glossy). Solid fallback for reduced transparency. */
+  .glass {
+    @apply rounded-2xl border border-white/[0.06];
+    background: rgba(17, 22, 22, 0.55);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    backdrop-filter: blur(18px) saturate(140%);
+    box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.04) inset, 0 16px 50px -18px rgba(0, 0, 0, 0.65);
+  }
+
+  .card {
+    @apply rounded-2xl border border-white/[0.06];
+    background: rgba(20, 26, 26, 0.5);
+    -webkit-backdrop-filter: blur(16px) saturate(135%);
+    backdrop-filter: blur(16px) saturate(135%);
+    box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.04) inset, 0 14px 44px -16px rgba(0, 0, 0, 0.6);
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 font-semibold text-white px-4 py-2 rounded-xl
+           transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+    background: linear-gradient(180deg, #16b0a0 0%, #0d8175 100%);
+    box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.18) inset, 0 8px 22px -10px rgba(13, 129, 117, 0.7);
+  }
+  .btn-primary:hover:not(:disabled) { filter: brightness(1.06); transform: translateY(-1px); }
+  .btn-primary:active:not(:disabled) { transform: translateY(0) scale(0.985); }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 font-medium text-gray-200 px-4 py-2 rounded-xl
+           border border-white/[0.07] transition-all duration-200;
+    background: rgba(255, 255, 255, 0.04);
+  }
+  .btn-secondary:hover { background: rgba(255, 255, 255, 0.08); }
+  .btn-secondary:active { transform: scale(0.985); }
+
   .badge { @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium; }
-  .input { @apply bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent; }
+
+  .input {
+    @apply rounded-xl px-3 py-2 text-gray-100 placeholder-gray-500 border border-white/[0.08]
+           transition-all duration-200 focus:outline-none;
+    background: rgba(255, 255, 255, 0.03);
+  }
+  .input:focus { border-color: rgba(20, 160, 143, 0.6); box-shadow: 0 0 0 3px rgba(20, 160, 143, 0.18); }
+
   .stat-card { @apply card p-5 flex flex-col gap-1; }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .glass, .card { -webkit-backdrop-filter: none; backdrop-filter: none; background: #11161a; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-up { animation: none !important; }
+  .btn-primary:hover, .btn-secondary:hover { transform: none; }
 }

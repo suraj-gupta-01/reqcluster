@@ -61,7 +61,7 @@ export default function GraphPage() {
       const edgeTrace = {
         type: 'scatter', mode: 'lines',
         x: edgeX, y: edgeY,
-        line: { width: 0.6, color: 'rgba(99,102,241,0.2)' },
+        line: { width: 0.6, color: 'rgba(20,160,143,0.22)' },
         hoverinfo: 'none', showlegend: false,
       }
 
