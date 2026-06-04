@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { Brain, Loader, Sparkles, AlertTriangle, TrendingUp, Gauge } from 'lucide-react'
+import { Brain, Loader, Sparkles, AlertTriangle, TrendingUp, Gauge, PencilLine } from 'lucide-react'
 import {
-  getSessions, getUncertaintyQueue, runConstrainedClustering, getQualityHistory, getErrorMessage,
+  getSessions, getUncertaintyQueue, runConstrainedClustering, getQualityHistory,
+  getClusters, submitFeedback, getErrorMessage,
 } from '../utils/api.js'
 import { getClusterColor } from '../utils/colors.js'
+import MoveToClusterModal from '../components/MoveToClusterModal.jsx'
 
 export default function ActiveLearningPage() {
   const chartRef = useRef(null)
@@ -11,6 +13,8 @@ export default function ActiveLearningPage() {
   const [selected, setSelected] = useState(null)
   const [queue, setQueue] = useState([])
   const [history, setHistory] = useState([])
+  const [clusters, setClusters] = useState([])
+  const [modalReq, setModalReq] = useState(null)
   const [loadingSessions, setLoadingSessions] = useState(true)
   const [running, setRunning] = useState(false)
   const [error, setError] = useState(null)
@@ -29,14 +33,29 @@ export default function ActiveLearningPage() {
 
   const load = useCallback(async (sid) => {
     try {
-      const [q, h] = await Promise.all([getUncertaintyQueue(sid, 25), getQualityHistory(sid)])
+      const [q, h, c] = await Promise.all([
+        getUncertaintyQueue(sid, 25), getQualityHistory(sid), getClusters(sid),
+      ])
       setQueue(q.queue || [])
       setHistory(h.history || [])
+      setClusters(c || [])
       setError(null)
     } catch (err) {
       setError(getErrorMessage(err, 'Failed to load active-learning data.'))
     }
   }, [])
+
+  const handleReassign = async (payload) => {
+    if (!selected || !modalReq) return
+    try {
+      await submitFeedback({ session_id: selected, requirement_id: modalReq.id, ...payload })
+      setModalReq(null)
+      setNotice('Correction submitted. Approve it in the Review Queue, then apply constraints.')
+      await load(selected)
+    } catch (err) {
+      setError(getErrorMessage(err, 'Failed to submit correction.'))
+    }
+  }
 
   useEffect(() => { if (selected) load(selected) }, [selected, load])
 
@@ -112,7 +131,7 @@ export default function ActiveLearningPage() {
           <div className="text-sm text-gray-500">No completed sessions. Run clustering first.</div>
         ) : (
           <select value={selected || ''} onChange={e => setSelected(parseInt(e.target.value))} className="input text-sm w-full md:w-96">
-            {sessions.map(s => <option key={s.id} value={s.id}>#{s.id} — {s.filename} ({s.total_requirements} reqs)</option>)}
+            {sessions.map(s => <option key={s.id} value={s.id}>#{s.id} - {s.filename} ({s.total_requirements} reqs)</option>)}
           </select>
         )}
       </div>
@@ -135,7 +154,7 @@ export default function ActiveLearningPage() {
             {queue.length === 0 ? (
               <div className="p-8 text-center text-gray-500 text-sm">No data. Select a clustered session.</div>
             ) : queue.map(item => (
-              <div key={item.index} className="px-4 py-3 flex items-center gap-3">
+              <div key={item.index} className="px-4 py-3 flex items-center gap-3 group">
                 <span className="font-mono text-xs text-gray-400 w-16 flex-shrink-0">{item.req_id}</span>
                 <p className="text-sm text-gray-300 flex-1 truncate">{item.text}</p>
                 <div className="flex items-center gap-1.5 flex-shrink-0">
@@ -145,6 +164,13 @@ export default function ActiveLearningPage() {
                   </div>
                   <span className="text-xs font-mono text-gray-500 w-9 text-right">{Math.round(item.uncertainty * 100)}%</span>
                 </div>
+                <button
+                  onClick={() => setModalReq({ id: item.requirement_id, req_id: item.req_id, text: item.text, cluster_id: item.cluster_id })}
+                  className="flex-shrink-0 p-1.5 rounded-lg text-gray-500 hover:text-brand-300 hover:bg-white/[0.05] transition-colors opacity-0 group-hover:opacity-100"
+                  title="Reassign cluster"
+                >
+                  <PencilLine size={14} />
+                </button>
               </div>
             ))}
           </div>
@@ -164,6 +190,14 @@ export default function ActiveLearningPage() {
           )}
         </div>
       </div>
+
+      <MoveToClusterModal
+        isOpen={!!modalReq}
+        onClose={() => setModalReq(null)}
+        requirement={modalReq}
+        clusters={clusters}
+        onSubmit={handleReassign}
+      />
     </div>
   )
 }

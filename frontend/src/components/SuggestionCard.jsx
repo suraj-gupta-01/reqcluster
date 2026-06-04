@@ -47,7 +47,7 @@ export default function SuggestionCard({
         className="px-4 py-3 flex items-center gap-3 cursor-pointer hover:bg-gray-800/50 transition-colors"
         onClick={() => setExpanded(!expanded)}
       >
-        <Icon size={16} className={isMerge ? 'text-blue-400' : 'text-orange-400'} />
+        <Icon size={16} className={isMerge ? 'text-brand-400' : 'text-orange-400'} />
 
         <div className="flex-1 min-w-0">
           <div className="text-sm font-medium text-gray-200 truncate">{title}</div>

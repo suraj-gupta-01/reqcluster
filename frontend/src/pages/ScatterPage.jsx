@@ -291,7 +291,7 @@ export default function ScatterPage() {
             <div className="space-y-2 text-xs">
               <div className="flex justify-between">
                 <span className="text-gray-500">Module</span>
-                <span className="text-gray-300">{selected.module || '—'}</span>
+                <span className="text-gray-300">{selected.module || '-'}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">Cluster</span>
@@ -305,14 +305,14 @@ export default function ScatterPage() {
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">Membership</span>
-                <span className="text-gray-300">{selected.prob?.toFixed(3) ?? '—'}</span>
+                <span className="text-gray-300">{selected.prob?.toFixed(3) ?? '-'}</span>
               </div>
             </div>
 
             {selected.correction && (
               <div className={`p-2.5 rounded text-xs border ${
                 selected.correction.status === 'pending'
-                  ? 'bg-blue-950/20 border-blue-900/50 text-blue-300'
+                  ? 'bg-brand-900/20 border-brand-900/50 text-blue-300'
                   : selected.correction.status === 'approved'
                   ? 'bg-emerald-950/20 border-emerald-900/50 text-emerald-300'
                   : 'bg-red-950/20 border-red-900/50 text-red-300'

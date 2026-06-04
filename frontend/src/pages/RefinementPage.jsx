@@ -62,7 +62,7 @@ export default function RefinementPage() {
       setClusterInfo(info)
       setError(null)
     } catch {
-      // No suggestions yet — that's fine
+      // No suggestions yet - that's fine
     }
   }, [])
 
@@ -161,7 +161,7 @@ export default function RefinementPage() {
               >
                 {sessions.map(s => (
                   <option key={s.id} value={s.id}>
-                    #{s.id} — {s.filename} ({s.total_requirements} reqs, {s.total_clusters} clusters)
+                    #{s.id} - {s.filename} ({s.total_requirements} reqs, {s.total_clusters} clusters)
                   </option>
                 ))}
               </select>
@@ -287,7 +287,7 @@ export default function RefinementPage() {
                   }`} />
                   <div className="flex-1">
                     <div className="text-sm text-gray-200">
-                      Suggestion #{entry.suggestion_id} — <span className="font-medium capitalize">{entry.action}</span>
+                      Suggestion #{entry.suggestion_id} - <span className="font-medium capitalize">{entry.action}</span>
                     </div>
                     <div className="text-xs text-gray-500">
                       {entry.created_at ? formatTimestamp(entry.created_at) : 'Unknown time'}

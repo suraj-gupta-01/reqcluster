@@ -304,7 +304,7 @@ export default function RequirementsPage() {
                       {r.module ? (
                         <span className="badge bg-gray-800 text-gray-400">{r.module}</span>
                       ) : (
-                        <span className="text-gray-700">—</span>
+                        <span className="text-gray-700">-</span>
                       )}
                     </td>
                     <td className="px-4 py-3">
@@ -316,7 +316,7 @@ export default function RequirementsPage() {
                     </td>
                     <td className="px-4 py-3">
                       {r.is_noise
-                        ? <span className="text-xs text-gray-600">—</span>
+                        ? <span className="text-xs text-gray-600">-</span>
                         : <MembershipDot prob={r.membership_prob} />
                       }
                     </td>

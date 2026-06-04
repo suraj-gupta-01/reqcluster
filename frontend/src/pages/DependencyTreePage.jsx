@@ -157,7 +157,7 @@ export default function DependencyTreePage() {
           <div className="text-sm text-gray-500">No completed sessions. Run clustering first.</div>
         ) : (
           <select value={selected || ''} onChange={e => setSelected(parseInt(e.target.value))} className="input text-sm w-full md:w-96">
-            {sessions.map(s => <option key={s.id} value={s.id}>#{s.id} — {s.filename} ({s.total_requirements} reqs)</option>)}
+            {sessions.map(s => <option key={s.id} value={s.id}>#{s.id} - {s.filename} ({s.total_requirements} reqs)</option>)}
           </select>
         )}
       </div>
@@ -185,7 +185,7 @@ export default function DependencyTreePage() {
             ].map(([label, val]) => (
               <div key={label} className="stat-card">
                 <span className="text-xs text-gray-500 uppercase tracking-wider">{label}</span>
-                <span className="text-2xl font-bold text-white font-mono">{val ?? '—'}</span>
+                <span className="text-2xl font-bold text-white font-mono">{val ?? '-'}</span>
               </div>
             ))}
           </div>

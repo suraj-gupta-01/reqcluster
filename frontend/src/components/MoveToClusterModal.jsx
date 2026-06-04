@@ -47,7 +47,7 @@ export default function MoveToClusterModal({
         {/* Header */}
         <div className="px-6 py-4 border-b bg-slate-800/40 border-slate-700/80">
           <h3 className="text-lg font-semibold text-slate-100">
-            Reassign Cluster &mdash; {requirement.req_id || `REQ-${requirement.id}`}
+            Reassign Cluster - {requirement.req_id || `REQ-${requirement.id}`}
           </h3>
           <p className="mt-1 text-xs text-slate-400 truncate">
             Current: {requirement.cluster_id !== null ? `Cluster ${requirement.cluster_id}` : 'Noise / Unclustered'}
@@ -72,7 +72,7 @@ export default function MoveToClusterModal({
                 value={targetClusterId}
                 onChange={(e) => setTargetClusterId(e.target.value)}
                 required
-                className="w-full px-3 py-2 text-sm rounded border bg-slate-950 border-slate-800 text-slate-200 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                className="w-full px-3 py-2 text-sm rounded border bg-slate-950 border-slate-800 text-slate-200 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors"
               >
                 <option value="-1">Noise / Unclustered (Remove from clusters)</option>
                 {clusters
@@ -91,7 +91,7 @@ export default function MoveToClusterModal({
                 <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
                   Confidence Rating
                 </label>
-                <span className="text-sm font-medium text-blue-400">{confidence}%</span>
+                <span className="text-sm font-medium text-brand-400">{confidence}%</span>
               </div>
               <input
                 type="range"
@@ -99,7 +99,7 @@ export default function MoveToClusterModal({
                 max="100"
                 value={confidence}
                 onChange={(e) => setConfidence(parseInt(e.target.value, 10))}
-                className="w-full h-1.5 rounded-lg bg-slate-800 accent-blue-500 cursor-pointer focus:outline-none"
+                className="w-full h-1.5 rounded-lg bg-slate-800 accent-brand-500 cursor-pointer focus:outline-none"
               />
               <div className="flex justify-between text-[10px] text-slate-500">
                 <span>50% (Uncertain)</span>
@@ -118,7 +118,7 @@ export default function MoveToClusterModal({
                 value={analystName}
                 onChange={(e) => setAnalystName(e.target.value)}
                 required
-                className="w-full px-3 py-2 text-sm rounded border bg-slate-950 border-slate-800 text-slate-200 placeholder-slate-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                className="w-full px-3 py-2 text-sm rounded border bg-slate-950 border-slate-800 text-slate-200 placeholder-slate-600 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors"
               />
             </div>
 
@@ -132,7 +132,7 @@ export default function MoveToClusterModal({
                 placeholder="Explain the rationale for this change..."
                 value={comments}
                 onChange={(e) => setComments(e.target.value)}
-                className="w-full px-3 py-2 text-sm rounded border bg-slate-950 border-slate-800 text-slate-200 placeholder-slate-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors resize-none"
+                className="w-full px-3 py-2 text-sm rounded border bg-slate-950 border-slate-800 text-slate-200 placeholder-slate-600 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-colors resize-none"
               />
             </div>
 
@@ -149,7 +149,7 @@ export default function MoveToClusterModal({
             </button>
             <button
               type="submit"
-              className="px-4 py-2 text-sm rounded font-medium bg-blue-600 hover:bg-blue-500 text-white transition-colors shadow-lg focus:outline-none"
+              className="px-4 py-2 text-sm rounded font-medium bg-brand-600 hover:bg-brand-500 text-white transition-colors shadow-lg focus:outline-none"
             >
               Reassign Cluster
             </button>

@@ -124,7 +124,7 @@ export default function OverviewPage({ onStatusChange }) {
         <h1 className="text-2xl font-bold text-white">Cluster Overview</h1>
         <p className="text-gray-400 mt-1">
           {session?.status === 'done'
-            ? 'Pipeline complete — explore your requirement clusters below.'
+            ? 'Pipeline complete - explore your requirement clusters below.'
             : `Status: ${session?.status}`}
         </p>
       </div>
@@ -137,7 +137,7 @@ export default function OverviewPage({ onStatusChange }) {
         <StatCard
           icon={Tag}
           label="Coverage"
-          value={totalReqs > 0 ? `${(((totalReqs - noiseCount) / totalReqs) * 100).toFixed(1)}%` : '—'}
+          value={totalReqs > 0 ? `${(((totalReqs - noiseCount) / totalReqs) * 100).toFixed(1)}%` : '-'}
           color="text-emerald-400"
         />
       </div>

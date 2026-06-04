@@ -63,7 +63,7 @@ export default function ExportPage() {
           <div className="text-sm text-gray-500">No completed sessions. Run clustering first.</div>
         ) : (
           <select value={selected || ''} onChange={e => setSelected(parseInt(e.target.value))} className="input text-sm w-full md:w-96">
-            {sessions.map(s => <option key={s.id} value={s.id}>#{s.id} — {s.filename} ({s.total_requirements} reqs)</option>)}
+            {sessions.map(s => <option key={s.id} value={s.id}>#{s.id} - {s.filename} ({s.total_requirements} reqs)</option>)}
           </select>
         )}
       </div>
