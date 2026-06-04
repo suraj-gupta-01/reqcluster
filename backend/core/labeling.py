@@ -129,7 +129,8 @@ def label_clusters(
         keywords = keywords_by_cluster.get(cluster_id, [])
         label = generate_cluster_label(keywords)
         size = int((labels == cluster_id).sum())
-        result[cluster_id] = {
+        # Convert numpy integer to Python int for proper SQLite storage
+        result[int(cluster_id)] = {
             "label": label,
             "keywords": keywords[:top_n_keywords],
             "size": size,
