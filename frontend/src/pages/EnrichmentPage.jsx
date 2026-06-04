@@ -218,7 +218,7 @@ export default function EnrichmentPage() {
 
   useEffect(() => {
     if (!selectedSessionId) return
-    queueMicrotask(() => {
+    const timer = window.setTimeout(() => {
       if (!mountedRef.current) return
       setError(null)
       setClusterError(null)
@@ -229,9 +229,10 @@ export default function EnrichmentPage() {
       setDomainVocabulary([])
       setQualityReport(null)
       setClusterResult(null)
-    })
-    loadStatus(selectedSessionId, true)
-    loadResults(selectedSessionId)
+      void loadStatus(selectedSessionId, true)
+      void loadResults(selectedSessionId)
+    }, 0)
+    return () => window.clearTimeout(timer)
   }, [selectedSessionId, loadStatus, loadResults])
 
   const updateEnrichmentOption = (key, value) => {

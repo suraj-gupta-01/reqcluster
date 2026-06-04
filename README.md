@@ -1,258 +1,190 @@
-# ReqCluster — Phase 1 MVP
+# ReqCluster
 
-> Automatically group functionally related engineering requirements using SBERT embeddings, UMAP dimensionality reduction, HDBSCAN clustering, and c-TF-IDF labeling.
+ReqCluster is an AI-assisted requirements clustering platform. It ingests CSV or XLSX requirement files, preprocesses and stores cleaned requirements, clusters them with SBERT + UMAP + HDBSCAN, labels clusters with c-TF-IDF, builds a similarity graph, and exposes the workflow through a FastAPI backend and React dashboard.
 
----
+Phase 2 adds LLM semantic enrichment on top of the Phase 1 clustering pipeline:
 
-## Pipeline
-
-```
-CSV/XLSX Input
-     │
-     ▼
-Preprocessing          (dedup · clean · validate)
-     │
-     ▼
-SBERT Embeddings       (all-MiniLM-L6-v2 → 384-dim)
-     │
-     ▼
-UMAP Reduction         (384-dim → 10-dim for clustering)
-                       (384-dim → 2-dim  for visualization)
-     │
-     ▼
-HDBSCAN Clustering     (density-based · noise-aware)
-     │
-     ▼
-c-TF-IDF Labeling      (deterministic keyword extraction)
-     │
-     ▼
-Similarity Graph       (cosine similarity > threshold)
-     │
-     ▼
-Interactive Dashboard  (React + Plotly.js)
+```text
+Upload requirements
+Preprocess and persist cleaned requirements
+Run optional LLM enrichment for a session
+Persist enriched requirement text and quality metadata
+Cluster with base, enriched, or hybrid embeddings
+Inspect comparison and ablation metrics
+Review scatter, graph, requirements, overview, and cluster detail views
 ```
 
----
+Base clustering remains the default Phase 1 behavior. Enriched and hybrid clustering require persisted enrichment from `POST /api/enrich`.
 
 ## Tech Stack
 
-| Layer      | Technology                                      |
-|------------|-------------------------------------------------|
-| Backend    | Python 3.11, FastAPI, Uvicorn                   |
-| ML         | sentence-transformers, umap-learn, hdbscan, scikit-learn |
-| Database   | SQLite (via SQLAlchemy)                         |
-| Frontend   | React 18, Vite, TailwindCSS, Plotly.js          |
-| Container  | Docker + Docker Compose                         |
+| Layer | Technology |
+| --- | --- |
+| Backend | Python 3.11, FastAPI, Uvicorn |
+| ML | sentence-transformers, UMAP, HDBSCAN, scikit-learn |
+| LLM enrichment | Mock provider, OpenAI-compatible HTTP provider, local HTTP provider |
+| Database | SQLite via SQLAlchemy |
+| Frontend | React, Vite, Tailwind CSS, Plotly.js |
 
----
+## Local Setup
 
-## Quick Start (Local)
-
-### Prerequisites
-- Python 3.11+
-- Node.js 18+
-- pip
-
-### 1. Clone and set up backend
+### 1. Backend
 
 ```bash
-git clone <repo>
 cd reqcluster
-
-# Install Python dependencies
 pip install -r backend/requirements.txt
-
-# Start the backend
 cd backend
 uvicorn main:app --reload --port 8000
 ```
 
-### 2. Set up and start frontend
+Backend URLs:
+
+```text
+API: http://localhost:8000
+Swagger UI: http://localhost:8000/docs
+Health: http://localhost:8000/health
+```
+
+### 2. Frontend
+
+Open a second terminal:
 
 ```bash
-cd frontend
+cd reqcluster/frontend
 npm install
 npm run dev
 ```
 
-### 3. Open the app
+Frontend URL:
 
-- **Frontend**: http://localhost:5173
-- **API Docs**: http://localhost:8000/docs
-
-### One-command start (both servers)
-
-```bash
-chmod +x start.sh
-./start.sh
+```text
+http://localhost:5173
 ```
 
----
+The Vite dev server proxies `/api` requests to `http://localhost:8000`.
 
-## Docker (Recommended)
+## Typical Phase 2 Workflow
 
-```bash
-# Build and start both services
-docker-compose up --build
-
-# Access the app
-open http://localhost:3000
-```
-
----
+1. Open `http://localhost:5173`.
+2. Upload a CSV or XLSX file from the Upload page.
+3. Run base clustering if you want the original Phase 1 flow.
+4. Open the Enrichment page.
+5. Select a session and provider. The default `mock` provider is deterministic and offline.
+6. Click `Start Enrichment`.
+7. Inspect enrichment status, enriched text, domain terms, confidence, and warnings.
+8. Run `Hybrid` or `Enriched` clustering from the Enrichment page.
+9. Inspect embedding comparison and ablation reports if enabled.
+10. Open Scatter, Graph, Requirements, Overview, or Cluster Detail pages.
 
 ## Input Format
 
-Upload a **CSV** or **XLSX** file with these columns:
+Upload a CSV or XLSX file with a requirement text column. Common text column names are normalized by the backend.
 
-| Column    | Required | Description                     |
-|-----------|----------|---------------------------------|
-| `id`      | No       | Requirement identifier (e.g. REQ-001) |
-| `text`    | **Yes**  | The requirement text            |
-| `module`  | No       | Subsystem or domain             |
-| `section` | No       | Section or chapter              |
+Recommended columns:
 
-**Example CSV:**
+| Column | Required | Description |
+| --- | --- | --- |
+| `id` | No | Requirement identifier, for example `REQ-001` |
+| `text` | Yes | Requirement text |
+| `module` | No | Subsystem or domain |
+| `section` | No | Document section |
+
+Example:
+
 ```csv
 id,text,module,section
-REQ-001,"Cooling fan shall activate above 70°C",Thermal,Temperature Control
+REQ-001,"Cooling fan shall activate above 70C",Thermal,Temperature Control
 REQ-002,"System shall survive 15g shock",Mechanical,Reliability
 REQ-003,"Battery shall provide 8 hours runtime",Power,Endurance
 ```
 
-A sample file is included at `data/sample_requirements.csv` (119 requirements across 6 domains).
+## Core API Endpoints
 
----
+| Method | Endpoint | Description |
+| --- | --- | --- |
+| POST | `/api/upload` | Upload and preprocess CSV/XLSX requirements |
+| POST | `/api/enrich` | Enrich persisted requirements for a session |
+| GET | `/api/enrich/status/{session_id}` | Get enrichment readiness counts |
+| GET | `/api/enrich/results?session_id=` | Get persisted enrichment rows in requirement order |
+| POST | `/api/cluster` | Run base, enriched, or hybrid clustering |
+| GET | `/api/progress/{session_id}` | Poll clustering or enrichment progress |
+| GET | `/api/sessions` | List sessions |
+| GET | `/api/sessions/{session_id}` | Get one session |
+| GET | `/api/clusters?session_id=` | Get clusters |
+| GET | `/api/cluster/{cluster_id}?session_id=` | Get cluster details |
+| GET | `/api/graph?session_id=` | Get similarity graph |
+| GET | `/api/requirements?session_id=` | Get requirements |
 
-## API Endpoints
+## Clustering Request Fields
 
-| Method | Endpoint                          | Description                      |
-|--------|-----------------------------------|----------------------------------|
-| POST   | `/api/upload`                     | Upload CSV/XLSX file             |
-| POST   | `/api/cluster`                    | Run clustering pipeline          |
-| GET    | `/api/progress/{session_id}`      | Poll pipeline progress           |
-| GET    | `/api/sessions`                   | List all sessions                |
-| GET    | `/api/sessions/{id}`              | Get session details              |
-| GET    | `/api/clusters?session_id=`       | Get all clusters                 |
-| GET    | `/api/cluster/{id}?session_id=`   | Get cluster + its requirements   |
-| GET    | `/api/graph?session_id=`          | Get similarity graph JSON        |
-| GET    | `/api/requirements?session_id=`   | Get all requirements             |
-
-Full interactive docs available at `/docs` (Swagger UI).
-
----
-
-## Clustering Parameters
-
-| Parameter             | Default        | Description                                     |
-|-----------------------|----------------|-------------------------------------------------|
-| `min_cluster_size`    | `max(5, N/50)` | Minimum requirements to form a cluster          |
-| `min_samples`         | `3`            | HDBSCAN density sensitivity                     |
-| `similarity_threshold`| `0.65`         | Cosine similarity cutoff for graph edges        |
-| `embedding_mode`      | `base`         | Phase 2 embedding mode: `base`, `enriched`, or `hybrid` |
-| `enable_embedding_comparison` | `false` | Include base-vs-selected embedding comparison in internal pipeline results |
-| `run_ablation`        | `false`        | Run the read-only base-vs-selected embedding ablation report |
-
-Tune `min_cluster_size` smaller to capture more clusters (fewer noise points), or larger to get broader, more general clusters.
-
-See `docs/PHASE2_EMBEDDINGS.md` for Phase 2 embedding mode details. Public API use of `enriched` and `hybrid` modes requires enriched text persistence from the upcoming enrichment service.
-
----
-
-## Dashboard Pages
-
-| Page              | Description                                           |
-|-------------------|-------------------------------------------------------|
-| **Upload**        | Drag-and-drop file upload with parameter configuration and live pipeline progress |
-| **Overview**      | Summary stats, coverage, cluster list with sizes      |
-| **Scatter Plot**  | 2D UMAP visualization · color by cluster · hover + click to inspect |
-| **Similarity Graph** | Network graph of similar requirements · adjustable edge weight threshold |
-| **Requirements**  | Full searchable/filterable/sortable table with membership scores |
-| **Cluster Detail**| Per-cluster view with top keywords and ranked requirements |
-
----
-
-## Project Structure
-
-```
-reqcluster/
-├── backend/
-│   ├── main.py              # FastAPI app entry point
-│   ├── requirements.txt
-│   ├── api/
-│   │   ├── __init__.py
-│   │   └── routes.py        # All API endpoints
-│   ├── core/
-│   │   ├── __init__.py
-│   │   ├── preprocessing.py # CSV/XLSX loading, dedup, validation
-│   │   ├── embeddings.py    # SBERT embedding generation + cache
-│   │   ├── reduction.py     # UMAP 384→10D and 384→2D
-│   │   ├── clustering.py    # HDBSCAN clustering
-│   │   ├── labeling.py      # c-TF-IDF keyword extraction + label generation
-│   │   ├── graph.py         # Cosine similarity graph builder
-│   │   └── pipeline.py      # Full pipeline orchestrator
-│   └── models/
-│       ├── __init__.py
-│       ├── database.py      # SQLAlchemy models + SQLite setup
-│       └── schemas.py       # Pydantic request/response schemas
-├── frontend/
-│   ├── src/
-│   │   ├── App.jsx           # Router + sidebar layout
-│   │   ├── main.jsx
-│   │   ├── index.css         # Tailwind + custom components
-│   │   ├── pages/
-│   │   │   ├── UploadPage.jsx
-│   │   │   ├── OverviewPage.jsx
-│   │   │   ├── ScatterPage.jsx
-│   │   │   ├── GraphPage.jsx
-│   │   │   ├── ClusterDetailPage.jsx
-│   │   │   └── RequirementsPage.jsx
-│   │   └── utils/
-│   │       ├── api.js        # Axios API client
-│   │       └── colors.js     # Deterministic cluster color palette
-│   ├── index.html
-│   ├── vite.config.js
-│   ├── tailwind.config.js
-│   └── package.json
-├── data/
-│   └── sample_requirements.csv
-├── embeddings/              # Cached SBERT embeddings (.npy)
-├── outputs/
-├── docker-compose.yml
-├── Dockerfile.backend
-├── Dockerfile.frontend
-├── nginx.conf
-└── start.sh
+```text
+session_id: required positive integer
+min_cluster_size: optional integer
+min_samples: optional integer
+similarity_threshold: 0..1, default 0.65
+embedding_mode: base | enriched | hybrid, default base
+enable_embedding_comparison: boolean, default false
+run_ablation: boolean, default false
 ```
 
----
+Public `enriched` and `hybrid` clustering do not silently fall back to base embeddings. Run `/api/enrich` first.
+
+## LLM Provider Configuration
+
+The mock provider requires no configuration.
+
+OpenAI-compatible provider environment variables:
+
+```text
+REQCLUSTER_LLM_PROVIDER
+REQCLUSTER_LLM_BASE_URL
+REQCLUSTER_LLM_API_KEY
+REQCLUSTER_LLM_MODEL
+REQCLUSTER_LLM_TIMEOUT_SECONDS
+REQCLUSTER_LLM_MAX_RETRIES
+```
+
+Local provider environment variables:
+
+```text
+REQCLUSTER_LOCAL_LLM_URL
+REQCLUSTER_LOCAL_LLM_MODEL
+REQCLUSTER_LOCAL_LLM_TIMEOUT_SECONDS
+```
+
+Provider secrets stay in backend environment variables. The frontend does not accept API keys.
+
+## Tests And Verification
+
+Backend:
+
+```bash
+python -m pytest
+```
+
+Frontend:
+
+```bash
+cd frontend
+npm run lint
+npm run build
+```
+
+## Documentation
+
+Phase 2 details are documented in:
+
+```text
+docs/PHASE2_EMBEDDINGS.md
+docs/PHASE2_LLM_ENRICHMENT.md
+docs/PHASE2_ENRICHMENT_API_DB.md
+docs/PHASE2_FRONTEND_ENRICHMENT_UI.md
+```
 
 ## Notes
 
-- **Embedding cache**: Embeddings are cached by content hash in `embeddings/`. Re-uploading the same file skips re-encoding.
-- **Noise cluster**: Requirements that don't fit any cluster are labeled cluster `-1` (Noise). Lower `min_cluster_size` to reduce noise.
-- **Graph size**: For datasets > 500 requirements, the graph computes edges only for non-noise nodes (up to 500) to keep the visualization responsive. Max 2000 edges are stored.
-- **No LLM**: All labeling is deterministic c-TF-IDF. No API keys required. Fully offline.
-
----
-
-## Phase 1 Scope
-
-✅ CSV/XLSX upload with validation  
-✅ SBERT embeddings (all-MiniLM-L6-v2)  
-✅ UMAP 384→10D (clustering) + 384→2D (visualization)  
-✅ HDBSCAN clustering with noise detection  
-✅ c-TF-IDF cluster labeling (deterministic)  
-✅ Cosine similarity graph  
-✅ Interactive Plotly scatter plot  
-✅ Interactive network graph  
-✅ Cluster detail view with membership scores  
-✅ Full requirements table with search/filter/sort  
-✅ Live pipeline progress  
-✅ SQLite persistence  
-✅ Docker support  
-
-❌ LLM enrichment (Phase 2)  
-❌ ClusterLLM refinement (Phase 2)  
-❌ Active learning (Phase 3)  
-❌ MBSE export (Phase 4)  
+- Phase 1 base clustering is still the default and does not require enrichment.
+- The mock enrichment provider is deterministic and suitable for offline tests.
+- Enrichment file cache lives under `backend/cache/llm_enrichment/`.
+- Embedding cache remains separate from enrichment cache.
+- The backend currently persists the latest clustering coordinates per session, so true side-by-side persisted scatter comparison is a future backend enhancement.
