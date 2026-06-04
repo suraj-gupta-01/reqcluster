@@ -187,5 +187,10 @@ export const getQualityHistory = async (sessionId) => {
   return res.data
 }
 
+// Phase 5: MBSE export. format = reqif | sysml | jama | csv
+export const getExportUrl = (sessionId, format = 'reqif') => {
+  return `${BASE_URL}/export/${format}?session_id=${sessionId}`
+}
+
 export default api
 

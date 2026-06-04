@@ -57,6 +57,7 @@ from services.active_learning_service import (
     get_uncertainty_queue,
     get_quality_history,
 )
+from services.export_service import ExportServiceError, export_session
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -693,4 +694,25 @@ def quality_history_endpoint(
         return get_quality_history(db, session_id)
     except ActiveLearningServiceError as exc:
         raise HTTPException(exc.status_code, exc.message)
+
+
+# --- Phase 5: MBSE export endpoint ---
+
+
+@router.get("/export/{fmt}")
+def export_endpoint(
+    fmt: str = Path(...),
+    session_id: int = Query(..., ge=1),
+    db: DBSession = Depends(get_db),
+):
+    """Export a session as reqif (ReqIF), sysml (SysML/UML XMI), jama, or csv."""
+    try:
+        content, media_type, filename = export_session(db, session_id, fmt)
+    except ExportServiceError as exc:
+        raise HTTPException(exc.status_code, exc.message)
+    return Response(
+        content=content,
+        media_type=media_type,
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
 
