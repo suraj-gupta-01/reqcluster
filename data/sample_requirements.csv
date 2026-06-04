@@ -1,0 +1,121 @@
+id,text,module,section
+REQ-001,The cooling fan shall activate when the processor temperature exceeds 70°C,Thermal,Temperature Control
+REQ-002,The system shall maintain the internal ambient temperature below 85°C during normal operation,Thermal,Temperature Control
+REQ-003,Thermal management subsystem shall dissipate a minimum of 50W of heat continuously,Thermal,Heat Dissipation
+REQ-004,The heat sink shall be constructed from anodized aluminum with a minimum surface area of 200 cm²,Thermal,Heat Dissipation
+REQ-005,The system shall include a thermal cutoff switch that triggers at 95°C to prevent overheating,Thermal,Protection
+REQ-006,Temperature sensors shall be accurate to within ±1°C across the full operating range,Thermal,Sensing
+REQ-007,The system shall log temperature readings every 5 seconds during operation,Thermal,Monitoring
+REQ-008,Fan speed shall be variable and proportional to the measured temperature above the activation threshold,Thermal,Temperature Control
+REQ-009,The unit shall withstand a peak operating temperature of 90°C for up to 30 minutes,Thermal,Endurance
+REQ-010,Thermal interface material shall be applied between the processor and heat sink with a coverage of at least 95%,Thermal,Heat Dissipation
+REQ-011,The structure shall survive a shock load of 15g for 11 milliseconds in all three axes,Mechanical,Shock
+REQ-012,The enclosure shall withstand a vibration level of 5 grms from 20 Hz to 2000 Hz,Mechanical,Vibration
+REQ-013,All fasteners shall be stainless steel Grade A4 with a minimum torque rating of 3 Nm,Mechanical,Fastening
+REQ-014,The chassis shall be manufactured from 6061-T6 aluminum alloy,Mechanical,Materials
+REQ-015,The unit mass shall not exceed 2.5 kg including all connectors and mounting hardware,Mechanical,Mass
+REQ-016,The PCB shall be secured using a minimum of 6 mounting points to prevent flexure under vibration,Mechanical,Mounting
+REQ-017,The enclosure shall maintain IP67 ingress protection rating under all operational conditions,Mechanical,Environmental
+REQ-018,The mechanical design shall allow for tool-free access to the battery compartment,Mechanical,Accessibility
+REQ-019,All external edges shall have a minimum chamfer radius of 2 mm to prevent operator injury,Mechanical,Safety Design
+REQ-020,The mounting bracket shall support a static load of 50 kg without permanent deformation,Mechanical,Structural
+REQ-021,The software shall be developed to DO-178C Level B,Software,Standards Compliance
+REQ-022,All safety-critical software functions shall have 100% modified condition/decision coverage,Software,Testing
+REQ-023,The software shall perform a built-in test routine at startup and report any faults within 2 seconds,Software,BITE
+REQ-024,Software shall be partitioned so that a failure in the application layer cannot corrupt the safety layer,Software,Partitioning
+REQ-025,The real-time operating system shall schedule tasks with a maximum jitter of 100 microseconds,Software,Timing
+REQ-026,All software parameters shall be configurable via a protected configuration file without recompilation,Software,Configuration
+REQ-027,The firmware shall support field updates via USB without requiring specialist tools,Software,Updatability
+REQ-028,Software shall detect and log all hardware faults with a unique fault code and timestamp,Software,Fault Management
+REQ-029,The software watchdog timer shall trigger a system reset if the main loop does not complete within 500 ms,Software,Watchdog
+REQ-030,All inter-process communication shall use CRC-32 checksums to detect data corruption,Software,Data Integrity
+REQ-031,The system shall comply with IEC 61508 SIL-2 for all safety-related functions,Safety,Standards
+REQ-032,A failure mode and effects analysis shall be performed for every functional block,Safety,FMEA
+REQ-033,The system shall achieve a minimum MTBF of 50,000 hours under nominal operating conditions,Safety,Reliability
+REQ-034,All safety-critical inputs shall be validated through a two-out-of-three voting logic,Safety,Voting Logic
+REQ-035,The system shall fail safe to a known safe state upon detection of any unrecoverable fault,Safety,Fail Safe
+REQ-036,Safety functions shall have a diagnostic coverage of at least 90% as defined in IEC 61508,Safety,Diagnostics
+REQ-037,The system shall maintain its safety integrity level during single-point hardware failures,Safety,Fault Tolerance
+REQ-038,A proof test shall be required every 12 months to validate proper operation of all safety functions,Safety,Testing
+REQ-039,The system shall prevent simultaneous actuation of conflicting outputs,Safety,Interlock
+REQ-040,Safety-critical signals shall be hardwired and shall not rely on software for their primary function,Safety,Hardwiring
+REQ-041,The system shall operate from a 28 VDC power supply with a tolerance of ±4 V,Power,Supply
+REQ-042,Power consumption during normal operation shall not exceed 35 W,Power,Consumption
+REQ-043,The system shall include transient voltage suppression capable of handling 100V spikes lasting up to 50 ms,Power,Protection
+REQ-044,The unit shall draw no more than 200 mA inrush current during power-on,Power,Inrush
+REQ-045,A reverse polarity protection circuit shall be included on the main power input,Power,Protection
+REQ-046,The power supply shall provide galvanic isolation between input and output of at least 500 VDC,Power,Isolation
+REQ-047,Battery backup shall maintain operation for a minimum of 4 hours following primary power loss,Power,Backup
+REQ-048,Power supply efficiency shall exceed 85% at full load,Power,Efficiency
+REQ-049,The system shall generate a low power warning when the supply voltage drops below 24 VDC,Power,Monitoring
+REQ-050,All power rails shall be fused to prevent cascading failures,Power,Protection
+REQ-051,The system shall communicate via CAN bus at a data rate of 1 Mbit/s,Communication,Protocols
+REQ-052,All CAN messages shall include a message authentication code to detect tampering,Communication,Security
+REQ-053,The system shall support RS-422 serial communication at baud rates up to 115200,Communication,Protocols
+REQ-054,The Ethernet interface shall support 100BASE-TX and 1000BASE-T standards,Communication,Network
+REQ-055,All network communications shall use TLS 1.3 or later for encryption,Communication,Security
+REQ-056,The system shall support SNMP v3 for remote monitoring and management,Communication,Network
+REQ-057,Communication latency on the CAN bus shall not exceed 10 ms end-to-end,Communication,Performance
+REQ-058,The system shall buffer up to 1000 messages in the event of a communication link failure,Communication,Buffering
+REQ-059,The communication interface shall support hot-plug insertion and removal without system reset,Communication,Hot-Plug
+REQ-060,All external communication ports shall be protected against ESD up to ±15 kV,Communication,Protection
+REQ-061,The system shall comply with MIL-STD-461G for electromagnetic emissions,EMC,Emissions
+REQ-062,The unit shall be immune to conducted susceptibility per MIL-STD-461G CS101,EMC,Immunity
+REQ-063,The enclosure shall provide a minimum of 40 dB shielding effectiveness from 100 MHz to 10 GHz,EMC,Shielding
+REQ-064,All cables shall be shielded with 95% optical coverage braid,EMC,Cabling
+REQ-065,The system shall meet DO-160G Section 20 for conducted emission limits,EMC,Standards
+REQ-066,The PCB layout shall follow IPC-2141A guidelines for controlled impedance traces,EMC,PCB Design
+REQ-067,Ferrite beads shall be placed on all power lines entering the PCB to attenuate high-frequency noise,EMC,Filtering
+REQ-068,The product shall pass radiated susceptibility testing at 200 V/m from 1 MHz to 18 GHz,EMC,Immunity
+REQ-069,The system shall comply with DO-160G Category B for electrostatic discharge,EMC,ESD
+REQ-070,Ground planes shall be uninterrupted beneath all analog signal traces,EMC,PCB Design
+REQ-071,The system shall operate continuously across an ambient temperature range of -40°C to +70°C,Environmental,Temperature
+REQ-072,The unit shall survive storage at temperatures from -55°C to +85°C without performance degradation,Environmental,Storage
+REQ-073,The system shall operate at altitudes from sea level to 15,000 feet without derating,Environmental,Altitude
+REQ-074,The unit shall withstand 95% relative humidity at 40°C for 96 hours without corrosion,Environmental,Humidity
+REQ-075,The enclosure shall be rated to withstand salt fog exposure per ASTM B117,Environmental,Corrosion
+REQ-076,The system shall survive thermal cycling between -40°C and +70°C for a minimum of 100 cycles,Environmental,Thermal Cycling
+REQ-077,All labels and markings shall remain legible after 1000 hours of UV exposure,Environmental,Weathering
+REQ-078,The unit shall operate correctly after being immersed in water to a depth of 1 m for 30 minutes,Environmental,Waterproofing
+REQ-079,The system shall operate in the presence of sand and dust at concentrations up to 10 mg/m³,Environmental,Contamination
+REQ-080,Conformal coating shall be applied to all PCBs to protect against condensation and humidity,Environmental,Protection
+REQ-081,The user interface shall be compliant with WCAG 2.1 Level AA accessibility standards,HMI,Accessibility
+REQ-082,The operator shall be able to acknowledge a fault alarm within 3 button presses or screen interactions,HMI,Usability
+REQ-083,All status indicators shall be visible in direct sunlight with a minimum luminance of 300 cd/m²,HMI,Display
+REQ-084,The system shall display error messages in plain English without requiring interpretation of fault codes,HMI,Diagnostics
+REQ-085,The HMI shall require a 3-second confirmation hold to execute any irreversible action,HMI,Safety
+REQ-086,The graphical display shall have a resolution of at least 800x480 pixels,HMI,Display
+REQ-087,The touchscreen shall detect input through standard nitrile work gloves,HMI,Usability
+REQ-088,The system shall support multiple operator profiles with role-based access control,HMI,Access Control
+REQ-089,All alarm conditions shall be accompanied by both a visual and audible indicator,HMI,Alerting
+REQ-090,The HMI shall retain operator settings across power cycles without requiring re-entry,HMI,Persistence
+REQ-091,The system shall maintain a tamper-evident audit log of all configuration changes,Security,Audit
+REQ-092,Firmware images shall be cryptographically signed using RSA-4096 before deployment,Security,Integrity
+REQ-093,The system shall enforce a minimum password length of 12 characters with complexity requirements,Security,Authentication
+REQ-094,All failed authentication attempts shall be logged and reported after 5 consecutive failures,Security,Authentication
+REQ-095,Physical access to internal connectors shall require breaking a tamper seal,Security,Physical
+REQ-096,The system shall support certificate-based mutual authentication for all network connections,Security,Authentication
+REQ-097,Debug ports shall be permanently disabled in production firmware builds,Security,Hardening
+REQ-098,All sensitive data shall be encrypted at rest using AES-256,Security,Encryption
+REQ-099,The system shall support secure boot to prevent execution of unauthorized firmware,Security,Boot Security
+REQ-100,A secure element shall store all cryptographic keys to prevent extraction,Security,Key Management
+REQ-101,The system shall be designed for a service life of 20 years with scheduled maintenance,Reliability,Life
+REQ-102,Mean time to repair shall not exceed 4 hours using standard workshop tooling,Reliability,Maintainability
+REQ-103,All wear items shall be replaceable without requiring specialist calibration equipment,Reliability,Serviceability
+REQ-104,The system shall log all maintenance actions with operator identification and timestamp,Reliability,Logging
+REQ-105,Diagnostic software shall identify faulty line replaceable units to board level,Reliability,Diagnostics
+REQ-106,The system shall provide prognostic health monitoring with 30-day advance warning of predicted failures,Reliability,Prognostics
+REQ-107,Spare parts availability shall be guaranteed for a minimum of 10 years post end-of-life,Reliability,Supportability
+REQ-108,The system shall pass accelerated life testing equivalent to 20 years of operation,Reliability,Life
+REQ-109,All critical components shall have a minimum component derating factor of 0.7,Reliability,Derating
+REQ-110,The system shall achieve zero failures in the first 90 days of operation (infant mortality period),Reliability,Burn-in
+REQ-111,The system shall acquire a GPS fix within 60 seconds from cold start under open sky conditions,Navigation,Acquisition
+REQ-112,Position accuracy shall be within 2.5 m CEP 95% under nominal operating conditions,Navigation,Accuracy
+REQ-113,The navigation system shall continue to provide position estimates for 30 seconds following GPS signal loss,Navigation,Continuity
+REQ-114,The system shall reject spoofed GPS signals with a false acceptance rate of less than 0.1%,Navigation,Security
+REQ-115,Velocity measurement accuracy shall be within 0.1 m/s RMS,Navigation,Accuracy
+REQ-116,The inertial navigation unit shall have a gyroscope bias stability of less than 1 degree per hour,Navigation,Inertial
+REQ-117,The system shall provide attitude estimates accurate to 0.1 degrees RMS in pitch and roll,Navigation,Attitude
+REQ-118,Navigation data shall be output at a minimum rate of 10 Hz,Navigation,Output Rate
+REQ-119,The system shall detect and flag multipath interference using carrier-to-noise ratio thresholds,Navigation,Integrity
+REQ-120,The navigation system shall comply with RTCA DO-229E for SBAS augmentation,Navigation,Standards
