@@ -158,5 +158,17 @@ export const getFeedbackExportUrl = (sessionId, format = 'csv') => {
   return `${BASE_URL}/feedback/export?session_id=${sessionId}&format=${format}`
 }
 
+// DP5: Dependency tree + rationale helpers
+
+export const generateDependencies = async (payload) => {
+  const res = await api.post('/dependencies/generate', payload)
+  return res.data
+}
+
+export const getDependencies = async (sessionId) => {
+  const res = await api.get('/dependencies', { params: { session_id: sessionId } })
+  return res.data
+}
+
 export default api
 

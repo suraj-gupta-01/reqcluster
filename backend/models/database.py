@@ -81,6 +81,19 @@ class Graph(Base):
     edges = Column(JSON, nullable=False)
 
 
+class DependencyTree(Base):
+    __tablename__ = "dependency_trees"
+    id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(Integer, nullable=False, unique=True, index=True)
+    nodes = Column(JSON, nullable=False)
+    edges = Column(JSON, nullable=False)
+    stats = Column(JSON, nullable=True)
+    rationale = Column(JSON, nullable=True)  # per-cluster + per-edge rationale document
+    provider = Column(String(80), nullable=True)
+    created_at = Column(DateTime, default=utcnow)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
+
+
 class EnrichedRequirement(Base):
     __tablename__ = "enriched_requirements"
     __table_args__ = (

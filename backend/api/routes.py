@@ -18,6 +18,7 @@ from models.schemas import (
     AuditLogEntry,
     FeedbackSubmitRequest, FeedbackCorrectionOut, FeedbackReviewRequest,
     ConstraintPairOut,
+    DependencyGenerateRequest, DependencyResponse,
 )
 from core.preprocessing import preprocess_requirements
 from core.pipeline import run_pipeline
@@ -43,6 +44,11 @@ from services.feedback_service import (
     export_feedback_json,
 )
 from core.feedback_bridge import detect_constraints_conflicts
+from services.dependency_service import (
+    DependencyServiceError,
+    generate_and_persist_dependencies,
+    get_dependencies,
+)
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -599,4 +605,41 @@ def export_feedback_endpoint(
     except Exception as exc:
         logger.exception("Feedback export error")
         raise HTTPException(500, "Failed to export feedback data.")
+
+
+# --- DP5: Dependency tree + rationale endpoints ---
+
+
+@router.post("/dependencies/generate", response_model=DependencyResponse)
+async def generate_dependencies_endpoint(
+    request: DependencyGenerateRequest,
+    db: DBSession = Depends(get_db),
+):
+    """Infer the requirement dependency tree and rationale document for a session."""
+    try:
+        return await run_in_threadpool(
+            generate_and_persist_dependencies,
+            db,
+            request.session_id,
+            request.provider_name,
+            request.sim_threshold,
+            request.top_k,
+        )
+    except DependencyServiceError as exc:
+        raise HTTPException(exc.status_code, exc.message)
+    except Exception:
+        logger.exception("Dependency generation error")
+        raise HTTPException(500, "Failed to generate dependency tree.")
+
+
+@router.get("/dependencies", response_model=DependencyResponse)
+def get_dependencies_endpoint(
+    session_id: int = Query(..., ge=1),
+    db: DBSession = Depends(get_db),
+):
+    """Get the persisted dependency tree + rationale document for a session."""
+    try:
+        return get_dependencies(db, session_id)
+    except DependencyServiceError as exc:
+        raise HTTPException(exc.status_code, exc.message)
 
