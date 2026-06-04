@@ -214,6 +214,25 @@ class FeedbackCorrection(Base):
     updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
 
 
+class ClusteringIteration(Base):
+    __tablename__ = "clustering_iterations"
+    __table_args__ = (
+        Index("ix_iteration_session", "session_id"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(Integer, nullable=False, index=True)
+    iteration = Column(Integer, nullable=False, default=0)
+    n_clusters = Column(Integer, nullable=True)
+    noise_count = Column(Integer, nullable=True)
+    noise_rate = Column(Float, nullable=True)
+    silhouette = Column(Float, nullable=True)
+    must_link_pairs = Column(Integer, default=0)
+    cannot_link_pairs = Column(Integer, default=0)
+    points_moved = Column(Integer, default=0)
+    created_at = Column(DateTime, default=utcnow)
+
+
 class ConstraintPair(Base):
     __tablename__ = "constraint_pairs"
     __table_args__ = (

@@ -170,5 +170,22 @@ export const getDependencies = async (sessionId) => {
   return res.data
 }
 
+// Phase 5: Active learning helpers
+
+export const runConstrainedClustering = async (sessionId) => {
+  const res = await api.post('/cluster/constrained', { session_id: sessionId })
+  return res.data
+}
+
+export const getUncertaintyQueue = async (sessionId, topK = 20) => {
+  const res = await api.get('/active-learning/queue', { params: { session_id: sessionId, top_k: topK } })
+  return res.data
+}
+
+export const getQualityHistory = async (sessionId) => {
+  const res = await api.get('/quality/history', { params: { session_id: sessionId } })
+  return res.data
+}
+
 export default api
 

@@ -165,6 +165,32 @@ class DependencyResponse(BaseModel):
     rationale: Dict[str, Any]
 
 
+# --- Phase 5: Active learning schemas ---
+
+
+class ConstrainedClusterRequest(BaseModel):
+    session_id: int = Field(..., ge=1)
+
+
+class ConstrainedClusterResponse(BaseModel):
+    session_id: int
+    iteration: int
+    constraints: Dict[str, Any]
+    quality: Dict[str, Any]
+
+
+class UncertaintyQueueResponse(BaseModel):
+    session_id: int
+    queue: List[Dict[str, Any]]
+    count: int
+
+
+class QualityHistoryResponse(BaseModel):
+    session_id: int
+    history: List[Dict[str, Any]]
+    count: int
+
+
 # --- Phase 3: Refinement schemas ---
 
 

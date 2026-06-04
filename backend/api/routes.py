@@ -19,6 +19,8 @@ from models.schemas import (
     FeedbackSubmitRequest, FeedbackCorrectionOut, FeedbackReviewRequest,
     ConstraintPairOut,
     DependencyGenerateRequest, DependencyResponse,
+    ConstrainedClusterRequest, ConstrainedClusterResponse,
+    UncertaintyQueueResponse, QualityHistoryResponse,
 )
 from core.preprocessing import preprocess_requirements
 from core.pipeline import run_pipeline
@@ -48,6 +50,12 @@ from services.dependency_service import (
     DependencyServiceError,
     generate_and_persist_dependencies,
     get_dependencies,
+)
+from services.active_learning_service import (
+    ActiveLearningServiceError,
+    run_constrained_reclustering,
+    get_uncertainty_queue,
+    get_quality_history,
 )
 
 logger = logging.getLogger(__name__)
@@ -641,5 +649,48 @@ def get_dependencies_endpoint(
     try:
         return get_dependencies(db, session_id)
     except DependencyServiceError as exc:
+        raise HTTPException(exc.status_code, exc.message)
+
+
+# --- Phase 5: Active learning endpoints ---
+
+
+@router.post("/cluster/constrained", response_model=ConstrainedClusterResponse)
+async def constrained_recluster_endpoint(
+    request: ConstrainedClusterRequest,
+    db: DBSession = Depends(get_db),
+):
+    """Inject Phase-4 must/cannot-link constraints into the current clustering."""
+    try:
+        return await run_in_threadpool(run_constrained_reclustering, db, request.session_id)
+    except ActiveLearningServiceError as exc:
+        raise HTTPException(exc.status_code, exc.message)
+    except Exception:
+        logger.exception("Constrained reclustering error")
+        raise HTTPException(500, "Failed to apply constraints.")
+
+
+@router.get("/active-learning/queue", response_model=UncertaintyQueueResponse)
+def uncertainty_queue_endpoint(
+    session_id: int = Query(..., ge=1),
+    top_k: int = Query(default=20, ge=1, le=200),
+    db: DBSession = Depends(get_db),
+):
+    """Get the uncertainty-sampled requirements most in need of human review."""
+    try:
+        return get_uncertainty_queue(db, session_id, top_k)
+    except ActiveLearningServiceError as exc:
+        raise HTTPException(exc.status_code, exc.message)
+
+
+@router.get("/quality/history", response_model=QualityHistoryResponse)
+def quality_history_endpoint(
+    session_id: int = Query(..., ge=1),
+    db: DBSession = Depends(get_db),
+):
+    """Get the clustering-quality history across constrained iterations."""
+    try:
+        return get_quality_history(db, session_id)
+    except ActiveLearningServiceError as exc:
         raise HTTPException(exc.status_code, exc.message)
 
