@@ -1,4 +1,5 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, BackgroundTasks
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session as DBSession
 from typing import List, Optional
@@ -20,6 +21,9 @@ router = APIRouter()
 # In-memory progress store
 pipeline_progress: dict = {}
 
+# Reject uploads larger than this to avoid loading huge files into memory.
+MAX_UPLOAD_BYTES = 25 * 1024 * 1024  # 25 MB
+
 
 @router.post("/upload", response_model=UploadResponse)
 async def upload_requirements(
@@ -27,10 +31,15 @@ async def upload_requirements(
     db: DBSession = Depends(get_db),
 ):
     """Upload and preprocess a CSV or XLSX requirements file."""
-    if not file.filename.endswith((".csv", ".xlsx", ".xls")):
+    if not file.filename or not file.filename.endswith((".csv", ".xlsx", ".xls")):
         raise HTTPException(400, "Only CSV and XLSX files are supported.")
 
     content = await file.read()
+
+    if len(content) > MAX_UPLOAD_BYTES:
+        raise HTTPException(
+            413, f"File too large. Maximum size is {MAX_UPLOAD_BYTES // (1024 * 1024)} MB."
+        )
 
     try:
         df, stats = preprocess_requirements(content, file.filename)
@@ -79,7 +88,6 @@ async def upload_requirements(
 @router.post("/cluster", response_model=ClusterResponse)
 async def cluster_requirements_endpoint(
     request: ClusterRequest,
-    background_tasks: BackgroundTasks,
     db: DBSession = Depends(get_db),
 ):
     """Run the clustering pipeline on an uploaded session."""
@@ -100,7 +108,6 @@ async def cluster_requirements_endpoint(
 
     texts = [r.text for r in reqs]
     req_ids = [r.req_id for r in reqs]
-    req_db_ids = [r.id for r in reqs]
 
     session.status = "processing"
     db.commit()
@@ -113,7 +120,10 @@ async def cluster_requirements_endpoint(
         pipeline_progress[session_id] = {"step": step, "progress": pct, "message": msg}
 
     try:
-        results = run_pipeline(
+        # run_pipeline is CPU-bound (SBERT/UMAP/HDBSCAN). Run it in a worker
+        # thread so the event loop stays free to serve progress polling.
+        results = await run_in_threadpool(
+            run_pipeline,
             texts=texts,
             req_ids=req_ids,
             min_cluster_size=request.min_cluster_size,
@@ -132,15 +142,15 @@ async def cluster_requirements_endpoint(
         db.query(Cluster).filter(Cluster.session_id == session_id).delete()
         db.query(Graph).filter(Graph.session_id == session_id).delete()
 
-        # Update requirements with cluster assignments
-        for i, req_db_id in enumerate(req_db_ids):
-            req = db.query(Requirement).filter(Requirement.id == req_db_id).first()
-            if req:
-                req.cluster_id = int(labels[i])
-                req.membership_prob = float(probabilities[i])
-                req.umap_x = float(embeddings_2d[i, 0])
-                req.umap_y = float(embeddings_2d[i, 1])
-                req.is_noise = bool(labels[i] == -1)
+        # Update requirements with cluster assignments. `reqs` is already
+        # loaded and ordered identically to texts/labels, so mutate in place
+        # instead of re-querying each row.
+        for i, req in enumerate(reqs):
+            req.cluster_id = int(labels[i])
+            req.membership_prob = float(probabilities[i])
+            req.umap_x = float(embeddings_2d[i, 0])
+            req.umap_y = float(embeddings_2d[i, 1])
+            req.is_noise = bool(labels[i] == -1)
 
         # Store clusters
         cluster_db_objs = []

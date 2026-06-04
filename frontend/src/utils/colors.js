@@ -25,15 +25,6 @@ const CLUSTER_COLORS = [
 export const NOISE_COLOR = '#6b7280' // gray for noise
 
 export const getClusterColor = (clusterId) => {
-  if (clusterId === -1) return NOISE_COLOR
+  if (clusterId === -1 || clusterId === null || clusterId === undefined) return NOISE_COLOR
   return CLUSTER_COLORS[clusterId % CLUSTER_COLORS.length]
-}
-
-export const getClusterColorHex = (clusterId) => getClusterColor(clusterId)
-
-export const hexToRgba = (hex, alpha = 1) => {
-  const r = parseInt(hex.slice(1, 3), 16)
-  const g = parseInt(hex.slice(3, 5), 16)
-  const b = parseInt(hex.slice(5, 7), 16)
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`
 }

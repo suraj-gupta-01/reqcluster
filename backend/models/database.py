@@ -70,3 +70,17 @@ def get_db():
 
 def init_db():
     Base.metadata.create_all(bind=engine)
+
+
+def reset_stale_sessions():
+    """Mark any session left in 'processing' (e.g. from a crash/restart) as
+    'error' so it isn't permanently blocked by the in-progress guard."""
+    db = SessionLocal()
+    try:
+        stale = db.query(Session).filter(Session.status == "processing").all()
+        for s in stale:
+            s.status = "error"
+        if stale:
+            db.commit()
+    finally:
+        db.close()
