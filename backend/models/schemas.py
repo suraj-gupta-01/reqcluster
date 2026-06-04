@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from pydantic import Field
-from typing import Optional, List, Any, Literal
+from typing import Optional, List, Any, Literal, Dict
 from datetime import datetime
 
 
@@ -78,6 +78,59 @@ class ClusterRequest(BaseModel):
     embedding_mode: Literal["base", "enriched", "hybrid"] = "base"
     enable_embedding_comparison: bool = False
     run_ablation: bool = False
+
+
+class EnrichmentRequest(BaseModel):
+    session_id: int = Field(..., ge=1)
+    provider_name: Literal["mock", "openai_compatible", "local"] = "mock"
+    embedding_mode: Literal["enriched", "hybrid"] = "hybrid"
+    batch_size: int = Field(default=8, ge=1, le=64)
+    max_concurrency: int = Field(default=4, ge=1, le=16)
+    timeout_seconds: float = Field(default=30, ge=1, le=120)
+    force_refresh: bool = False
+    fail_fast: bool = False
+    use_cache: bool = True
+
+
+class EnrichmentResponse(BaseModel):
+    session_id: int
+    status: str
+    total: int
+    succeeded: int
+    failed: int
+    provider: Optional[str]
+    model: Optional[str]
+    prompt_version: Optional[str]
+    domain_vocabulary: List[str]
+    quality_report: Dict[str, Any]
+    warnings: List[str]
+    duration_ms: float
+
+
+class EnrichmentStatusResponse(BaseModel):
+    session_id: int
+    status: str
+    total: int
+    succeeded: int
+    failed: int
+    pending: int
+    latest_run_created_at: Optional[datetime]
+    provider: Optional[str]
+    model: Optional[str]
+    warnings: List[str]
+
+
+class EnrichmentResultOut(BaseModel):
+    requirement_id: Optional[str]
+    expanded_text: Optional[str]
+    domain_terms: List[str]
+    functional_intent: Optional[str]
+    mentioned_components: List[str]
+    assumptions: List[str]
+    confidence: Optional[float]
+    warnings: List[str]
+    quality_report: Optional[Dict[str, Any]]
+    status: str
 
 
 class ClusterResponse(BaseModel):

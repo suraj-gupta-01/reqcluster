@@ -1,4 +1,16 @@
-from sqlalchemy import create_engine, Column, Integer, String, Float, Text, DateTime, JSON, Boolean
+from sqlalchemy import (
+    create_engine,
+    Column,
+    Integer,
+    String,
+    Float,
+    Text,
+    DateTime,
+    JSON,
+    Boolean,
+    UniqueConstraint,
+    Index,
+)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from datetime import datetime
@@ -58,6 +70,45 @@ class Graph(Base):
     session_id = Column(Integer, nullable=False, unique=True)
     nodes = Column(JSON, nullable=False)
     edges = Column(JSON, nullable=False)
+
+
+class EnrichedRequirement(Base):
+    __tablename__ = "enriched_requirements"
+    __table_args__ = (
+        UniqueConstraint(
+            "session_id",
+            "requirement_db_id",
+            "requirement_text_hash",
+            "provider",
+            "model",
+            "prompt_version",
+            name="uq_enriched_requirement_identity",
+        ),
+        Index("ix_enriched_session_requirement", "session_id", "requirement_db_id"),
+        Index("ix_enriched_session_status", "session_id", "status"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(Integer, nullable=False, index=True)
+    requirement_db_id = Column(Integer, nullable=False, index=True)
+    requirement_id = Column(String, nullable=True, index=True)
+    requirement_text_hash = Column(String(64), nullable=False, index=True)
+    provider = Column(String(80), nullable=False, index=True)
+    model = Column(String(160), nullable=False)
+    prompt_version = Column(String(120), nullable=False)
+    embedding_mode_recommended = Column(String(20), default="hybrid")
+    expanded_text = Column(Text, nullable=True)
+    domain_terms_json = Column(JSON, nullable=True)
+    functional_intent = Column(Text, nullable=True)
+    mentioned_components_json = Column(JSON, nullable=True)
+    assumptions_json = Column(JSON, nullable=True)
+    confidence = Column(Float, nullable=True)
+    warnings_json = Column(JSON, nullable=True)
+    quality_report_json = Column(JSON, nullable=True)
+    status = Column(String(20), default="pending", index=True)
+    error_message = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
 def get_db():

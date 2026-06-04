@@ -191,8 +191,19 @@ run_pipeline(
 
 Missing enrichment entries are returned as `None`, allowing the existing hybrid embedding fallback behavior to handle partial failures.
 
-## Future Task 3 API/Database Handoff
+## API/Database Persistence Handoff
 
-The current public `/api/cluster` route still rejects `enriched` and `hybrid` modes because enriched text is not persisted yet. A future API/database task can store `RequirementExpansionResult` values, expose enrichment endpoints, and pass stored enriched text into `run_pipeline(...)`.
+Phase 2 Task 3 adds database persistence and public API integration for this enrichment layer.
 
-Until then, the enrichment service remains a read-only preparation layer.
+Use:
+
+```text
+POST /api/enrich
+GET /api/enrich/status/{session_id}
+GET /api/enrich/results?session_id=...
+POST /api/cluster with embedding_mode=enriched or embedding_mode=hybrid
+```
+
+The Task 2 service still owns prompt construction, provider calls, strict parsing, quality checks, and file caching. Task 3 stores validated results per session and reconstructs ordered `enriched_texts` for the Task 1 embedding pipeline.
+
+See `docs/PHASE2_ENRICHMENT_API_DB.md` for endpoint and database details.

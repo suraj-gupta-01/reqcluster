@@ -116,13 +116,21 @@ The public `/api/cluster` request schema accepts:
 }
 ```
 
-Because this member task does not add enriched requirement persistence, public API requests for `embedding_mode="enriched"` or `embedding_mode="hybrid"` return HTTP 400 until a future enrichment service stores or supplies enriched text. This prevents the API from silently reporting enriched embeddings when only base text was embedded.
+Public API requests for `embedding_mode="base"` preserve the Phase 1 behavior.
 
-Internal callers can already pass `enriched_texts` into `run_pipeline(...)` or `run_embedding_ablation(...)`.
+Public API requests for `embedding_mode="enriched"` or `embedding_mode="hybrid"` now require persisted enrichment from:
 
-## Future LLM Enrichment Handoff
+```text
+POST /api/enrich
+```
 
-The future Member 2/Member 3 enrichment service should pass enriched requirement text as an ordered list aligned with the original requirements:
+If enrichment is missing or misaligned, `/api/cluster` returns HTTP 400 with a clear instruction to run `/api/enrich` first. The public API does not silently fall back to base embeddings for enriched or hybrid requests.
+
+Internal callers can still pass `enriched_texts` directly into `run_pipeline(...)` or `run_embedding_ablation(...)`.
+
+## LLM Enrichment Handoff
+
+The enrichment service passes enriched requirement text as an ordered list aligned with the original requirements:
 
 ```python
 run_pipeline(
@@ -133,7 +141,7 @@ run_pipeline(
 )
 ```
 
-Ordering is part of the cache contract. The enriched list must have the same length and order as `texts`. Missing values may be `None`; whether those values fall back to base text is controlled by `DomainEmbeddingConfig.fallback_to_base`.
+Ordering is part of the cache and API contract. The enriched list must have the same length and order as `texts`. Internal callers may pass `None` values and rely on `DomainEmbeddingConfig.fallback_to_base`; the public API validates persisted enrichment and rejects missing entries before calling the pipeline.
 
 ## Security Considerations
 
