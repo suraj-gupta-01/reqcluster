@@ -11,8 +11,7 @@ from sqlalchemy import (
     UniqueConstraint,
     Index,
 )
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import declarative_base, sessionmaker
 from datetime import datetime
 import os
 
@@ -109,6 +108,67 @@ class EnrichedRequirement(Base):
     error_message = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class RefinementSuggestion(Base):
+    __tablename__ = "refinement_suggestions"
+    __table_args__ = (
+        Index("ix_refinement_session_status", "session_id", "status"),
+        Index("ix_refinement_session_type", "session_id", "suggestion_type"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(Integer, nullable=False, index=True)
+    suggestion_type = Column(String(10), nullable=False)  # merge / split
+    status = Column(String(20), default="pending", index=True)  # pending / accepted / rejected / applied
+
+    # Merge fields
+    cluster_a_id = Column(Integer, nullable=True)
+    cluster_b_id = Column(Integer, nullable=True)
+    # Split fields
+    cluster_id = Column(Integer, nullable=True)
+
+    # Scores
+    similarity_score = Column(Float, nullable=True)
+    silhouette_delta = Column(Float, nullable=True)
+    coherence_score = Column(Float, nullable=True)
+    spread_score = Column(Float, nullable=True)
+    bimodality_score = Column(Float, nullable=True)
+
+    # Text
+    rationale = Column(Text, nullable=True)
+    summary = Column(Text, nullable=True)
+    cluster_a_label = Column(String, nullable=True)
+    cluster_b_label = Column(String, nullable=True)
+    cluster_label = Column(String, nullable=True)
+
+    # JSON
+    representative_req_ids_json = Column(JSON, nullable=True)
+    sub_labels_json = Column(JSON, nullable=True)
+    sub_cluster_sizes_json = Column(JSON, nullable=True)
+    metadata_json = Column(JSON, nullable=True)
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    applied_at = Column(DateTime, nullable=True)
+
+
+class RefinementAuditLog(Base):
+    __tablename__ = "refinement_audit_log"
+    __table_args__ = (
+        Index("ix_audit_session", "session_id"),
+        Index("ix_audit_suggestion", "suggestion_id"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(Integer, nullable=False, index=True)
+    suggestion_id = Column(Integer, nullable=False, index=True)
+    action = Column(String(20), nullable=False)  # applied / rejected / reverted
+    before_state_json = Column(JSON, nullable=True)
+    after_state_json = Column(JSON, nullable=True)
+    applied_by = Column(String, nullable=True)  # placeholder for Phase 4 user identity
+    created_at = Column(DateTime, default=datetime.utcnow)
 
 
 def get_db():

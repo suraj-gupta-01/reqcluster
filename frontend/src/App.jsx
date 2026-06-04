@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, NavLink, useLocation } from 'react-router-dom'
-import { Upload, LayoutDashboard, Network, Database, Activity, Layers, Sparkles } from 'lucide-react'
+import { Upload, LayoutDashboard, Network, Database, Activity, Layers, Sparkles, Wrench } from 'lucide-react'
 
 import { getSession } from './utils/api.js'
 import UploadPage from './pages/UploadPage.jsx'
@@ -10,12 +10,14 @@ import ClusterDetailPage from './pages/ClusterDetailPage.jsx'
 import GraphPage from './pages/GraphPage.jsx'
 import RequirementsPage from './pages/RequirementsPage.jsx'
 import EnrichmentPage from './pages/EnrichmentPage.jsx'
+import RefinementPage from './pages/RefinementPage.jsx'
 
 function Sidebar({ sessionId, sessionStatus }) {
   const done = sessionStatus === 'done'
   const navItems = [
     { to: '/', icon: Upload, label: 'Upload', exact: true, disabled: false },
     { to: '/enrichment', icon: Sparkles, label: 'Enrichment', disabled: false },
+    { to: '/refinement', icon: Wrench, label: 'Refinement', disabled: false },
     { to: `/overview/${sessionId}`, icon: LayoutDashboard, label: 'Overview', disabled: !sessionId },
     { to: `/scatter/${sessionId}`, icon: Activity, label: 'Scatter Plot', disabled: !sessionId || !done },
     { to: `/graph/${sessionId}`, icon: Network, label: 'Similarity Graph', disabled: !sessionId || !done },
@@ -30,7 +32,7 @@ function Sidebar({ sessionId, sessionStatus }) {
           </div>
           <div>
             <div className="text-sm font-bold text-white tracking-tight">ReqCluster</div>
-          <div className="text-xs text-gray-500">Phase 2 Workflow</div>
+          <div className="text-xs text-gray-500">Phase 3 Workflow</div>
           </div>
         </div>
       </div>
@@ -87,6 +89,7 @@ function AppContent() {
         <Routes>
           <Route path="/" element={<UploadPage onSessionCreated={(id, status) => { setUploadSessionId(id); setSessionStatus(status) }} />} />
           <Route path="/enrichment" element={<EnrichmentPage />} />
+          <Route path="/refinement" element={<RefinementPage />} />
           <Route path="/overview/:sessionId" element={<OverviewPage onStatusChange={setSessionStatus} />} />
           <Route path="/scatter/:sessionId" element={<ScatterPage />} />
           <Route path="/cluster/:sessionId/:clusterId" element={<ClusterDetailPage />} />

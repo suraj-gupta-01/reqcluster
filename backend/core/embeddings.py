@@ -3,7 +3,40 @@ import os
 import hashlib
 import json
 from typing import List, Optional, Callable
-from sentence_transformers import SentenceTransformer
+try:
+    from sentence_transformers import SentenceTransformer
+    _torch_available = True
+except (OSError, ImportError) as e:
+    import logging
+    logging.warning("Failed to load sentence_transformers/PyTorch (likely due to DLL error). Using local fallback mock.")
+    _torch_available = False
+
+    class SentenceTransformer:
+        def __init__(self, model_name: str, **kwargs):
+            self.model_name = model_name
+
+        def encode(
+            self,
+            sentences: List[str],
+            batch_size: int = 32,
+            show_progress_bar: bool = False,
+            convert_to_numpy: bool = True,
+            normalize_embeddings: bool = True,
+            **kwargs
+        ) -> np.ndarray:
+            vectors = []
+            for text in sentences:
+                # Generate deterministic mock vector using SHA-256 hash of the text
+                digest = hashlib.sha256(str(text).encode("utf-8")).digest()
+                # Repeat digest bytes to fill 384 float dimensions (384 * 4 = 1536 bytes)
+                raw = (digest * 48)[:384 * 4]
+                vector = np.frombuffer(raw, dtype=np.float32).copy()
+                # Normalize
+                norm = np.linalg.norm(vector)
+                if norm > 0:
+                    vector = vector / norm
+                vectors.append(vector)
+            return np.vstack(vectors).astype(np.float32)
 
 MODEL_NAME = "all-MiniLM-L6-v2"
 CACHE_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "embeddings")

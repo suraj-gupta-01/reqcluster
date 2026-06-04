@@ -1,5 +1,4 @@
-from pydantic import BaseModel
-from pydantic import Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, List, Any, Literal, Dict
 from datetime import datetime
 
@@ -18,8 +17,7 @@ class SessionOut(BaseModel):
     total_clusters: int
     noise_count: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class RequirementOut(BaseModel):
@@ -35,8 +33,7 @@ class RequirementOut(BaseModel):
     umap_y: Optional[float]
     is_noise: bool
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ClusterOut(BaseModel):
@@ -47,8 +44,7 @@ class ClusterOut(BaseModel):
     keywords: Optional[List[str]]
     size: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ClusterDetail(BaseModel):
@@ -149,3 +145,96 @@ class ProgressUpdate(BaseModel):
     step: str
     progress: int
     message: str
+
+
+# --- Phase 3: Refinement schemas ---
+
+
+class RefinementSuggestRequest(BaseModel):
+    session_id: int = Field(..., ge=1)
+    provider_name: str = "mock"
+    top_n_merges: int = Field(default=5, ge=1, le=20)
+    top_n_splits: int = Field(default=5, ge=1, le=20)
+    sim_threshold: float = Field(default=0.75, ge=0.0, le=1.0)
+    spread_threshold: float = Field(default=0.3, ge=0.0, le=1.0)
+
+
+class RepresentativeOut(BaseModel):
+    req_id: Optional[str]
+    text: str
+    similarity_to_centroid: float
+    rank: int
+
+
+class RefinementSuggestionOut(BaseModel):
+    id: int
+    session_id: int
+    suggestion_type: str
+    status: str
+    cluster_a_id: Optional[int] = None
+    cluster_b_id: Optional[int] = None
+    cluster_id: Optional[int] = None
+    cluster_a_label: Optional[str] = None
+    cluster_b_label: Optional[str] = None
+    cluster_label: Optional[str] = None
+    similarity_score: Optional[float] = None
+    silhouette_delta: Optional[float] = None
+    coherence_score: Optional[float] = None
+    spread_score: Optional[float] = None
+    bimodality_score: Optional[float] = None
+    rationale: Optional[str] = None
+    summary: Optional[str] = None
+    representative_req_ids: List[str] = []
+    sub_cluster_sizes: List[int] = []
+    created_at: Optional[datetime] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class CoherenceResultOut(BaseModel):
+    cluster_id: int
+    coherence_score: float
+    top_keywords: List[str]
+    size: int
+    assessment: str
+
+
+class ClusterSummaryOut(BaseModel):
+    cluster_id: int
+    summary: str
+    representative_count: int
+
+
+class RefinementSuggestResponse(BaseModel):
+    session_id: int
+    merge_suggestions: List[RefinementSuggestionOut]
+    split_suggestions: List[RefinementSuggestionOut]
+    coherence_scores: List[CoherenceResultOut]
+    cluster_summaries: List[ClusterSummaryOut]
+    warnings: List[str]
+
+
+class ApplySuggestionRequest(BaseModel):
+    session_id: int = Field(..., ge=1)
+    suggestion_id: int = Field(..., ge=1)
+    action: Literal["accept", "reject"]
+
+
+class ApplySuggestionResponse(BaseModel):
+    suggestion_id: int
+    action: str
+    status: str
+    affected_clusters: List[int]
+    message: str
+
+
+class AuditLogEntry(BaseModel):
+    id: int
+    session_id: int
+    suggestion_id: int
+    action: str
+    before_state: Optional[Dict[str, Any]] = None
+    after_state: Optional[Dict[str, Any]] = None
+    applied_by: Optional[str] = None
+    created_at: Optional[datetime] = None
+
