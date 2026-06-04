@@ -19,7 +19,7 @@ STOPWORDS = {
     "enable", "within", "without", "using", "based", "per", "via", "including",
     "while", "also", "any", "applicable", "defined", "minimum", "maximum",
     "least", "greater", "less", "equal", "type", "value", "number", "set",
-    "meet", "maintain", "applicable", "required", "requirement",
+    "meet", "maintain", "required", "requirement",
 }
 
 

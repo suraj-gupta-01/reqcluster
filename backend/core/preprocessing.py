@@ -76,14 +76,19 @@ def preprocess_requirements(
 
     stats["total_raw"] = len(df)
 
+    # Detect a real text column BEFORE normalization, which would otherwise
+    # synthesize an empty "text" column and mask a genuinely missing one.
+    original_cols = [str(c).strip().lower() for c in df.columns]
+    has_text_col = any(c in REQUIRED_COLUMNS_VARIANTS["text"] for c in original_cols)
+
     # Normalize columns
     df = normalize_column_names(df)
 
     # Validate text column exists
-    if "text" not in df.columns or df["text"].isnull().all():
+    if not has_text_col:
         raise ValueError(
             "Could not find a requirements text column. "
-            "Expected columns: id, text, module, section"
+            "Expected one of: text, requirement, description, content."
         )
 
     # Clean text

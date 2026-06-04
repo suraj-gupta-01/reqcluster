@@ -37,8 +37,11 @@ export default function GraphPage() {
 
   useEffect(() => {
     if (!graphData || !plotRef.current) return
+    const el = plotRef.current
+    let disposed = false
     const draw = async () => {
       const Plotly = (await import('plotly.js-dist-min')).default
+      if (disposed || !el) return
       const { nodes, edges } = graphData
       const clusterLabelMap = {}
       clusters.forEach(c => { clusterLabelMap[c.cluster_id] = c.label })
@@ -127,13 +130,27 @@ export default function GraphPage() {
         displaylogo: false, scrollZoom: true,
       }
 
-      Plotly.react(plotRef.current, [edgeTrace, ...nodeTraces], layout, config)
-      plotRef.current.on('plotly_click', (data) => {
+      el.removeAllListeners?.('plotly_click')
+      Plotly.react(el, [edgeTrace, ...nodeTraces], layout, config)
+      el.on('plotly_click', (data) => {
         if (data.points?.[0]?.customdata) setSelected(data.points[0].customdata)
       })
     }
     draw()
+    return () => { disposed = true }
   }, [graphData, clusters, minWeight, showLabels])
+
+  // Purge Plotly (frees the WebGL context + listeners) only on unmount.
+  useEffect(() => {
+    const el = plotRef.current
+    return () => {
+      if (el) {
+        import('plotly.js-dist-min')
+          .then(({ default: Plotly }) => Plotly.purge(el))
+          .catch(() => {})
+      }
+    }
+  }, [])
 
   if (loading) return (
     <div className="flex items-center justify-center h-64">
@@ -143,7 +160,13 @@ export default function GraphPage() {
   if (error) return <div className="p-8 text-red-400">{error}</div>
 
   const nodeCount = graphData?.nodes?.length || 0
-  const edgeCount = (graphData?.edges || []).filter(e => e.weight >= minWeight).length
+  const allEdges = graphData?.edges || []
+  const edgeCount = allEdges.filter(e => e.weight >= minWeight).length
+
+  // The backend only computed edges above the clustering threshold, so the
+  // slider can't reveal anything below the lowest stored edge weight.
+  const minEdgeWeight = allEdges.length ? Math.min(...allEdges.map(e => e.weight)) : 0.5
+  const weightFloor = Math.max(0.5, Math.floor(minEdgeWeight * 20) / 20)
 
   return (
     <div className="p-6 h-screen flex flex-col gap-4">
@@ -164,7 +187,7 @@ export default function GraphPage() {
           <div className="flex items-center gap-2">
             <Sliders size={14} className="text-gray-500" />
             <label className="text-sm text-gray-400">Min Weight</label>
-            <input type="range" min="0.5" max="0.95" step="0.05"
+            <input type="range" min={weightFloor} max="0.95" step="0.05"
               value={minWeight}
               onChange={e => setMinWeight(parseFloat(e.target.value))}
               className="w-24 accent-brand-500" />

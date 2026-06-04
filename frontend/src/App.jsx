@@ -1,7 +1,8 @@
-import React, { useState } from 'react'
-import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom'
+import React, { useState, useEffect } from 'react'
+import { BrowserRouter, Routes, Route, NavLink, useLocation } from 'react-router-dom'
 import { Upload, LayoutDashboard, Network, Database, Activity, Layers } from 'lucide-react'
 
+import { getSession } from './utils/api.js'
 import UploadPage from './pages/UploadPage.jsx'
 import OverviewPage from './pages/OverviewPage.jsx'
 import ScatterPage from './pages/ScatterPage.jsx'
@@ -58,14 +59,31 @@ function Sidebar({ sessionId, sessionStatus }) {
 }
 
 function AppContent() {
-  const [sessionId, setSessionId] = useState(null)
+  const location = useLocation()
+  const [uploadSessionId, setUploadSessionId] = useState(null)
   const [sessionStatus, setSessionStatus] = useState(null)
+
+  // Derive the active session from the URL so a page refresh keeps the sidebar
+  // working; fall back to the id captured during the upload flow.
+  const match = location.pathname.match(/\/(?:overview|scatter|graph|requirements|cluster)\/(\d+)/)
+  const sessionId = match ? parseInt(match[1]) : uploadSessionId
+
+  // Keep the sidebar's status in sync when navigating directly to a session URL.
+  useEffect(() => {
+    if (!sessionId) { setSessionStatus(null); return }
+    let cancelled = false
+    getSession(sessionId)
+      .then(s => { if (!cancelled) setSessionStatus(s.status) })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [sessionId])
+
   return (
     <div className="flex min-h-screen">
       <Sidebar sessionId={sessionId} sessionStatus={sessionStatus} />
       <main className="flex-1 overflow-auto min-w-0">
         <Routes>
-          <Route path="/" element={<UploadPage onSessionCreated={(id, status) => { setSessionId(id); setSessionStatus(status) }} />} />
+          <Route path="/" element={<UploadPage onSessionCreated={(id, status) => { setUploadSessionId(id); setSessionStatus(status) }} />} />
           <Route path="/overview/:sessionId" element={<OverviewPage onStatusChange={setSessionStatus} />} />
           <Route path="/scatter/:sessionId" element={<ScatterPage />} />
           <Route path="/cluster/:sessionId/:clusterId" element={<ClusterDetailPage />} />

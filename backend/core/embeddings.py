@@ -20,7 +20,10 @@ def get_model() -> SentenceTransformer:
 
 
 def _cache_key(texts: List[str]) -> str:
-    joined = "\n".join(sorted(texts))
+    # Hash in the given order: cached embeddings are saved in this same order,
+    # so the key must be order-sensitive to avoid returning misaligned vectors
+    # for two inputs that share the same texts in a different order.
+    joined = "\n".join(texts)
     return hashlib.sha256(joined.encode()).hexdigest()[:16]
 
 

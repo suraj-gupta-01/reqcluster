@@ -8,7 +8,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import logging
 
-from models.database import init_db
+from models.database import init_db, reset_stale_sessions
 from api.routes import router
 
 logging.basicConfig(
@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     logger.info("Initializing database...")
     init_db()
+    reset_stale_sessions()
     logger.info("ReqCluster API ready.")
     yield
     logger.info("Shutting down ReqCluster API...")
@@ -34,10 +35,15 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# Restrict CORS to known frontends. Override via CORS_ORIGINS (comma-separated).
+# Note: the "*" wildcard cannot be combined with credentials per the CORS spec.
+_origins = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://localhost:3000")
+allow_origins = [o.strip() for o in _origins.split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=allow_origins,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )

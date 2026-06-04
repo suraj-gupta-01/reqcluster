@@ -43,8 +43,12 @@ export default function ScatterPage() {
   useEffect(() => {
     if (loading || !plotRef.current || requirements.length === 0) return
 
+    const el = plotRef.current
+    let disposed = false
+
     const loadPlotly = async () => {
       const Plotly = (await import('plotly.js-dist-min')).default
+      if (disposed || !el) return
 
       // Group by cluster
       const clusterMap = {}
@@ -139,9 +143,11 @@ export default function ScatterPage() {
         toImageButtonOptions: { format: 'png', filename: 'reqcluster_scatter' },
       }
 
-      Plotly.react(plotRef.current, traces, layout, config)
+      // Drop any handler bound on a previous run before re-binding.
+      el.removeAllListeners?.('plotly_click')
+      Plotly.react(el, traces, layout, config)
 
-      plotRef.current.on('plotly_click', (data) => {
+      el.on('plotly_click', (data) => {
         if (data.points?.[0]?.customdata) {
           setSelected(data.points[0].customdata)
         }
@@ -149,7 +155,21 @@ export default function ScatterPage() {
     }
 
     loadPlotly()
+
+    return () => { disposed = true }
   }, [loading, requirements, clusters, filterCluster, showNoise])
+
+  // Purge Plotly (frees the WebGL context + listeners) only on unmount.
+  useEffect(() => {
+    const el = plotRef.current
+    return () => {
+      if (el) {
+        import('plotly.js-dist-min')
+          .then(({ default: Plotly }) => Plotly.purge(el))
+          .catch(() => {})
+      }
+    }
+  }, [])
 
   if (loading) return (
     <div className="flex items-center justify-center h-64">
