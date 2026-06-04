@@ -1,0 +1,65 @@
+id,text,module,section
+REQ-001,The thermal management unit shall measure baseplate temperature at no less than 5 Hz.,Thermal,Temperature Control
+REQ-002,The cooling fan shall activate once the baseplate temperature reported in REQ-001 exceeds 70 degrees Celsius.,Thermal,Temperature Control
+REQ-003,The system shall maintain the avionics bay temperature below 55 degrees Celsius during nominal operation.,Thermal,Temperature Control
+REQ-004,The thermal controller shall use the temperature measurement to compute a fan duty cycle.,Thermal,Temperature Control
+REQ-005,The heater element shall raise the battery temperature above -10 degrees Celsius prior to charging.,Thermal,Temperature Control
+REQ-006,The system shall log a thermal fault when the temperature gradient exceeds 8 degrees Celsius per minute.,Thermal,Temperature Control
+REQ-007,The radiator shall dissipate at least 120 watts of waste heat at the maximum design load.,Thermal,Temperature Control
+REQ-008,The thermal unit shall provide a temperature telemetry frame every 200 milliseconds.,Thermal,Temperature Control
+REQ-009,The power distribution unit shall provide a regulated 28 volt bus within plus or minus 2 percent.,Power,Electrical Distribution
+REQ-010,The battery management system shall report state of charge with an accuracy of 3 percent.,Power,Electrical Distribution
+REQ-011,The avionics shall require the regulated 28 volt bus defined in REQ-009 to operate.,Power,Electrical Distribution
+REQ-012,The power controller shall disconnect a load drawing more than 15 amps within 50 milliseconds.,Power,Electrical Distribution
+REQ-013,The solar array shall generate at least 300 watts at beginning of life.,Power,Electrical Distribution
+REQ-014,The system shall log an undervoltage event when the main bus drops below 24 volts.,Power,Electrical Distribution
+REQ-015,The power unit shall provide an isolated 5 volt rail for the sensor suite.,Power,Electrical Distribution
+REQ-016,The battery shall supply 8 hours of runtime at the nominal load profile.,Power,Electrical Distribution
+REQ-017,The communication subsystem shall transmit telemetry to the ground station at 1 Mbps.,Avionics,Communication
+REQ-018,The transceiver shall acquire carrier lock within 2 seconds after power-on.,Avionics,Communication
+REQ-019,The data handler shall use the telemetry frames produced by REQ-017 for downlink.,Avionics,Communication
+REQ-020,The system shall encrypt all command uplink traffic using AES-256.,Avionics,Communication
+REQ-021,The communication unit shall retransmit a frame after a 100 millisecond acknowledgement timeout.,Avionics,Communication
+REQ-022,The antenna controller shall point the high-gain antenna within 0.5 degrees of the ground station.,Avionics,Communication
+REQ-023,The receiver shall reject out-of-band interference exceeding 40 dB.,Avionics,Communication
+REQ-024,The system shall buffer up to 64 megabytes of telemetry during loss of signal.,Avionics,Communication
+REQ-025,The primary structure shall survive a 15 g mechanical shock without permanent deformation.,Structural,Mechanical Reliability
+REQ-026,The deployment mechanism shall release the solar array once the separation signal in REQ-025 is received.,Structural,Mechanical Reliability
+REQ-027,The chassis shall maintain alignment of the optical bench within 50 microns under thermal load.,Structural,Mechanical Reliability
+REQ-028,The fasteners shall be torqued to the values specified in the assembly procedure.,Structural,Mechanical Reliability
+REQ-029,The structure shall withstand a random vibration profile of 14.1 g RMS.,Structural,Mechanical Reliability
+REQ-030,The hinge assembly shall complete deployment within 4 seconds of actuation.,Structural,Mechanical Reliability
+REQ-031,The system shall provide a mechanical interface compliant with the launch vehicle adapter.,Structural,Mechanical Reliability
+REQ-032,The bracket shall constrain the reaction wheel to a first natural frequency above 120 Hz.,Structural,Mechanical Reliability
+REQ-033,The flight software shall execute the control loop at a fixed rate of 50 Hz.,Control,Flight Software
+REQ-034,The autopilot shall use the attitude estimate provided by REQ-033 to compute actuator commands.,Control,Flight Software
+REQ-035,The software shall enter safe mode after detecting three consecutive watchdog timeouts.,Control,Flight Software
+REQ-036,The control unit shall limit the commanded torque to 0.2 newton meters.,Control,Flight Software
+REQ-037,The system shall complete boot and self-test within 12 seconds of power application.,Control,Flight Software
+REQ-038,The software shall record the last 256 fault events in non-volatile memory.,Control,Flight Software
+REQ-039,The scheduler shall guarantee the control task meets its deadline 99.9 percent of the time.,Control,Flight Software
+REQ-040,The software shall validate uplinked commands against the allowed command table before execution.,Control,Flight Software
+REQ-041,"The navigation filter shall estimate attitude with an accuracy of 0.1 degrees, 1 sigma.",Navigation,Guidance
+REQ-042,The star tracker shall provide an attitude quaternion at 4 Hz.,Navigation,Guidance
+REQ-043,The guidance module shall use the position fix from REQ-041 to compute a maneuver plan.,Navigation,Guidance
+REQ-044,The GPS receiver shall provide a position fix with an accuracy of 10 meters.,Navigation,Guidance
+REQ-045,The system shall propagate the orbit state during GPS outages for up to 30 minutes.,Navigation,Guidance
+REQ-046,The navigation unit shall flag a degraded solution when the covariance exceeds the configured bound.,Navigation,Guidance
+REQ-047,The inertial measurement unit shall sample angular rate at 200 Hz.,Navigation,Guidance
+REQ-048,The guidance module shall recompute the maneuver after each new position fix.,Navigation,Guidance
+REQ-049,The system shall isolate a failed reaction wheel within one control cycle.,Safety,Fault Management
+REQ-050,The fault manager shall raise an alarm when the constraint defined in REQ-049 is violated.,Safety,Fault Management
+REQ-051,The system shall provide a hardware inhibit on all pyrotechnic actuators until armed.,Safety,Fault Management
+REQ-052,The watchdog shall reset the processor if not serviced within 500 milliseconds.,Safety,Fault Management
+REQ-053,The safety monitor shall verify two independent signals before commanding a deployment.,Safety,Fault Management
+REQ-054,The system shall transition to safe mode upon detecting a loss of attitude knowledge.,Safety,Fault Management
+REQ-055,The fault manager shall log the time and cause of every safe-mode entry.,Safety,Fault Management
+REQ-056,The system shall require ground confirmation before exiting safe mode.,Safety,Fault Management
+REQ-057,The propulsion controller shall regulate chamber pressure to within 3 percent of the setpoint.,Propulsion,Thrust Control
+REQ-058,The thruster shall produce 1 newton of thrust at the nominal feed pressure.,Propulsion,Thrust Control
+REQ-059,The propulsion unit shall use the maneuver plan from REQ-057 to schedule burns.,Propulsion,Thrust Control
+REQ-060,The valve driver shall open the latch valve within 20 milliseconds of command.,Propulsion,Thrust Control
+REQ-061,The system shall inhibit thruster firing when the tank pressure is below 5 bar.,Propulsion,Thrust Control
+REQ-062,The controller shall measure propellant temperature for feed-pressure compensation.,Propulsion,Thrust Control
+REQ-063,The propulsion unit shall report total impulse consumed after each burn.,Propulsion,Thrust Control
+REQ-064,The system shall close all valves and report a fault on detection of a pressure leak.,Propulsion,Thrust Control
