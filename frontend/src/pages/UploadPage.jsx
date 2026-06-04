@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Upload, FileText, CheckCircle, AlertCircle, Loader, ChevronRight, Settings, X } from 'lucide-react'
 import { uploadRequirements, runClustering, getProgress, getSession } from '../utils/api.js'
@@ -13,7 +13,7 @@ const STEP_LABELS = {
   done: 'Complete',
 }
 
-function ProgressStep({ step, currentStep, progress, message }) {
+function ProgressStep({ step, currentStep, message }) {
   const steps = STEP_ORDER.slice(0, -1)
   const currentIdx = steps.indexOf(currentStep)
   const thisIdx = steps.indexOf(step)
@@ -58,14 +58,7 @@ export default function UploadPage({ onSessionCreated }) {
   const [showParams, setShowParams] = useState(false)
   const [params, setParams] = useState({ min_cluster_size: '', min_samples: 3, similarity_threshold: 0.65 })
 
-  const handleDrop = useCallback((e) => {
-    e.preventDefault()
-    setDragOver(false)
-    const dropped = e.dataTransfer.files[0]
-    if (dropped) validateAndSetFile(dropped)
-  }, [])
-
-  const validateAndSetFile = (f) => {
+  const validateAndSetFile = useCallback((f) => {
     if (!f.name.match(/\.(csv|xlsx|xls)$/i)) {
       setError('Only CSV and XLSX files are supported.')
       return
@@ -74,7 +67,14 @@ export default function UploadPage({ onSessionCreated }) {
     setError(null)
     setUploadResult(null)
     setPhase('idle')
-  }
+  }, [])
+
+  const handleDrop = useCallback((e) => {
+    e.preventDefault()
+    setDragOver(false)
+    const dropped = e.dataTransfer.files[0]
+    if (dropped) validateAndSetFile(dropped)
+  }, [validateAndSetFile])
 
   const handleUpload = async () => {
     if (!file) return
@@ -108,7 +108,9 @@ export default function UploadPage({ onSessionCreated }) {
             setPhase('error')
           }
         }
-      } catch {}
+      } catch {
+        clearInterval(pollRef.current)
+      }
     }, 800)
   }
 
@@ -278,7 +280,6 @@ export default function UploadPage({ onSessionCreated }) {
             {STEP_ORDER.slice(0, -1).map(step => (
               <ProgressStep key={step} step={step}
                 currentStep={progress.step}
-                progress={progress.progress}
                 message={progress.message} />
             ))}
           </div>

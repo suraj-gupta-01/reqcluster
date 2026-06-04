@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { ChevronLeft, Loader, Tag, Hash, AlertTriangle } from 'lucide-react'
+import { ChevronLeft, Loader, Tag } from 'lucide-react'
 import { getClusterDetail, getClusters } from '../utils/api.js'
 import { getClusterColor } from '../utils/colors.js'
 
@@ -40,7 +40,7 @@ export default function ClusterDetailPage() {
           setDetail(d)
           setAllClusters(clus)
         }
-      } catch (err) {
+      } catch {
         if (!cancelled) setError('Failed to load cluster.')
       } finally {
         if (!cancelled) setLoading(false)

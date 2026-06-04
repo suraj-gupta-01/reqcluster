@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams } from 'react-router-dom'
 import { Loader, Info, Sliders } from 'lucide-react'
 import { getGraph, getClusters } from '../utils/api.js'

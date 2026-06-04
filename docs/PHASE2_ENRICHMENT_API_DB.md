@@ -204,7 +204,7 @@ Stack traces, full LLM responses, API keys, and raw provider request payloads ar
 
 ## Handoff To Task 4
 
-The frontend can later call:
+The frontend now calls:
 
 ```text
 POST /api/enrich
@@ -213,4 +213,4 @@ GET /api/enrich/results?session_id=...
 POST /api/cluster with embedding_mode=hybrid
 ```
 
-Task 4 can add UI controls for provider selection, enrichment progress, quality warnings, and enriched/hybrid clustering without changing the backend flow described here.
+Task 4 adds UI controls for provider selection, enrichment progress, quality warnings, and enriched/hybrid clustering without changing the backend flow described here.

@@ -288,6 +288,10 @@ async def cluster_requirements_endpoint(
                 for c in clusters_out
             ],
             status="done",
+            embedding_mode=results.get("embedding_mode"),
+            warnings=results.get("warnings"),
+            embedding_comparison=results.get("embedding_comparison"),
+            ablation_report=results.get("ablation_report"),
         )
 
     except Exception as e:

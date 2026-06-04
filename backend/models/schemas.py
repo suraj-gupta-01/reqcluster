@@ -139,6 +139,10 @@ class ClusterResponse(BaseModel):
     noise_count: int
     clusters: List[ClusterOut]
     status: str
+    embedding_mode: Optional[Literal["base", "enriched", "hybrid"]] = None
+    warnings: Optional[List[str]] = None
+    embedding_comparison: Optional[Dict[str, Any]] = None
+    ablation_report: Optional[Dict[str, Any]] = None
 
 
 class ProgressUpdate(BaseModel):
