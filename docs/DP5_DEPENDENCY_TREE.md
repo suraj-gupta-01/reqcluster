@@ -46,8 +46,15 @@ Response shape:
 
 ## UI
 
-The **Dependency Tree** page lays nodes out by dependency level, colours edges
-by relation type, and shows the grouping rationale plus per-edge justifications.
+The **Dependency Tree** page provides two visualization modes:
+- **2D View**: Lays nodes out vertically aligned by dependency level.
+- **3D View**: Distributes nodes within each dependency level along a cylindrical Y-Z plane to prevent visual overlap and clutter. The radial coordinates are calculated as:
+  $$R = 0.5 \times \sqrt{L}$$
+  $$\theta_i = \frac{2 \pi i}{L}$$
+  $$y_i = R \cos(\theta_i)$$
+  $$z_i = R \sin(\theta_i)$$
+  where $L$ is the number of requirements in that level, and $i$ is the node index. 
+- Interactive camera controls allow panning, zooming, and rotating (orbit) in the 3D space. Edges are colored by relation type, and clicking nodes surfaces their detailed rationale.
 
 ## Notes
 

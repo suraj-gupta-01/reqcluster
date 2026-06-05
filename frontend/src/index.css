@@ -27,6 +27,11 @@
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { @apply bg-gray-700/60 rounded-full; border: 2px solid transparent; background-clip: padding-box; }
   ::-webkit-scrollbar-thumb:hover { @apply bg-brand-600/70; }
+
+  select option {
+    background-color: #111827;
+    color: #f3f4f6;
+  }
 }
 
 @layer components {
@@ -74,6 +79,41 @@
   .input:focus { border-color: rgba(20, 160, 143, 0.6); box-shadow: 0 0 0 3px rgba(20, 160, 143, 0.18); }
 
   .stat-card { @apply card p-5 flex flex-col gap-1; }
+
+  .card-interactive {
+    @apply transition-all duration-300;
+  }
+  .card-interactive:hover {
+    border-color: rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.03);
+    box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.06) inset, 0 20px 50px -12px rgba(0, 0, 0, 0.75);
+    transform: translateY(-2px);
+  }
+
+  .card-accent-top {
+    position: relative;
+  }
+  .card-accent-top::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #16b0a0, #0d8175);
+    opacity: 0.85;
+    border-top-left-radius: inherit;
+    border-top-right-radius: inherit;
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.35s ease-out both;
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @media (prefers-reduced-transparency: reduce) {

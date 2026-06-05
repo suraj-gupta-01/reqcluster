@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Download, Loader, FileCode, FileSpreadsheet, Boxes, Network } from 'lucide-react'
-import { getSessions } from '../utils/api.js'
-import { getExportUrl } from '../utils/api.js'
+import { getSessions, getExportUrl } from '../utils/api.js'
 
 const FORMATS = [
   {

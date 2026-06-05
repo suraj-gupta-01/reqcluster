@@ -351,10 +351,15 @@ def _validate_http_url(value: str, env_name: str) -> str:
 
 
 def _post_json(url: str, payload: dict, headers: dict, timeout_seconds: float) -> dict:
+    req_headers = dict(headers)
+    req_headers.setdefault(
+        "User-Agent",
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+    )
     request = urllib.request.Request(
         url,
         data=json.dumps(payload).encode("utf-8"),
-        headers=headers,
+        headers=req_headers,
         method="POST",
     )
     try:

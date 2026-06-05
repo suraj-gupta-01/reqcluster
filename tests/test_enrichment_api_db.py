@@ -24,7 +24,8 @@ REQUIREMENT_TEXTS = [
 
 
 @pytest.fixture
-def api_db(tmp_path):
+def api_db(tmp_path, monkeypatch):
+    monkeypatch.setenv("REQCLUSTER_LLM_PROVIDER", "mock")
     engine = create_engine(
         f"sqlite:///{tmp_path / 'reqcluster_test.db'}",
         connect_args={"check_same_thread": False},

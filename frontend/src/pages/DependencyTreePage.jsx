@@ -27,6 +27,7 @@ export default function DependencyTreePage() {
   const [generating, setGenerating] = useState(false)
   const [error, setError] = useState(null)
   const [selectedNode, setSelectedNode] = useState(null)
+  const [viewMode, setViewMode] = useState('3D')
 
   useEffect(() => {
     getSessions()
@@ -62,7 +63,7 @@ export default function DependencyTreePage() {
     } finally { setGenerating(false) }
   }
 
-  // Render the tree with Plotly: x = dependency level, y = spread within level.
+  // Render the tree with Plotly: x = dependency level, y/z = spread within level (using 3D cylinder layout).
   useEffect(() => {
     if (!data || !plotRef.current) return
     const el = plotRef.current
@@ -71,36 +72,66 @@ export default function DependencyTreePage() {
       const Plotly = (await import('plotly.js-dist-min')).default
       if (disposed || !el) return
       const { nodes, edges } = data
+      const is3D = viewMode === '3D'
       const byLevel = {}
       nodes.forEach(n => { (byLevel[n.level] ||= []).push(n) })
       const pos = {}
       Object.entries(byLevel).forEach(([lvl, group]) => {
         const L = group.length
-        group.forEach((n, i) => { pos[n.id] = { x: Number(lvl), y: i - (L - 1) / 2 } })
+        group.forEach((n, i) => {
+          if (is3D) {
+            if (L === 1) {
+              pos[n.id] = { x: Number(lvl), y: 0, z: 0 }
+            } else {
+              // Radial distribution on Y-Z plane to prevent visual overlap
+              const radius = 0.5 * Math.sqrt(L)
+              const angle = (2 * Math.PI * i) / L
+              pos[n.id] = { x: Number(lvl), y: radius * Math.cos(angle), z: radius * Math.sin(angle) }
+            }
+          } else {
+            pos[n.id] = { x: Number(lvl), y: i - (L - 1) / 2, z: 0 }
+          }
+        })
       })
 
       const edgeTraces = Object.keys(RELATION_COLORS).map(rel => {
-        const ex = [], ey = []
+        const ex = [], ey = [], ez = []
         edges.filter(e => e.relation === rel).forEach(e => {
           const s = pos[e.source], t = pos[e.target]
           if (!s || !t) return
-          ex.push(s.x, t.x, null); ey.push(s.y, t.y, null)
+          ex.push(s.x, t.x, null)
+          ey.push(s.y, t.y, null)
+          ez.push(s.z, t.z, null)
         })
         return {
-          type: 'scatter', mode: 'lines', x: ex, y: ey, name: RELATION_LABEL[rel],
-          line: { width: 1, color: RELATION_COLORS[rel], shape: 'spline' },
-          hoverinfo: 'none', opacity: 0.7,
+          type: is3D ? 'scatter3d' : 'scatter',
+          mode: 'lines',
+          x: ex,
+          y: ey,
+          ...(is3D ? { z: ez } : {}),
+          name: RELATION_LABEL[rel],
+          line: is3D
+            ? { width: 2.5, color: RELATION_COLORS[rel] }
+            : { width: 1, color: RELATION_COLORS[rel], shape: 'spline' },
+          hoverinfo: 'none',
+          opacity: 0.7,
         }
       })
 
       const nodeTrace = {
-        type: 'scatter', mode: 'markers', name: 'Requirements', showlegend: false,
-        x: nodes.map(n => pos[n.id].x), y: nodes.map(n => pos[n.id].y),
+        type: is3D ? 'scatter3d' : 'scatter',
+        mode: 'markers',
+        name: 'Requirements',
+        showlegend: false,
+        x: nodes.map(n => pos[n.id].x),
+        y: nodes.map(n => pos[n.id].y),
+        ...(is3D ? { z: nodes.map(n => pos[n.id].z) } : {}),
         text: nodes.map(n => n.node_id),
         customdata: nodes.map(n => ({ id: n.id, req_id: n.node_id, text: n.requirement_text, cluster_id: n.cluster_id, level: n.level })),
         hovertemplate: '<b>%{customdata.req_id}</b><br>%{customdata.text}<br><i>Level %{customdata.level}</i><extra></extra>',
         marker: {
-          size: 12, color: nodes.map(n => getClusterColor(n.cluster_id)),
+          size: is3D ? 7 : 12,
+          color: nodes.map(n => getClusterColor(n.cluster_id)),
           line: { width: 1.5, color: 'rgba(0,0,0,0.45)' },
         },
       }
@@ -108,20 +139,36 @@ export default function DependencyTreePage() {
       const layout = {
         paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
         font: { color: '#9ca3af', size: 11, family: 'Plus Jakarta Sans, sans-serif' },
-        margin: { l: 20, r: 20, t: 20, b: 20 },
-        xaxis: { title: 'Dependency level', gridcolor: 'rgba(255,255,255,0.05)', zeroline: false },
-        yaxis: { showgrid: false, zeroline: false, showticklabels: false },
+        margin: is3D ? { l: 0, r: 0, t: 0, b: 0 } : { l: 20, r: 20, t: 20, b: 20 },
+        ...(is3D ? {
+          scene: {
+            xaxis: { title: 'Dependency Level', gridcolor: 'rgba(255,255,255,0.05)', backgroundcolor: 'rgba(0,0,0,0)', showbackground: false, showgrid: true, zeroline: false },
+            yaxis: { title: '', showgrid: false, showbackground: false, showticklabels: false, zeroline: false },
+            zaxis: { title: '', showgrid: false, showbackground: false, showticklabels: false, zeroline: false },
+            camera: {
+              eye: { x: 1.6, y: 1.6, z: 1.2 }
+            }
+          }
+        } : {
+          xaxis: { title: 'Dependency level', gridcolor: 'rgba(255,255,255,0.05)', zeroline: false },
+          yaxis: { showgrid: false, zeroline: false, showticklabels: false },
+        }),
         legend: { bgcolor: 'rgba(17,22,22,0.7)', bordercolor: 'rgba(255,255,255,0.08)', borderwidth: 1, orientation: 'h', y: 1.06, font: { size: 10 } },
         hoverlabel: { bgcolor: '#11161a', bordercolor: '#1f2937', font: { color: '#e5e7eb', size: 12 }, align: 'left' },
-        dragmode: 'pan',
+        dragmode: is3D ? 'orbit' : 'pan',
       }
       el.removeAllListeners?.('plotly_click')
-      Plotly.react(el, [...edgeTraces, nodeTrace], layout, { responsive: true, displaylogo: false, scrollZoom: true, modeBarButtonsToRemove: ['select2d', 'lasso2d'] })
+      Plotly.react(el, [...edgeTraces, nodeTrace], layout, {
+        responsive: true,
+        displaylogo: false,
+        scrollZoom: true,
+        ...(is3D ? {} : { modeBarButtonsToRemove: ['select2d', 'lasso2d'] })
+      })
       el.on('plotly_click', (ev) => { if (ev.points?.[0]?.customdata) setSelectedNode(ev.points[0].customdata) })
     }
     draw()
     return () => { disposed = true }
-  }, [data])
+  }, [data, viewMode])
 
   useEffect(() => {
     const el = plotRef.current
@@ -144,9 +191,35 @@ export default function DependencyTreePage() {
             preconditions, and outputs, with a generated rationale document.
           </p>
         </div>
-        <button onClick={handleGenerate} disabled={!selected || generating} className="btn-primary text-sm">
-          {generating ? <><Loader size={14} className="animate-spin" /> Analyzing…</> : <><RefreshCw size={14} /> Build dependency tree</>}
-        </button>
+        <div className="flex items-center gap-3">
+          {data && (
+            <div className="flex rounded-lg bg-gray-900 border border-white/[0.08] p-0.5">
+              <button
+                onClick={() => setViewMode('2D')}
+                className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
+                  viewMode === '2D'
+                    ? 'bg-brand-500/15 text-brand-300 border border-brand-500/20'
+                    : 'text-gray-400 hover:text-white border border-transparent'
+                }`}
+              >
+                2D View
+              </button>
+              <button
+                onClick={() => setViewMode('3D')}
+                className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
+                  viewMode === '3D'
+                    ? 'bg-brand-500/15 text-brand-300 border border-brand-500/20'
+                    : 'text-gray-400 hover:text-white border border-transparent'
+                }`}
+              >
+                3D View
+              </button>
+            </div>
+          )}
+          <button onClick={handleGenerate} disabled={!selected || generating} className="btn-primary text-sm">
+            {generating ? <><Loader size={14} className="animate-spin" /> Analyzing…</> : <><RefreshCw size={14} /> Build dependency tree</>}
+          </button>
+        </div>
       </div>
 
       <div className="card p-4 mb-6">
