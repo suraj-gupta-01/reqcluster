@@ -81,22 +81,32 @@ def compute_ctfidf(
     return keywords_by_cluster
 
 
-def generate_cluster_label(keywords: List[str]) -> str:
+def generate_cluster_label(keywords: List[str], max_words: int = 4) -> str:
     """
     Generate a human-readable label from top keywords.
-    Uses top 3-4 keywords, title-cased.
+
+    Words are collected across the top keywords in order, de-duplicated
+    case-insensitively, so mixed unigram/bigram keywords (e.g. "degrees celsius"
+    + "celsius" + "degrees") do not produce repeated words in the label.
     """
     if not keywords:
         return "Uncategorized"
 
-    top_keywords = keywords[:4]
-    
-    # Capitalize each word
-    label_parts = []
-    for kw in top_keywords:
-        label_parts.append(" ".join(w.capitalize() for w in kw.split()))
+    seen: set[str] = set()
+    words: List[str] = []
+    for kw in keywords:
+        for w in kw.split():
+            wl = w.lower()
+            if wl in seen:
+                continue
+            seen.add(wl)
+            words.append(w.capitalize())
+            if len(words) >= max_words:
+                break
+        if len(words) >= max_words:
+            break
 
-    return " ".join(label_parts)
+    return " ".join(words) if words else "Uncategorized"
 
 
 def label_clusters(

@@ -528,6 +528,94 @@ class LocalLLMProvider:
         return parse_expansion_response(_extract_response_content(response))
 
 
+def _extract_text_content(response: dict) -> str:
+    choices = response.get("choices")
+    if isinstance(choices, list) and choices:
+        first = choices[0]
+        if isinstance(first, dict):
+            message = first.get("message")
+            if isinstance(message, dict) and isinstance(message.get("content"), str):
+                return message["content"]
+            if isinstance(first.get("text"), str):
+                return first["text"]
+    for key in ("response", "content", "text", "output", "message"):
+        value = response.get(key)
+        if isinstance(value, str):
+            return value
+    raise ProviderResponseError("LLM provider response did not contain text content.")
+
+
+def generate_completion(
+    prompt: str,
+    provider_name: str | None = None,
+    *,
+    system: str = "You are a precise systems-engineering analyst. Reply with concise plain prose, no markdown.",
+    timeout_seconds: float | None = None,
+    max_chars: int = 1200,
+) -> str:
+    """Free-text completion via an on-prem/openai-compatible LLM.
+
+    Used for narrative summaries and rationales (e.g. Qwen served by Ollama or
+    an OpenAI-compatible gateway). Synchronous; callers running on the event
+    loop should wrap this in a worker thread. Raises ``LLMProviderError`` on any
+    configuration or response problem so callers can fall back deterministically.
+    """
+    selected = normalize_plain_text(
+        provider_name or os.getenv("REQCLUSTER_LLM_PROVIDER") or "mock",
+        max_chars=80,
+    ).lower()
+    timeout = _bounded_float(
+        str(timeout_seconds) if timeout_seconds is not None else None, 30.0, 1.0, 300.0
+    )
+
+    if selected in {"openai", "openai-compatible", "openai_compatible"}:
+        base_url = _validate_http_url(
+            os.getenv("REQCLUSTER_LLM_BASE_URL", ""), "REQCLUSTER_LLM_BASE_URL"
+        )
+        api_key = os.getenv("REQCLUSTER_LLM_API_KEY", "")
+        model = os.getenv("REQCLUSTER_LLM_MODEL", "")
+        if not api_key or not model:
+            raise ProviderConfigurationError(
+                "REQCLUSTER_LLM_API_KEY and REQCLUSTER_LLM_MODEL are required."
+            )
+        payload = {
+            "model": model,
+            "messages": [
+                {"role": "system", "content": system},
+                {"role": "user", "content": prompt},
+            ],
+            "temperature": 0,
+        }
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {api_key}",
+        }
+        endpoint = f"{base_url}/chat/completions"
+    elif selected in {"local", "local-llm", "local_llm"}:
+        endpoint = _validate_http_url(
+            os.getenv("REQCLUSTER_LOCAL_LLM_URL", ""), "REQCLUSTER_LOCAL_LLM_URL"
+        )
+        model = os.getenv("REQCLUSTER_LOCAL_LLM_MODEL", "local-model")
+        payload = {
+            "model": model,
+            "prompt": prompt,
+            "system": system,
+            "temperature": 0,
+            "stream": False,
+        }
+        headers = {"Content-Type": "application/json"}
+    else:
+        raise ProviderConfigurationError(
+            "Free-text generation requires the 'openai'/'openai-compatible' or 'local' provider."
+        )
+
+    response = _post_json(endpoint, payload, headers, timeout)
+    text = normalize_plain_text(_extract_text_content(response), max_chars=max_chars)
+    if not text:
+        raise ProviderResponseError("LLM provider returned empty text.")
+    return text
+
+
 def get_provider(provider_name: str | None = "mock") -> RequirementExpansionProvider:
     selected = normalize_plain_text(
         provider_name or os.getenv("REQCLUSTER_LLM_PROVIDER") or "mock",

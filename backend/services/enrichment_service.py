@@ -13,7 +13,7 @@ from llm_services.prompts import PROMPT_VERSION, normalize_plain_text
 from llm_services.providers import ProviderConfigurationError, get_provider
 from llm_services.quality import summarize_quality_report
 from llm_services.vocabulary import extract_domain_vocabulary
-from models.database import EnrichedRequirement, Requirement, Session
+from models.database import EnrichedRequirement, Requirement, Session, utcnow
 
 
 ProgressCallback = Callable[[str, int, str], None]
@@ -187,7 +187,7 @@ def _upsert_success_row(
     recommended_mode: str,
 ) -> EnrichedRequirement:
     row = _get_existing_row(db, req, result.provider, result.model)
-    now = datetime.utcnow()
+    now = utcnow()
     if row is None:
         row = EnrichedRequirement(
             session_id=req.session_id,
@@ -227,7 +227,7 @@ def _upsert_failure_row(
     recommended_mode: str,
 ) -> EnrichedRequirement:
     row = _get_existing_row(db, req, provider, model)
-    now = datetime.utcnow()
+    now = utcnow()
     if row is None:
         row = EnrichedRequirement(
             session_id=req.session_id,

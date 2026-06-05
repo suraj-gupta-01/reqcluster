@@ -7,6 +7,17 @@ const api = axios.create({
   timeout: 300000, // 5 min for long pipeline runs
 })
 
+// Backend timestamps are naive UTC (no timezone suffix). new Date() would
+// otherwise parse them as local time, so append 'Z' to force UTC parsing.
+export const formatTimestamp = (value) => {
+  if (!value) return ''
+  let iso = String(value)
+  const hasTz = /[zZ]|[+-]\d{2}:?\d{2}$/.test(iso)
+  if (iso.includes('T') && !hasTz) iso += 'Z'
+  const d = new Date(iso)
+  return Number.isNaN(d.getTime()) ? String(value) : d.toLocaleString()
+}
+
 export const getErrorMessage = (error, fallback = 'Request failed.') => {
   const detail = error?.response?.data?.detail
   let message = fallback
@@ -145,6 +156,40 @@ export const getConstraints = async (sessionId) => {
 
 export const getFeedbackExportUrl = (sessionId, format = 'csv') => {
   return `${BASE_URL}/feedback/export?session_id=${sessionId}&format=${format}`
+}
+
+// DP5: Dependency tree + rationale helpers
+
+export const generateDependencies = async (payload) => {
+  const res = await api.post('/dependencies/generate', payload)
+  return res.data
+}
+
+export const getDependencies = async (sessionId) => {
+  const res = await api.get('/dependencies', { params: { session_id: sessionId } })
+  return res.data
+}
+
+// Phase 5: Active learning helpers
+
+export const runConstrainedClustering = async (sessionId) => {
+  const res = await api.post('/cluster/constrained', { session_id: sessionId })
+  return res.data
+}
+
+export const getUncertaintyQueue = async (sessionId, topK = 20) => {
+  const res = await api.get('/active-learning/queue', { params: { session_id: sessionId, top_k: topK } })
+  return res.data
+}
+
+export const getQualityHistory = async (sessionId) => {
+  const res = await api.get('/quality/history', { params: { session_id: sessionId } })
+  return res.data
+}
+
+// Phase 5: MBSE export. format = reqif | sysml | jama | csv
+export const getExportUrl = (sessionId, format = 'reqif') => {
+  return `${BASE_URL}/export/${format}?session_id=${sessionId}`
 }
 
 export default api

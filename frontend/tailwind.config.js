@@ -4,23 +4,40 @@ export default {
   theme: {
     extend: {
       colors: {
+        // Single accent: teal (technical, premium, not purple/indigo).
         brand: {
-          50:  '#f0f4ff',
-          100: '#dce8ff',
-          200: '#b9d0ff',
-          300: '#89affd',
-          400: '#5c89fa',
-          500: '#3b63f5',
-          600: '#2545e8',
-          700: '#1d33d5',
-          800: '#1e2dac',
-          900: '#1e2b88',
-        }
+          50:  '#effcf9',
+          100: '#c9f5ec',
+          200: '#97e9da',
+          300: '#5fd6c3',
+          400: '#2fbcaa',
+          500: '#14a08f',
+          600: '#0d8175',
+          700: '#10665e',
+          800: '#11514c',
+          900: '#11433f',
+        },
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
-      }
+        sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+        mono: ['"JetBrains Mono"', 'Fira Code', 'monospace'],
+      },
+      boxShadow: {
+        glass: '0 1px 0 0 rgba(255,255,255,0.04) inset, 0 12px 40px -12px rgba(0,0,0,0.6)',
+        'glass-lg': '0 1px 0 0 rgba(255,255,255,0.05) inset, 0 24px 70px -20px rgba(0,0,0,0.7)',
+      },
+      keyframes: {
+        'fade-up': {
+          '0%': { opacity: '0', transform: 'translateY(8px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        shimmer: {
+          '100%': { transform: 'translateX(100%)' },
+        },
+      },
+      animation: {
+        'fade-up': 'fade-up 0.4s cubic-bezier(0.16,1,0.3,1) both',
+      },
     },
   },
   plugins: [],

@@ -17,7 +17,12 @@ embeddings/
 outputs/
 backend/cache/
 .pytest_cache/
-*.json
+
+# Transient graphify artifacts (graph.html / graph.json / GRAPH_REPORT.md are kept)
+.graphify_*.json
+**/graphify-out/cache/
+graphify-out/cost.json
+
 # Node
 node_modules/
 frontend/dist/

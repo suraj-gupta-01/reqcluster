@@ -147,6 +147,50 @@ class ProgressUpdate(BaseModel):
     message: str
 
 
+# --- DP5: Dependency tree + rationale schemas ---
+
+
+class DependencyGenerateRequest(BaseModel):
+    session_id: int = Field(..., ge=1)
+    provider_name: str = "mock"
+    sim_threshold: float = Field(default=0.45, ge=0.0, le=1.0)
+    top_k: int = Field(default=8, ge=1, le=50)
+
+
+class DependencyResponse(BaseModel):
+    session_id: int
+    nodes: List[Any]
+    edges: List[Any]
+    stats: Dict[str, Any]
+    rationale: Dict[str, Any]
+
+
+# --- Phase 5: Active learning schemas ---
+
+
+class ConstrainedClusterRequest(BaseModel):
+    session_id: int = Field(..., ge=1)
+
+
+class ConstrainedClusterResponse(BaseModel):
+    session_id: int
+    iteration: int
+    constraints: Dict[str, Any]
+    quality: Dict[str, Any]
+
+
+class UncertaintyQueueResponse(BaseModel):
+    session_id: int
+    queue: List[Dict[str, Any]]
+    count: int
+
+
+class QualityHistoryResponse(BaseModel):
+    session_id: int
+    history: List[Dict[str, Any]]
+    count: int
+
+
 # --- Phase 3: Refinement schemas ---
 
 

@@ -126,7 +126,7 @@ export default function ReviewQueuePage() {
       <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <Inbox size={20} className="text-blue-400" />
+            <Inbox size={20} className="text-brand-400" />
             <h1 className="text-2xl font-bold text-white">Review Queue</h1>
           </div>
           <p className="text-gray-400 text-sm">
@@ -181,11 +181,11 @@ export default function ReviewQueuePage() {
             <select
               value={selectedSession || ''}
               onChange={(e) => navigate(`/review-queue/${e.target.value}`)}
-              className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 w-full md:w-96 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 w-full md:w-96 focus:outline-none focus:ring-1 focus:ring-brand-500"
             >
               {sessions.map((s) => (
                 <option key={s.id} value={s.id}>
-                  #{s.id} — {s.filename} ({s.total_requirements} reqs, {s.total_clusters} clusters)
+                  #{s.id} - {s.filename} ({s.total_requirements} reqs, {s.total_clusters} clusters)
                 </option>
               ))}
             </select>
@@ -198,7 +198,7 @@ export default function ReviewQueuePage() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
           <div className="card p-3 bg-slate-800/40 border border-slate-700/50">
             <div className="text-xs text-gray-500">Pending Review</div>
-            <div className="text-xl font-bold text-blue-400 mt-1">{pendingItems.length}</div>
+            <div className="text-xl font-bold text-brand-400 mt-1">{pendingItems.length}</div>
           </div>
           <div className="card p-3 bg-slate-800/40 border border-slate-700/50">
             <div className="text-xs text-gray-500">Approved</div>
@@ -271,7 +271,7 @@ export default function ReviewQueuePage() {
         >
           Pending adjustments
           {pendingItems.length > 0 && (
-            <span className="text-xs bg-blue-500 text-white px-1.5 py-0.5 rounded-full ml-1 font-semibold">
+            <span className="text-xs bg-brand-500 text-white px-1.5 py-0.5 rounded-full ml-1 font-semibold">
               {pendingItems.length}
             </span>
           )}
@@ -333,7 +333,7 @@ export default function ReviewQueuePage() {
                             : 'Noise / Unclustered'}
                         </td>
                         {/* Target Cluster */}
-                        <td className="px-4 py-3 text-sm text-blue-400 truncate max-w-[120px] font-medium">
+                        <td className="px-4 py-3 text-sm text-brand-400 truncate max-w-[120px] font-medium">
                           {item.new_cluster_id !== null && item.new_cluster_id !== -1
                             ? clusterInfo[item.new_cluster_id] || `Cluster ${item.new_cluster_id}`
                             : 'Noise / Unclustered'}
@@ -392,7 +392,7 @@ export default function ReviewQueuePage() {
                       {/* Expanded requirement text view */}
                       {isExpanded && (
                         <tr>
-                          <td colSpan={activeTab === 'pending' ? 6 : 6} className="px-6 py-4 bg-slate-950/40">
+                          <td colSpan={6} className="px-6 py-4 bg-slate-950/40">
                             <div className="space-y-2 text-sm">
                               <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
                                 Requirement Text
