@@ -258,27 +258,38 @@ auto-detects common column-name variants.
 
 ## Scalability
 
+The pipeline is **size-adaptive**: small datasets take the exact, deterministic
+path; large ones automatically switch to the fast parallel/approximate path.
+
 **Implemented**
 
-- PostgreSQL with connection pooling and indexed hot query paths (SQLite stays as
-  the zero-setup local fallback, with WAL mode enabled).
-- Redis per-text embedding cache - add new requirements without re-embedding the
-  existing ones; file-cache fallback when Redis is absent.
+- **Adaptive reduction:** for N > ~4000, UMAP drops the fixed seed to run
+  multi-threaded, a PCA pre-step (384 -> ~50) denoises and shrinks the cost, and
+  the expensive kNN graph is computed once and shared by both the 10-d and 2-d
+  embeddings. A cuML (GPU) path is used automatically when a CUDA device is
+  present. Small N keeps the seeded, reproducible path.
+- **ANN similarity graph:** edges are built with hnswlib approximate kNN over
+  *all* non-noise nodes (O(N log N)), not a dense O(N^2) matrix capped to the
+  first 500 - with a bounded exact fallback if hnswlib is missing.
+- **PostgreSQL** with connection pooling and indexed hot query paths (SQLite is
+  the zero-setup local fallback, WAL enabled).
+- **Redis** per-text embedding cache - add new requirements without re-embedding
+  the existing ones; file-cache fallback when Redis is absent.
+- **Async background clustering job** with live progress polling.
 - Server-side paginated / filterable requirements reads; WebGL (`scattergl`)
-  rendering for large scatter plots.
-- 130+ automated tests, green in CI; one-command Docker Compose stack.
+  scatter rendering.
+- 140+ automated tests, green in CI; one-command Docker Compose stack.
 
-**Roadmap** (see the bottlenecks below)
+Measured: a generated 10,000-requirement set clusters end to end in ~90s on
+plain CPU (no GPU); a 6,000-set in ~55s.
 
-1. SQLite single-writer lock -> PostgreSQL (done) for > 20k requirements.
-2. Composite indexes (done) for filtered reads.
-3. Faster embeddings: larger batches + GPU/ONNX + the incremental cache (cache done).
-4. Memory-mapped embeddings instead of in-RAM arrays.
-5. Streaming/parallel UMAP and an approximate-kNN (ANN) similarity graph -
-   O(N log N) instead of O(N squared).
-6. Async background clustering jobs with live progress.
+**Remaining roadmap**
 
-Target: 500k requirements, ~10s clustering, on commodity hardware.
+- Memory-mapped embeddings instead of in-RAM arrays for very large N.
+- ONNX-runtime embeddings for a faster CPU encode path.
+- Cluster-level aggregate graph view for the dashboard at 50k+.
+
+Target: 500k requirements, ~10s clustering, on GPU hardware.
 
 ---
 

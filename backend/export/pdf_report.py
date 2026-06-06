@@ -20,6 +20,7 @@ from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
 from reportlab.platypus import (
     HRFlowable,
+    Image,
     KeepTogether,
     Paragraph,
     SimpleDocTemplate,
@@ -27,6 +28,12 @@ from reportlab.platypus import (
     Table,
     TableStyle,
 )
+
+# Qualitative palette for charts (teal-led, print-friendly, no purple).
+_CHART_COLORS = [
+    "#0D8175", "#2FBCAA", "#0EA5E9", "#F59E0B", "#84CC16", "#EC4899",
+    "#14B8A6", "#3B82F6", "#D97706", "#22C55E", "#E11D48", "#0891B2",
+]
 
 TEAL = colors.HexColor("#0D8175")
 INK = colors.HexColor("#0F1A18")
@@ -81,6 +88,77 @@ def _footer(canvas, doc):
     canvas.restoreState()
 
 
+def _new_figure(width_in, height_in):
+    """Lazily create a matplotlib figure (Agg). Returns (fig, ax, plt) or None."""
+    try:
+        import matplotlib
+        matplotlib.use("Agg")
+        import matplotlib.pyplot as plt
+    except Exception:
+        return None
+    fig, ax = plt.subplots(figsize=(width_in, height_in), dpi=150)
+    return fig, ax, plt
+
+
+def _fig_to_buf(fig, plt) -> io.BytesIO:
+    buf = io.BytesIO()
+    fig.savefig(buf, format="png", bbox_inches="tight", facecolor="white")
+    plt.close(fig)
+    buf.seek(0)
+    return buf
+
+
+def _scatter_png(requirements: List[Dict[str, Any]]) -> io.BytesIO | None:
+    """UMAP 2-d scatter coloured by cluster (noise in grey). None if no coords."""
+    pts = [
+        (r.get("umap_x"), r.get("umap_y"), r.get("cluster_id"))
+        for r in requirements
+        if r.get("umap_x") is not None and r.get("umap_y") is not None
+    ]
+    if len(pts) < 3:
+        return None
+    made = _new_figure(6.6, 3.3)
+    if made is None:
+        return None
+    fig, ax, plt = made
+    uniq = sorted({c for _, _, c in pts if c is not None and c != -1})
+    cmap = {c: _CHART_COLORS[i % len(_CHART_COLORS)] for i, c in enumerate(uniq)}
+    xs = [p[0] for p in pts]
+    ys = [p[1] for p in pts]
+    cols = ["#C9D2D0" if c == -1 else cmap.get(c, "#0D8175") for _, _, c in pts]
+    ax.scatter(xs, ys, c=cols, s=7, alpha=0.75, linewidths=0)
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.set_title("UMAP projection (colored by cluster)", fontsize=9, color="#0F1A18")
+    for spine in ax.spines.values():
+        spine.set_color("#D7E0DE")
+    return _fig_to_buf(fig, plt)
+
+
+def _bar_png(clusters: List[Dict[str, Any]]) -> io.BytesIO | None:
+    """Horizontal bar chart of the largest clusters. None if matplotlib missing."""
+    top = sorted(clusters, key=lambda c: c.get("size", 0), reverse=True)[:15]
+    if not top:
+        return None
+    made = _new_figure(6.6, max(2.2, 0.28 * len(top) + 0.6))
+    if made is None:
+        return None
+    fig, ax, plt = made
+    labels = [(str(c.get("label") or c.get("cluster_id")))[:26] for c in top]
+    sizes = [c.get("size", 0) for c in top]
+    ax.barh(range(len(top)), sizes, color="#0D8175")
+    ax.set_yticks(range(len(top)))
+    ax.set_yticklabels(labels, fontsize=7.5, color="#0F1A18")
+    ax.invert_yaxis()
+    ax.tick_params(axis="x", labelsize=7.5, colors="#5B6B68")
+    ax.set_title("Largest clusters", fontsize=9, color="#0F1A18")
+    for side in ("top", "right"):
+        ax.spines[side].set_visible(False)
+    for side in ("left", "bottom"):
+        ax.spines[side].set_color("#D7E0DE")
+    return _fig_to_buf(fig, plt)
+
+
 def export_pdf(data: Dict[str, Any]) -> bytes:
     reqs: List[Dict[str, Any]] = data.get("requirements", [])
     clusters: List[Dict[str, Any]] = data.get("clusters", [])
@@ -94,9 +172,8 @@ def export_pdf(data: Dict[str, Any]) -> bytes:
     by_cluster: Dict[Any, List[Dict[str, Any]]] = defaultdict(list)
     for r in reqs:
         by_cluster[r.get("cluster_id")].append(r)
-    label_of = {c["cluster_id"]: c.get("label", f"Cluster {c['cluster_id']}") for c in clusters}
-    kw_of = {c["cluster_id"]: (c.get("keywords") or []) for c in clusters}
     ordered = sorted(clusters, key=lambda c: c.get("size", 0), reverse=True)
+    avail = A4[0] - 32 * mm
 
     st = _styles()
     buf = io.BytesIO()
@@ -137,6 +214,17 @@ def export_pdf(data: Dict[str, Any]) -> bytes:
     story.append(metrics)
     story.append(Spacer(1, 10))
 
+    # --- charts (skipped gracefully if matplotlib is unavailable) ---
+    scatter = _scatter_png(reqs)
+    if scatter is not None:
+        story.append(Paragraph("Cluster map", st["h2"]))
+        story.append(Image(scatter, width=avail, height=avail * 0.5))
+        story.append(Spacer(1, 8))
+    bar = _bar_png(clusters)
+    if bar is not None:
+        story.append(Image(bar, width=avail * 0.78, height=avail * 0.78 * 0.5))
+        story.append(Spacer(1, 6))
+
     # --- cluster summary table ---
     story.append(Paragraph("Cluster summary", st["h2"]))
     head = [Paragraph(h, st["cellh"]) for h in ("ID", "Label", "Size", "Top keywords")]
@@ -150,7 +238,6 @@ def export_pdf(data: Dict[str, Any]) -> bytes:
             Paragraph(_esc(c.get("size", 0)), st["cell"]),
             Paragraph(_esc(kws), st["cellm"]),
         ])
-    avail = A4[0] - 32 * mm
     summary = Table(rows, colWidths=[avail * 0.08, avail * 0.4, avail * 0.1, avail * 0.42], repeatRows=1)
     summary.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, 0), TEAL),

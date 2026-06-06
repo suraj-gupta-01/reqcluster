@@ -60,6 +60,8 @@ def _gather(db: DBSession, session_id: int) -> Dict[str, Any]:
             "section": r.section,
             "cluster_id": r.cluster_id,
             "is_noise": r.is_noise,
+            "umap_x": r.umap_x,
+            "umap_y": r.umap_y,
         }
         for r in reqs
     ]
