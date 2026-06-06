@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Upload, FileText, CheckCircle, AlertCircle, Loader, ChevronRight, Settings, X, BookOpen, Database, Sparkles, Wrench, Inbox, Workflow, Brain, Network, Activity } from 'lucide-react'
+import { Upload, FileText, CheckCircle, AlertCircle, Loader, ChevronRight, Settings, X, BookOpen, Sparkles, Wrench, Workflow, Brain, Network, Activity } from 'lucide-react'
 import { uploadRequirements, runClustering, getProgress, getSession } from '../utils/api.js'
 
 const STEP_ORDER = ['embedding', 'umap', 'clustering', 'labeling', 'graph', 'done']

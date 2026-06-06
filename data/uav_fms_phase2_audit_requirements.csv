@@ -1,0 +1,121 @@
+id,text,module,section,page,source_doc,requirement_type,criticality
+UAV-FMS-001,The command authentication function shall authenticate uplink commands before execution.,Command Authentication,Command Security,1,uav_fms_phase2_audit,functional,high
+UAV-FMS-002,The system shall maintain the command security state when required to authenticate uplink commands before execution.,Command Authentication,Command Security,1,uav_fms_phase2_audit,functional,high
+UAV-FMS-003,The command authentication function shall reject commands with stale sequence counters.,Command Authentication,Command Security,1,uav_fms_phase2_audit,functional,high
+UAV-FMS-004,The system shall maintain the command security state when required to reject commands with stale sequence counters.,Command Authentication,Command Security,2,uav_fms_phase2_audit,functional,high
+UAV-FMS-005,The command authentication function shall log operator identity for every accepted command.,Command Authentication,Command Security,2,uav_fms_phase2_audit,functional,high
+UAV-FMS-006,The system shall maintain the command security state when required to log operator identity for every accepted command.,Command Authentication,Command Security,2,uav_fms_phase2_audit,functional,high
+UAV-FMS-007,The command authentication function shall validate command freshness against the configured command timer.,Command Authentication,Command Security,2,uav_fms_phase2_audit,functional,high
+UAV-FMS-008,The system shall maintain the command security state when required to validate command freshness against the configured command timer.,Command Authentication,Command Security,3,uav_fms_phase2_audit,functional,high
+UAV-FMS-009,The command authentication function shall isolate command buffers after authentication failure.,Command Authentication,Command Security,3,uav_fms_phase2_audit,functional,high
+UAV-FMS-010,The system shall maintain the command security state when required to isolate command buffers after authentication failure.,Command Authentication,Command Security,3,uav_fms_phase2_audit,functional,high
+UAV-FMS-011,The mission management function shall validate uploaded waypoints before storing the mission plan.,Mission Management,Mission Upload,3,uav_fms_phase2_audit,functional,medium
+UAV-FMS-012,The system shall maintain the mission upload state when required to validate uploaded waypoints before storing the mission plan.,Mission Management,Mission Upload,4,uav_fms_phase2_audit,functional,medium
+UAV-FMS-013,The mission management function shall reject mission upload when waypoint count exceeds the configured limit.,Mission Management,Mission Upload,4,uav_fms_phase2_audit,functional,medium
+UAV-FMS-014,The system shall maintain the mission upload state when required to reject mission upload when waypoint count exceeds the configured limit.,Mission Management,Mission Upload,4,uav_fms_phase2_audit,functional,medium
+UAV-FMS-015,The mission management function shall preserve the active mission until the new mission passes validation.,Mission Management,Mission Upload,4,uav_fms_phase2_audit,functional,medium
+UAV-FMS-016,The system shall maintain the mission upload state when required to preserve the active mission until the new mission passes validation.,Mission Management,Mission Upload,5,uav_fms_phase2_audit,functional,medium
+UAV-FMS-017,The mission management function shall set the mission_ready flag after all waypoints are verified.,Mission Management,Mission Upload,5,uav_fms_phase2_audit,functional,medium
+UAV-FMS-018,The system shall maintain the mission upload state when required to set the mission_ready flag after all waypoints are verified.,Mission Management,Mission Upload,5,uav_fms_phase2_audit,functional,medium
+UAV-FMS-019,The mission management function shall clear the upload buffer after a failed mission transfer.,Mission Management,Mission Upload,5,uav_fms_phase2_audit,functional,medium
+UAV-FMS-020,The system shall maintain the mission upload state when required to clear the upload buffer after a failed mission transfer.,Mission Management,Mission Upload,6,uav_fms_phase2_audit,functional,medium
+UAV-FMS-021,The navigation function shall compute navigation state from GPS and inertial reference data.,Navigation,Sensor Fusion,6,uav_fms_phase2_audit,functional,medium
+UAV-FMS-022,The system shall maintain the sensor fusion state when required to compute navigation state from GPS and inertial reference data.,Navigation,Sensor Fusion,6,uav_fms_phase2_audit,functional,medium
+UAV-FMS-023,The navigation function shall enter inertial fallback when GPS validity is lost.,Navigation,Sensor Fusion,6,uav_fms_phase2_audit,functional,medium
+UAV-FMS-024,The system shall maintain the sensor fusion state when required to enter inertial fallback when GPS validity is lost.,Navigation,Sensor Fusion,7,uav_fms_phase2_audit,functional,medium
+UAV-FMS-025,The navigation function shall raise navigation_degraded when position uncertainty exceeds the configured threshold.,Navigation,Sensor Fusion,7,uav_fms_phase2_audit,functional,medium
+UAV-FMS-026,The system shall maintain the sensor fusion state when required to raise navigation_degraded when position uncertainty exceeds the configured threshold.,Navigation,Sensor Fusion,7,uav_fms_phase2_audit,functional,medium
+UAV-FMS-027,The navigation function shall publish the selected navigation source to guidance.,Navigation,Sensor Fusion,7,uav_fms_phase2_audit,functional,medium
+UAV-FMS-028,The system shall maintain the sensor fusion state when required to publish the selected navigation source to guidance.,Navigation,Sensor Fusion,8,uav_fms_phase2_audit,functional,medium
+UAV-FMS-029,The navigation function shall restore GPS navigation only after validity remains stable for the configured timer.,Navigation,Sensor Fusion,8,uav_fms_phase2_audit,functional,medium
+UAV-FMS-030,The system shall maintain the sensor fusion state when required to restore GPS navigation only after validity remains stable for the configured timer.,Navigation,Sensor Fusion,8,uav_fms_phase2_audit,functional,medium
+UAV-FMS-031,The guidance function shall select the next waypoint after crossing the active waypoint acceptance radius.,Guidance,Waypoint Guidance,8,uav_fms_phase2_audit,functional,medium
+UAV-FMS-032,The system shall maintain the waypoint guidance state when required to select the next waypoint after crossing the active waypoint acceptance radius.,Guidance,Waypoint Guidance,9,uav_fms_phase2_audit,functional,medium
+UAV-FMS-033,The guidance function shall compute lateral guidance commands from current track and desired path.,Guidance,Waypoint Guidance,9,uav_fms_phase2_audit,functional,medium
+UAV-FMS-034,The system shall maintain the waypoint guidance state when required to compute lateral guidance commands from current track and desired path.,Guidance,Waypoint Guidance,9,uav_fms_phase2_audit,functional,medium
+UAV-FMS-035,The guidance function shall compute vertical guidance commands from target altitude and climb constraints.,Guidance,Waypoint Guidance,9,uav_fms_phase2_audit,functional,medium
+UAV-FMS-036,The system shall maintain the waypoint guidance state when required to compute vertical guidance commands from target altitude and climb constraints.,Guidance,Waypoint Guidance,10,uav_fms_phase2_audit,functional,medium
+UAV-FMS-037,The guidance function shall hold the active waypoint when navigation validity is degraded.,Guidance,Waypoint Guidance,10,uav_fms_phase2_audit,functional,medium
+UAV-FMS-038,The system shall maintain the waypoint guidance state when required to hold the active waypoint when navigation validity is degraded.,Guidance,Waypoint Guidance,10,uav_fms_phase2_audit,functional,medium
+UAV-FMS-039,The guidance function shall output guidance mode status to telemetry.,Guidance,Waypoint Guidance,10,uav_fms_phase2_audit,functional,medium
+UAV-FMS-040,The system shall maintain the waypoint guidance state when required to output guidance mode status to telemetry.,Guidance,Waypoint Guidance,11,uav_fms_phase2_audit,functional,medium
+UAV-FMS-041,The flight control function shall allow automatic mode entry only when navigation and guidance are valid.,Flight Control,Automatic Mode,11,uav_fms_phase2_audit,functional,high
+UAV-FMS-042,The system shall maintain the automatic mode state when required to allow automatic mode entry only when navigation and guidance are valid.,Flight Control,Automatic Mode,11,uav_fms_phase2_audit,functional,high
+UAV-FMS-043,The flight control function shall exit automatic mode when pilot override is detected.,Flight Control,Automatic Mode,11,uav_fms_phase2_audit,functional,high
+UAV-FMS-044,The system shall maintain the automatic mode state when required to exit automatic mode when pilot override is detected.,Flight Control,Automatic Mode,12,uav_fms_phase2_audit,functional,high
+UAV-FMS-045,The flight control function shall limit lateral control command rate to the configured bound.,Flight Control,Automatic Mode,12,uav_fms_phase2_audit,functional,high
+UAV-FMS-046,The system shall maintain the automatic mode state when required to limit lateral control command rate to the configured bound.,Flight Control,Automatic Mode,12,uav_fms_phase2_audit,functional,high
+UAV-FMS-047,The flight control function shall limit vertical control command rate to the configured bound.,Flight Control,Automatic Mode,12,uav_fms_phase2_audit,functional,high
+UAV-FMS-048,The system shall maintain the automatic mode state when required to limit vertical control command rate to the configured bound.,Flight Control,Automatic Mode,13,uav_fms_phase2_audit,functional,high
+UAV-FMS-049,The flight control function shall inhibit arming when any flight-control self-test fails.,Flight Control,Automatic Mode,13,uav_fms_phase2_audit,functional,high
+UAV-FMS-050,The system shall maintain the automatic mode state when required to inhibit arming when any flight-control self-test fails.,Flight Control,Automatic Mode,13,uav_fms_phase2_audit,functional,high
+UAV-FMS-051,The power management function shall estimate remaining battery capacity from voltage current and temperature.,Power Management,Battery Readiness,13,uav_fms_phase2_audit,functional,high
+UAV-FMS-052,The system shall maintain the battery readiness state when required to estimate remaining battery capacity from voltage current and temperature.,Power Management,Battery Readiness,14,uav_fms_phase2_audit,functional,high
+UAV-FMS-053,The power management function shall inhibit mission launch when battery state of charge is below the configured threshold.,Power Management,Battery Readiness,14,uav_fms_phase2_audit,functional,high
+UAV-FMS-054,The system shall maintain the battery readiness state when required to inhibit mission launch when battery state of charge is below the configured threshold.,Power Management,Battery Readiness,14,uav_fms_phase2_audit,functional,high
+UAV-FMS-055,The power management function shall inhibit mission launch when battery temperature exceeds the configured limit.,Power Management,Battery Readiness,14,uav_fms_phase2_audit,functional,high
+UAV-FMS-056,The system shall maintain the battery readiness state when required to inhibit mission launch when battery temperature exceeds the configured limit.,Power Management,Battery Readiness,15,uav_fms_phase2_audit,functional,high
+UAV-FMS-057,The power management function shall publish battery readiness status to mission management.,Power Management,Battery Readiness,15,uav_fms_phase2_audit,functional,high
+UAV-FMS-058,The system shall maintain the battery readiness state when required to publish battery readiness status to mission management.,Power Management,Battery Readiness,15,uav_fms_phase2_audit,functional,high
+UAV-FMS-059,The power management function shall record battery health trend data for maintenance.,Power Management,Battery Readiness,15,uav_fms_phase2_audit,functional,high
+UAV-FMS-060,The system shall maintain the battery readiness state when required to record battery health trend data for maintenance.,Power Management,Battery Readiness,16,uav_fms_phase2_audit,functional,high
+UAV-FMS-061,The communications function shall detect lost link when heartbeat messages are absent for the configured timeout.,Communications,Lost Link,16,uav_fms_phase2_audit,functional,medium
+UAV-FMS-062,The system shall maintain the lost link state when required to detect lost link when heartbeat messages are absent for the configured timeout.,Communications,Lost Link,16,uav_fms_phase2_audit,functional,medium
+UAV-FMS-063,The communications function shall enter lost-link behavior after the lost_link timer expires.,Communications,Lost Link,16,uav_fms_phase2_audit,functional,medium
+UAV-FMS-064,The system shall maintain the lost link state when required to enter lost-link behavior after the lost_link timer expires.,Communications,Lost Link,17,uav_fms_phase2_audit,functional,medium
+UAV-FMS-065,The communications function shall retry command acknowledgement within three seconds.,Communications,Lost Link,17,uav_fms_phase2_audit,functional,medium
+UAV-FMS-066,The system shall maintain the lost link state when required to retry command acknowledgement within three seconds.,Communications,Lost Link,17,uav_fms_phase2_audit,functional,medium
+UAV-FMS-067,The communications function shall queue telemetry packets while the downlink is unavailable.,Communications,Lost Link,17,uav_fms_phase2_audit,functional,medium
+UAV-FMS-068,The system shall maintain the lost link state when required to queue telemetry packets while the downlink is unavailable.,Communications,Lost Link,18,uav_fms_phase2_audit,functional,medium
+UAV-FMS-069,The communications function shall flush queued telemetry after link recovery.,Communications,Lost Link,18,uav_fms_phase2_audit,functional,medium
+UAV-FMS-070,The system shall maintain the lost link state when required to flush queued telemetry after link recovery.,Communications,Lost Link,18,uav_fms_phase2_audit,functional,medium
+UAV-FMS-071,The payload control function shall reject payload slew commands that exceed configured motion limits.,Payload Control,Payload Motion,18,uav_fms_phase2_audit,functional,medium
+UAV-FMS-072,The system shall maintain the payload motion state when required to reject payload slew commands that exceed configured motion limits.,Payload Control,Payload Motion,19,uav_fms_phase2_audit,functional,medium
+UAV-FMS-073,The payload control function shall stop payload motion when vehicle attitude is outside the safe envelope.,Payload Control,Payload Motion,19,uav_fms_phase2_audit,functional,medium
+UAV-FMS-074,The system shall maintain the payload motion state when required to stop payload motion when vehicle attitude is outside the safe envelope.,Payload Control,Payload Motion,19,uav_fms_phase2_audit,functional,medium
+UAV-FMS-075,The payload control function shall publish payload pointing status to telemetry.,Payload Control,Payload Motion,19,uav_fms_phase2_audit,functional,medium
+UAV-FMS-076,The system shall maintain the payload motion state when required to publish payload pointing status to telemetry.,Payload Control,Payload Motion,20,uav_fms_phase2_audit,functional,medium
+UAV-FMS-077,The payload control function shall hold payload position during automatic mode exit.,Payload Control,Payload Motion,20,uav_fms_phase2_audit,functional,medium
+UAV-FMS-078,The system shall maintain the payload motion state when required to hold payload position during automatic mode exit.,Payload Control,Payload Motion,20,uav_fms_phase2_audit,functional,medium
+UAV-FMS-079,The payload control function shall log payload constraint violations for maintenance review.,Payload Control,Payload Motion,20,uav_fms_phase2_audit,functional,medium
+UAV-FMS-080,The system shall maintain the payload motion state when required to log payload constraint violations for maintenance review.,Payload Control,Payload Motion,21,uav_fms_phase2_audit,functional,medium
+UAV-FMS-081,The health monitoring function shall run power-on self-test before enabling mission functions.,Health Monitoring,Fault Response,21,uav_fms_phase2_audit,functional,medium
+UAV-FMS-082,The system shall maintain the fault response state when required to run power-on self-test before enabling mission functions.,Health Monitoring,Fault Response,21,uav_fms_phase2_audit,functional,medium
+UAV-FMS-083,The health monitoring function shall aggregate subsystem health flags into a vehicle readiness output.,Health Monitoring,Fault Response,21,uav_fms_phase2_audit,functional,medium
+UAV-FMS-084,The system shall maintain the fault response state when required to aggregate subsystem health flags into a vehicle readiness output.,Health Monitoring,Fault Response,22,uav_fms_phase2_audit,functional,medium
+UAV-FMS-085,The health monitoring function shall raise emergency response when critical health flags are active.,Health Monitoring,Fault Response,22,uav_fms_phase2_audit,functional,medium
+UAV-FMS-086,The system shall maintain the fault response state when required to raise emergency response when critical health flags are active.,Health Monitoring,Fault Response,22,uav_fms_phase2_audit,functional,medium
+UAV-FMS-087,The health monitoring function shall store health-monitor events in the event log.,Health Monitoring,Fault Response,22,uav_fms_phase2_audit,functional,medium
+UAV-FMS-088,The system shall maintain the fault response state when required to store health-monitor events in the event log.,Health Monitoring,Fault Response,23,uav_fms_phase2_audit,functional,medium
+UAV-FMS-089,The health monitoring function shall clear transient health flags only after the configured debounce timer.,Health Monitoring,Fault Response,23,uav_fms_phase2_audit,functional,medium
+UAV-FMS-090,The system shall maintain the fault response state when required to clear transient health flags only after the configured debounce timer.,Health Monitoring,Fault Response,23,uav_fms_phase2_audit,functional,medium
+UAV-FMS-091,The software update function shall verify software update package signature before installation.,Software Update,Update Safety,23,uav_fms_phase2_audit,functional,high
+UAV-FMS-092,The system shall maintain the update safety state when required to verify software update package signature before installation.,Software Update,Update Safety,24,uav_fms_phase2_audit,functional,high
+UAV-FMS-093,The software update function shall reject update packages with an invalid rollback marker.,Software Update,Update Safety,24,uav_fms_phase2_audit,functional,high
+UAV-FMS-094,The system shall maintain the update safety state when required to reject update packages with an invalid rollback marker.,Software Update,Update Safety,24,uav_fms_phase2_audit,functional,high
+UAV-FMS-095,The software update function shall preserve the previous software image until post-update self-test passes.,Software Update,Update Safety,24,uav_fms_phase2_audit,functional,high
+UAV-FMS-096,The system shall maintain the update safety state when required to preserve the previous software image until post-update self-test passes.,Software Update,Update Safety,25,uav_fms_phase2_audit,functional,high
+UAV-FMS-097,The software update function shall block mission launch while update installation is in progress.,Software Update,Update Safety,25,uav_fms_phase2_audit,functional,high
+UAV-FMS-098,The system shall maintain the update safety state when required to block mission launch while update installation is in progress.,Software Update,Update Safety,25,uav_fms_phase2_audit,functional,high
+UAV-FMS-099,The software update function shall record software update result in the maintenance log.,Software Update,Update Safety,25,uav_fms_phase2_audit,functional,high
+UAV-FMS-100,The system shall maintain the update safety state when required to record software update result in the maintenance log.,Software Update,Update Safety,26,uav_fms_phase2_audit,functional,high
+UAV-FMS-101,The telemetry function shall generate telemetry frames containing navigation guidance power and health data.,Telemetry,Reporting,26,uav_fms_phase2_audit,functional,medium
+UAV-FMS-102,The system shall maintain the reporting state when required to generate telemetry frames containing navigation guidance power and health data.,Telemetry,Reporting,26,uav_fms_phase2_audit,functional,medium
+UAV-FMS-103,The telemetry function shall tag telemetry frames with source timestamp and sequence number.,Telemetry,Reporting,26,uav_fms_phase2_audit,functional,medium
+UAV-FMS-104,The system shall maintain the reporting state when required to tag telemetry frames with source timestamp and sequence number.,Telemetry,Reporting,27,uav_fms_phase2_audit,functional,medium
+UAV-FMS-105,The telemetry function shall drop telemetry frames that exceed the configured payload size.,Telemetry,Reporting,27,uav_fms_phase2_audit,functional,medium
+UAV-FMS-106,The system shall maintain the reporting state when required to drop telemetry frames that exceed the configured payload size.,Telemetry,Reporting,27,uav_fms_phase2_audit,functional,medium
+UAV-FMS-107,The telemetry function shall publish emergency telemetry immediately after emergency response entry.,Telemetry,Reporting,27,uav_fms_phase2_audit,functional,medium
+UAV-FMS-108,The system shall maintain the reporting state when required to publish emergency telemetry immediately after emergency response entry.,Telemetry,Reporting,28,uav_fms_phase2_audit,functional,medium
+UAV-FMS-109,The telemetry function shall report active control mode and mission phase to the ground station.,Telemetry,Reporting,28,uav_fms_phase2_audit,functional,medium
+UAV-FMS-110,The system shall maintain the reporting state when required to report active control mode and mission phase to the ground station.,Telemetry,Reporting,28,uav_fms_phase2_audit,functional,medium
+UAV-FMS-111,The fms function shall compute LNAV path transitions from active flight-plan legs.,FMS,LNAV VNAV Fuel Displays,28,uav_fms_phase2_audit,functional,medium
+UAV-FMS-112,The system shall maintain the lnav vnav fuel displays state when required to compute LNAV path transitions from active flight-plan legs.,FMS,LNAV VNAV Fuel Displays,29,uav_fms_phase2_audit,functional,medium
+UAV-FMS-113,The fms function shall compute VNAV targets from altitude constraints and descent path geometry.,FMS,LNAV VNAV Fuel Displays,29,uav_fms_phase2_audit,functional,medium
+UAV-FMS-114,The system shall maintain the lnav vnav fuel displays state when required to compute VNAV targets from altitude constraints and descent path geometry.,FMS,LNAV VNAV Fuel Displays,29,uav_fms_phase2_audit,functional,medium
+UAV-FMS-115,The fms function shall integrate fuel remaining with predicted time to destination.,FMS,LNAV VNAV Fuel Displays,29,uav_fms_phase2_audit,functional,medium
+UAV-FMS-116,The system shall maintain the lnav vnav fuel displays state when required to integrate fuel remaining with predicted time to destination.,FMS,LNAV VNAV Fuel Displays,30,uav_fms_phase2_audit,functional,medium
+UAV-FMS-117,The fms function shall display active flight-plan leg and lateral deviation to the cockpit display.,FMS,LNAV VNAV Fuel Displays,30,uav_fms_phase2_audit,functional,medium
+UAV-FMS-118,The system shall maintain the lnav vnav fuel displays state when required to display active flight-plan leg and lateral deviation to the cockpit display.,FMS,LNAV VNAV Fuel Displays,30,uav_fms_phase2_audit,functional,medium
+UAV-FMS-119,The fms function shall record flight-plan edits in the maintenance log.,FMS,LNAV VNAV Fuel Displays,30,uav_fms_phase2_audit,functional,medium
+UAV-FMS-120,The system shall maintain the lnav vnav fuel displays state when required to record flight-plan edits in the maintenance log.,FMS,LNAV VNAV Fuel Displays,31,uav_fms_phase2_audit,functional,medium

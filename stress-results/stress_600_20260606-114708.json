@@ -1,0 +1,368 @@
+{
+  "base_url": "http://127.0.0.1:8000",
+  "session_id": 5,
+  "requirements": 600,
+  "pages": 160,
+  "upload_ms": 127.916,
+  "cluster_ms": 20432.844,
+  "cluster_status": 200,
+  "cluster_summary": {
+    "session_id": 5,
+    "total_clusters": 24,
+    "noise_count": 0,
+    "clusters": [
+      {
+        "id": 21,
+        "session_id": 5,
+        "cluster_id": 0,
+        "label": "Monitoring Function Health Verified",
+        "keywords": [
+          "monitoring function",
+          "health monitoring",
+          "health",
+          "monitoring",
+          "verified"
+        ],
+        "size": 25
+      },
+      {
+        "id": 22,
+        "session_id": 5,
+        "cluster_id": 1,
+        "label": "Mission Management Timer Stale",
+        "keywords": [
+          "mission",
+          "mission management",
+          "timer",
+          "stale",
+          "timer expires"
+        ],
+        "size": 25
+      },
+      {
+        "id": 23,
+        "session_id": 5,
+        "cluster_id": 2,
+        "label": "Payload Control Timestamp Log",
+        "keywords": [
+          "payload control",
+          "payload",
+          "timestamp",
+          "log rejected",
+          "log"
+        ],
+        "size": 25
+      },
+      {
+        "id": 24,
+        "session_id": 5,
+        "cluster_id": 3,
+        "label": "Flight Control Until Replacement",
+        "keywords": [
+          "flight control",
+          "flight",
+          "until",
+          "until replacement",
+          "verified"
+        ],
+        "size": 25
+      },
+      {
+        "id": 25,
+        "session_id": 5,
+        "cluster_id": 4,
+        "label": "Payload Control Inhibit Limits",
+        "keywords": [
+          "payload control",
+          "payload",
+          "inhibit",
+          "limits",
+          "configured safety"
+        ],
+        "size": 25
+      },
+      {
+        "id": 26,
+        "session_id": 5,
+        "cluster_id": 5,
+        "label": "Command Authentication Function Validate",
+        "keywords": [
+          "command",
+          "authentication function",
+          "authentication",
+          "command authentication",
+          "validate state"
+        ],
+        "size": 25
+      },
+      {
+        "id": 27,
+        "session_id": 5,
+        "cluster_id": 6,
+        "label": "Command Authentication Function Verified",
+        "keywords": [
+          "command",
+          "authentication function",
+          "authentication",
+          "command authentication",
+          "verified"
+        ],
+        "size": 25
+      },
+      {
+        "id": 28,
+        "session_id": 5,
+        "cluster_id": 7,
+        "label": "Power Management Raise Degraded",
+        "keywords": [
+          "power",
+          "power management",
+          "raise degraded",
+          "degraded",
+          "degraded status"
+        ],
+        "size": 25
+      },
+      {
+        "id": 29,
+        "session_id": 5,
+        "cluster_id": 8,
+        "label": "Mission Management Raise Degraded",
+        "keywords": [
+          "mission",
+          "mission management",
+          "raise degraded",
+          "degraded",
+          "degraded status"
+        ],
+        "size": 25
+      },
+      {
+        "id": 30,
+        "session_id": 5,
+        "cluster_id": 9,
+        "label": "Fms Function Timestamp Source",
+        "keywords": [
+          "fms",
+          "fms function",
+          "timestamp",
+          "source timestamp",
+          "log"
+        ],
+        "size": 25
+      },
+      {
+        "id": 31,
+        "session_id": 5,
+        "cluster_id": 10,
+        "label": "Update Function Software Degraded",
+        "keywords": [
+          "update function",
+          "update",
+          "software",
+          "software update",
+          "degraded"
+        ],
+        "size": 25
+      },
+      {
+        "id": 32,
+        "session_id": 5,
+        "cluster_id": 11,
+        "label": "Monitoring Function Health Validate",
+        "keywords": [
+          "monitoring function",
+          "health monitoring",
+          "health",
+          "monitoring",
+          "validate state"
+        ],
+        "size": 25
+      },
+      {
+        "id": 33,
+        "session_id": 5,
+        "cluster_id": 12,
+        "label": "Flight Control State Flags",
+        "keywords": [
+          "flight control",
+          "flight",
+          "state flags",
+          "state",
+          "validate state"
+        ],
+        "size": 25
+      },
+      {
+        "id": 34,
+        "session_id": 5,
+        "cluster_id": 13,
+        "label": "Guidance Function Limits Inhibit",
+        "keywords": [
+          "guidance function",
+          "limits",
+          "inhibit",
+          "inhibit launch",
+          "exceeded"
+        ],
+        "size": 25
+      },
+      {
+        "id": 35,
+        "session_id": 5,
+        "cluster_id": 14,
+        "label": "Navigation Function Subsystem Publish",
+        "keywords": [
+          "navigation function",
+          "subsystem",
+          "publish readiness",
+          "readiness status",
+          "readiness"
+        ],
+        "size": 25
+      },
+      {
+        "id": 36,
+        "session_id": 5,
+        "cluster_id": 15,
+        "label": "Fms Function Limits Inhibit",
+        "keywords": [
+          "fms",
+          "fms function",
+          "limits",
+          "inhibit launch",
+          "exceeded"
+        ],
+        "size": 25
+      },
+      {
+        "id": 37,
+        "session_id": 5,
+        "cluster_id": 16,
+        "label": "Telemetry Function Subsystem Readiness",
+        "keywords": [
+          "telemetry",
+          "telemetry function",
+          "subsystem",
+          "readiness",
+          "readiness status"
+        ],
+        "size": 25
+      },
+      {
+        "id": 38,
+        "session_id": 5,
+        "cluster_id": 17,
+        "label": "Communications Function Subsystem Publish",
+        "keywords": [
+          "communications function",
+          "communications",
+          "subsystem",
+          "publish",
+          "readiness status"
+        ],
+        "size": 25
+      },
+      {
+        "id": 39,
+        "session_id": 5,
+        "cluster_id": 18,
+        "label": "Navigation Function Selected Compute",
+        "keywords": [
+          "navigation",
+          "navigation function",
+          "selected navigation",
+          "selected",
+          "compute guidance"
+        ],
+        "size": 25
+      },
+      {
+        "id": 40,
+        "session_id": 5,
+        "cluster_id": 19,
+        "label": "Guidance Function Timestamp Source",
+        "keywords": [
+          "guidance function",
+          "timestamp",
+          "source timestamp",
+          "log rejected",
+          "log"
+        ],
+        "size": 25
+      },
+      {
+        "id": 41,
+        "session_id": 5,
+        "cluster_id": 20,
+        "label": "Communications Function Selected Navigation",
+        "keywords": [
+          "communications function",
+          "communications",
+          "selected navigation",
+          "selected",
+          "outputs"
+        ],
+        "size": 25
+      },
+      {
+        "id": 42,
+        "session_id": 5,
+        "cluster_id": 21,
+        "label": "Telemetry Function Navigation Source",
+        "keywords": [
+          "telemetry",
+          "telemetry function",
+          "navigation source",
+          "compute",
+          "compute guidance"
+        ],
+        "size": 25
+      },
+      {
+        "id": 43,
+        "session_id": 5,
+        "cluster_id": 22,
+        "label": "Update Function Software Stale",
+        "keywords": [
+          "update function",
+          "update",
+          "software",
+          "software update",
+          "stale"
+        ],
+        "size": 25
+      },
+      {
+        "id": 44,
+        "session_id": 5,
+        "cluster_id": 23,
+        "label": "Power Management Timer Stale",
+        "keywords": [
+          "power",
+          "power management",
+          "timer",
+          "stale",
+          "timer expires"
+        ],
+        "size": 25
+      }
+    ],
+    "status": "done",
+    "embedding_mode": "base",
+    "warnings": null,
+    "embedding_comparison": null,
+    "ablation_report": null
+  },
+  "read_requests": 300,
+  "concurrency": 32,
+  "read_failures": 0,
+  "read_latency_ms": {
+    "min": 17.422,
+    "mean": 391.298,
+    "p50": 246.13,
+    "p95": 1174.148,
+    "max": 1479.597
+  },
+  "failures_sample": []
+}

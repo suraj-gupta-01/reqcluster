@@ -89,9 +89,9 @@ async def upload_requirements(
         df, stats = preprocess_requirements(content, file.filename)
     except ValueError as e:
         raise HTTPException(400, str(e))
-    except Exception as e:
+    except Exception:
         logger.exception("Preprocessing error")
-        raise HTTPException(500, f"Failed to process file: {str(e)}")
+        raise HTTPException(500, "Failed to process file.")
 
     if stats["final"] == 0:
         raise HTTPException(400, "No valid requirements found in file.")
@@ -329,12 +329,12 @@ async def cluster_requirements_endpoint(
             ablation_report=results.get("ablation_report"),
         )
 
-    except Exception as e:
+    except Exception:
         logger.exception("Pipeline error")
         session.status = "error"
         db.commit()
-        pipeline_progress[session_id] = {"step": "error", "progress": 0, "message": str(e)}
-        raise HTTPException(500, f"Pipeline failed: {str(e)}")
+        pipeline_progress[session_id] = {"step": "error", "progress": 0, "message": "Pipeline failed."}
+        raise HTTPException(500, "Pipeline failed.")
 
 
 @router.get("/progress/{session_id}")
@@ -508,9 +508,9 @@ def submit_feedback_endpoint(
         return submit_feedback(db, request)
     except ValueError as exc:
         raise HTTPException(400, str(exc))
-    except Exception as exc:
+    except Exception:
         logger.exception("Feedback submit error")
-        raise HTTPException(500, f"Failed to submit feedback: {str(exc)}")
+        raise HTTPException(500, "Failed to submit feedback.")
 
 
 @router.get("/feedback/queue", response_model=List[FeedbackCorrectionOut])

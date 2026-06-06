@@ -1,0 +1,13 @@
+id,text,module,section,page,source_doc,requirement_type,criticality
+CB-001,The system shall accept commands with invalid sequence numbers.,Command Authentication,Contradiction,1,contradiction_boundary_audit,functional,high
+CB-002,The system shall reject commands with invalid sequence numbers.,Command Authentication,Contradiction,2,contradiction_boundary_audit,functional,high
+CB-003,The vehicle shall allow mission launch when battery temperature exceeds the configured limit.,Power Management,Contradiction,3,contradiction_boundary_audit,functional,high
+CB-004,The vehicle shall inhibit mission launch when battery temperature exceeds the configured limit.,Power Management,Contradiction,4,contradiction_boundary_audit,functional,high
+CB-005,The UAV shall maintain altitude within configured tolerance.,Guidance,Boundary,5,contradiction_boundary_audit,functional,high
+CB-006,The UAV shall maintain altitude.,Guidance,Boundary,6,contradiction_boundary_audit,functional,high
+CB-007,The system shall retry communication.,Communications,Boundary,7,contradiction_boundary_audit,functional,high
+CB-008,The system shall retry communication within 3 seconds.,Communications,Boundary,8,contradiction_boundary_audit,functional,high
+CB-009,The telemetry service shall archive messages for the configured retention period.,Telemetry,Boundary,9,contradiction_boundary_audit,functional,high
+CB-010,The telemetry service shall archive messages for 30 days.,Telemetry,Boundary,10,contradiction_boundary_audit,functional,high
+CB-011,The update manager shall verify update signatures before installation.,Software Update,Security,11,contradiction_boundary_audit,non_functional,high
+CB-012,The update manager shall install update packages before signature verification.,Software Update,Contradiction,12,contradiction_boundary_audit,functional,high
