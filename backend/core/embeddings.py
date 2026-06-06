@@ -84,7 +84,19 @@ _model: Optional[SentenceTransformer] = None
 def get_model() -> SentenceTransformer:
     global _model
     if _model is None:
-        _model = SentenceTransformer(MODEL_NAME)
+        # Auto-select the accelerator (GPU when a CUDA torch build is present,
+        # CPU otherwise). Guarded so a detection hiccup never blocks loading.
+        try:
+            from .device import detect
+
+            info = detect()
+            _model = SentenceTransformer(MODEL_NAME, device=info.device)
+            logger.info(
+                "SBERT model loaded on %s (%s)",
+                info.device, info.gpu_name or "cpu",
+            )
+        except Exception:
+            _model = SentenceTransformer(MODEL_NAME)
     return _model
 
 

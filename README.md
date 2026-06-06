@@ -321,6 +321,32 @@ A real-world run (PROMISE-exp, 969 industry requirements) clusters end to end in
 | **CI** | GitHub Actions runs the backend test suite + the frontend build on every push/PR. |
 | **LLM** | Offline-first: deterministic mock by default; optional local (Ollama) or OpenAI-compatible provider. No data leaves the network. |
 
+### GPU acceleration (measured)
+
+The pipeline auto-detects the accelerator (`backend/core/device.py`) and runs
+embeddings on the GPU automatically when a CUDA build of torch is installed - no
+code change. Measured here (RTX 2050 laptop, 4 GB, vs the 12-core CPU), encoding
+`all-MiniLM-L6-v2`:
+
+| N | CPU (12-core) | GPU (RTX 2050) | speedup |
+|--:|--:|--:|--:|
+| 2,000 | 4.6 s · 433 req/s | 0.55 s · 3,614 req/s | **8.4×** |
+| 10,000 | 22.4 s · 447 req/s | 2.73 s · 3,664 req/s | **8.2×** |
+| 50,000 | ~112 s (extrapolated) | 13.8 s · 3,633 req/s | **~8×** |
+
+Embeddings go from ~440 to ~3,650 req/s. On a datacenter GPU (L4 / A100) expect
+20-40×. (Batch past 128 didn't help on 4 GB - the run is model-bound.)
+
+**Check and enable GPU on your machine:**
+```bash
+python backend/core/device.py                 # reports GPU, driver, and whether torch can use it
+# if it says "torch is CPU-only", install a CUDA build matching your driver:
+pip install torch --index-url https://download.pytorch.org/whl/cu121
+python scripts/benchmark_embeddings.py --device cuda --n 10000   # verify
+```
+Embeddings then run on the GPU automatically. **GPU UMAP/HDBSCAN (cuML/RAPIDS) is
+Linux-only** - on Windows use WSL2; the CPU path remains the default everywhere.
+
 **Remaining roadmap**
 
 - Memory-mapped embeddings instead of in-RAM arrays for very large N.
