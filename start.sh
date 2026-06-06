@@ -4,7 +4,7 @@ set -e
 ROOT="$(cd "$(dirname "$0")" && pwd)"
 
 echo "╔══════════════════════════════════╗"
-echo "║     ReqCluster Phase 1 MVP       ║"
+echo "║         ReqCluster v5.0          ║"
 echo "╚══════════════════════════════════╝"
 
 # Backend

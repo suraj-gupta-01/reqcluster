@@ -20,7 +20,6 @@ export default function RefinementPage() {
   const [mergeSuggestions, setMergeSuggestions] = useState([])
   const [splitSuggestions, setSplitSuggestions] = useState([])
   const [coherenceScores, setCoherenceScores] = useState([])
-  const [clusterSummaries, setClusterSummaries] = useState([])
   const [auditLog, setAuditLog] = useState([])
   const [clusterInfo, setClusterInfo] = useState({})
 
@@ -80,7 +79,6 @@ export default function RefinementPage() {
       setMergeSuggestions(result.merge_suggestions || [])
       setSplitSuggestions(result.split_suggestions || [])
       setCoherenceScores(result.coherence_scores || [])
-      setClusterSummaries(result.cluster_summaries || [])
       if (result.warnings?.length) {
         setError(result.warnings.join(' '))
       }

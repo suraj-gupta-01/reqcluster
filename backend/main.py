@@ -2,6 +2,32 @@ import sys
 import os
 from contextlib import asynccontextmanager
 
+def load_dotenv():
+    paths = [
+        os.path.join(os.getcwd(), ".env"),
+        os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".env"),
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"),
+    ]
+    for path in paths:
+        if os.path.isfile(path):
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    for line in f:
+                        line = line.strip()
+                        if not line or line.startswith("#"):
+                            continue
+                        if "=" in line:
+                            k, v = line.split("=", 1)
+                            k = k.strip()
+                            v = v.strip().strip("'\"")
+                            if k and k not in os.environ:
+                                os.environ[k] = v
+                break
+            except Exception:
+                pass
+
+load_dotenv()
+
 sys.path.insert(0, os.path.dirname(__file__))
 
 from fastapi import FastAPI
@@ -30,8 +56,8 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="ReqCluster API",
-    description="Requirement clustering with Phase 2 LLM enrichment, hybrid embeddings, and Phase 3 ClusterLLM refinement.",
-    version="3.0.0",
+    description="AI-assisted requirements clustering with LLM enrichment, ClusterLLM refinement, human-in-the-loop corrections, active learning, dependency trees, and MBSE export.",
+    version="5.0.0",
     lifespan=lifespan,
 )
 
@@ -55,7 +81,7 @@ app.include_router(router, prefix="/api")
 def root():
     return {
         "name": "ReqCluster",
-        "version": "3.0.0",
+        "version": "5.0.0",
         "status": "running",
         "docs": "/docs",
     }

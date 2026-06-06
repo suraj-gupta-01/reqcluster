@@ -37,6 +37,8 @@ Base clustering remains the default Phase 1 behavior. Enriched and hybrid cluste
 
 ## Configuration (environment variables)
 
+Copy the [.env.example](.env.example) template to `.env` in the root folder to set up variables:
+
 | Variable | Purpose | Default |
 | --- | --- | --- |
 | `CORS_ORIGINS` | Comma-separated allowed origins | `http://localhost:5173,http://localhost:3000` |
@@ -47,6 +49,9 @@ Base clustering remains the default Phase 1 behavior. Enriched and hybrid cluste
 | `JAMA_BASE_URL` / `JAMA_API_TOKEN` / `JAMA_PROJECT_ID` / `JAMA_ITEM_TYPE_ID` | Jama export target | unset |
 
 With no LLM configured everything runs offline via the deterministic mock provider.
+
+> [!NOTE]
+> Cloud-based LLMs hosted behind Cloudflare security (like Groq) are fully supported. The backend automatically injects standard User-Agent request signatures to bypass Cloudflare Error 1010 blockages.
 
 ## Datasets and testing
 
@@ -230,15 +235,19 @@ npm run build
 
 ## Documentation
 
-Phases 2, 3, and 4 details are documented in:
+Phase and architecture details are documented in:
 
 ```text
+docs/ARCHITECTURE.md
 docs/PHASE2_EMBEDDINGS.md
 docs/PHASE2_LLM_ENRICHMENT.md
 docs/PHASE2_ENRICHMENT_API_DB.md
 docs/PHASE2_FRONTEND_ENRICHMENT_UI.md
 docs/PHASE3_CLUSTER_REFINEMENT.md
 docs/PHASE4_HUMAN_IN_THE_LOOP.md
+docs/PHASE5_ACTIVE_LEARNING.md
+docs/PHASE5_MBSE_EXPORT.md
+docs/DP5_DEPENDENCY_TREE.md
 ```
 
 ## Notes

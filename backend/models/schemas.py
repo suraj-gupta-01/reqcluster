@@ -1,6 +1,14 @@
 from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, List, Any, Literal, Dict
 from datetime import datetime
+import os
+
+def get_default_provider() -> str:
+    prov = os.getenv("REQCLUSTER_LLM_PROVIDER", "mock").strip().lower()
+    if prov in {"openai", "openai-compatible"}:
+        return "openai_compatible"
+    return prov
+
 
 
 class SessionCreate(BaseModel):
@@ -78,7 +86,9 @@ class ClusterRequest(BaseModel):
 
 class EnrichmentRequest(BaseModel):
     session_id: int = Field(..., ge=1)
-    provider_name: Literal["mock", "openai_compatible", "local"] = "mock"
+    provider_name: Literal["mock", "openai_compatible", "local"] = Field(
+        default_factory=get_default_provider
+    )
     embedding_mode: Literal["enriched", "hybrid"] = "hybrid"
     batch_size: int = Field(default=8, ge=1, le=64)
     max_concurrency: int = Field(default=4, ge=1, le=16)
@@ -152,7 +162,7 @@ class ProgressUpdate(BaseModel):
 
 class DependencyGenerateRequest(BaseModel):
     session_id: int = Field(..., ge=1)
-    provider_name: str = "mock"
+    provider_name: str = Field(default_factory=get_default_provider)
     sim_threshold: float = Field(default=0.45, ge=0.0, le=1.0)
     top_k: int = Field(default=8, ge=1, le=50)
 
@@ -196,7 +206,7 @@ class QualityHistoryResponse(BaseModel):
 
 class RefinementSuggestRequest(BaseModel):
     session_id: int = Field(..., ge=1)
-    provider_name: str = "mock"
+    provider_name: str = Field(default_factory=get_default_provider)
     top_n_merges: int = Field(default=5, ge=1, le=20)
     top_n_splits: int = Field(default=5, ge=1, le=20)
     sim_threshold: float = Field(default=0.75, ge=0.0, le=1.0)
