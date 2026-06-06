@@ -13,6 +13,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..",
 from export.reqif_exporter import export_reqif, REQIF_NS
 from export.sysml_xmi_exporter import export_sysml_xmi, UML_NS, XMI_NS
 from export.jama_connector import export_jama
+from export.pdf_report import export_pdf
 
 
 def _data():
@@ -79,3 +80,18 @@ def test_jama_bundle_has_items_and_relationships():
     assert bundle["meta"]["item_count"] == 3
     assert len(bundle["relationships"]) == 1
     assert bundle["relationships"][0]["fromItem"] == "REQ-001"
+
+
+def test_pdf_is_valid_and_handles_special_chars():
+    pdf = export_pdf(_data())
+    assert isinstance(pdf, (bytes, bytearray))
+    assert pdf[:5] == b"%PDF-"          # valid PDF header
+    assert pdf.rstrip().endswith(b"%%EOF")
+    assert len(pdf) > 1000
+
+
+def test_pdf_empty_clusters_does_not_crash():
+    data = _data()
+    data["clusters"] = []
+    pdf = export_pdf(data)
+    assert pdf[:5] == b"%PDF-"

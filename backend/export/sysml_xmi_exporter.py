@@ -18,7 +18,7 @@ portable UML with SysML keywords, which the named tools import as a model tree.
 from __future__ import annotations
 
 import xml.etree.ElementTree as ET
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 XMI_NS = "http://www.omg.org/spec/XMI/20131001"
 UML_NS = "http://www.omg.org/spec/UML/20131001"

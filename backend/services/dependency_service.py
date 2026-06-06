@@ -9,7 +9,7 @@ both, and exposes retrieval. Narrative prose uses the refinement provider
 from __future__ import annotations
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import numpy as np
 from sqlalchemy.orm import Session as DBSession

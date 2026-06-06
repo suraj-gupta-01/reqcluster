@@ -4,22 +4,24 @@ from __future__ import annotations
 
 import csv
 import io
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List
 
 from sqlalchemy.orm import Session as DBSession
 
 from export.jama_connector import export_jama
+from export.pdf_report import export_pdf
 from export.reqif_exporter import export_reqif
 from export.sysml_xmi_exporter import export_sysml_xmi
 from models.database import Cluster, DependencyTree, Requirement, Session, utcnow
 
-SUPPORTED_FORMATS = {"reqif", "sysml", "jama", "csv"}
+SUPPORTED_FORMATS = {"reqif", "sysml", "jama", "csv", "pdf"}
 
 _MEDIA = {
     "reqif": ("application/xml", "reqif"),
     "sysml": ("application/xml", "xmi"),
     "jama": ("application/json", "json"),
     "csv": ("text/csv", "csv"),
+    "pdf": ("application/pdf", "pdf"),
 }
 
 
@@ -109,8 +111,12 @@ def _export_csv(data: Dict[str, Any]) -> str:
     return out.getvalue()
 
 
-def export_session(db: DBSession, session_id: int, fmt: str) -> Tuple[str, str, str]:
-    """Return (content, media_type, filename) for the requested export format."""
+def export_session(db: DBSession, session_id: int, fmt: str):
+    """Return (content, media_type, filename) for the requested export format.
+
+    `content` is str for text formats and bytes for PDF (FastAPI's Response
+    accepts both).
+    """
     fmt = (fmt or "").strip().lower()
     if fmt not in SUPPORTED_FORMATS:
         raise ExportServiceError(
@@ -124,6 +130,8 @@ def export_session(db: DBSession, session_id: int, fmt: str) -> Tuple[str, str, 
         content = export_sysml_xmi(data)
     elif fmt == "jama":
         content = export_jama(data)
+    elif fmt == "pdf":
+        content = export_pdf(data)
     else:
         content = _export_csv(data)
 

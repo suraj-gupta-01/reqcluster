@@ -1,10 +1,7 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, Path, Query, Response, BackgroundTasks
 from fastapi.concurrency import run_in_threadpool
-from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session as DBSession
 from typing import List, Optional, Dict, Tuple
-import asyncio
-import json
 import logging
 
 from models.database import get_db, Session, Requirement, Cluster, Graph, SessionLocal
@@ -17,7 +14,6 @@ from models.schemas import (
     RefinementSuggestionOut, ApplySuggestionRequest, ApplySuggestionResponse,
     AuditLogEntry,
     FeedbackSubmitRequest, FeedbackCorrectionOut, FeedbackReviewRequest,
-    ConstraintPairOut,
     DependencyGenerateRequest, DependencyResponse,
     ConstrainedClusterRequest, ConstrainedClusterResponse,
     UncertaintyQueueResponse, QualityHistoryResponse,
@@ -627,7 +623,7 @@ def get_feedback_queue_endpoint(
     """Retrieve the human feedback review queue for a session."""
     try:
         return get_feedback_queue(db, session_id, status)
-    except Exception as exc:
+    except Exception:
         logger.exception("Get feedback queue error")
         raise HTTPException(500, "Failed to retrieve feedback queue.")
 
@@ -642,7 +638,7 @@ def review_feedback_endpoint(
         return review_feedback(db, request.session_id, request.feedback_id, request.status)
     except ValueError as exc:
         raise HTTPException(400, str(exc))
-    except Exception as exc:
+    except Exception:
         logger.exception("Review feedback error")
         raise HTTPException(500, "Failed to review feedback.")
 
@@ -684,7 +680,7 @@ def get_constraints_endpoint(
             "conflicts": conflicts,
             "has_conflicts": len(conflicts) > 0,
         }
-    except Exception as exc:
+    except Exception:
         logger.exception("Get constraints error")
         raise HTTPException(500, "Failed to retrieve constraints and conflicts.")
 
@@ -716,7 +712,7 @@ def export_feedback_endpoint(
             raise HTTPException(400, "Unsupported export format. Use 'csv' or 'json'.")
     except HTTPException:
         raise
-    except Exception as exc:
+    except Exception:
         logger.exception("Feedback export error")
         raise HTTPException(500, "Failed to export feedback data.")
 
@@ -810,7 +806,7 @@ def export_endpoint(
     session_id: int = Query(..., ge=1),
     db: DBSession = Depends(get_db),
 ):
-    """Export a session as reqif (ReqIF), sysml (SysML/UML XMI), jama, or csv."""
+    """Export a session as pdf (report), reqif (ReqIF), sysml (SysML/UML XMI), jama, or csv."""
     try:
         content, media_type, filename = export_session(db, session_id, fmt)
     except ExportServiceError as exc:

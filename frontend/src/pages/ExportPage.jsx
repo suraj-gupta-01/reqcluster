@@ -1,8 +1,13 @@
 import { useState, useEffect } from 'react'
-import { Download, Loader, FileCode, FileSpreadsheet, Boxes, Network } from 'lucide-react'
+import { Download, Loader, FileCode, FileSpreadsheet, Boxes, Network, FileText } from 'lucide-react'
 import { getSessions, getExportUrl } from '../utils/api.js'
 
 const FORMATS = [
+  {
+    key: 'pdf', icon: FileText, name: 'PDF report',
+    desc: 'A print-ready clustering report: headline metrics, the cluster summary table, and per-cluster requirements. The shareable final output.',
+    accent: '#2fbcaa',
+  },
   {
     key: 'reqif', icon: FileCode, name: 'ReqIF 1.2',
     desc: 'OMG ReqIF XML with cluster-grouped spec hierarchy. Imports into IBM DOORS Next, ReqView, and Polarion.',

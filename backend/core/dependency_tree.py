@@ -15,7 +15,7 @@ prose can be layered on top by the service/LLM provider.
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
 import numpy as np

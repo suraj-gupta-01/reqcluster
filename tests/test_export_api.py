@@ -68,6 +68,7 @@ def _seed(SessionLocal):
     ("sysml", "application/xml"),
     ("jama", "application/json"),
     ("csv", "text/csv"),
+    ("pdf", "application/pdf"),
 ])
 def test_export_formats(api_db, fmt, ctype):
     client, SessionLocal = api_db
@@ -83,7 +84,7 @@ def test_export_formats(api_db, fmt, ctype):
 def test_export_unsupported_format(api_db):
     client, SessionLocal = api_db
     sid = _seed(SessionLocal)
-    res = client.get(f"/api/export/pdf?session_id={sid}")
+    res = client.get(f"/api/export/docx?session_id={sid}")
     assert res.status_code == 400
 
 

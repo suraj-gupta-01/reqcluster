@@ -36,7 +36,7 @@ import numpy as np
 try:
     from sentence_transformers import SentenceTransformer
     _torch_available = True
-except (OSError, ImportError) as e:
+except (OSError, ImportError):
     logging.warning(
         "Failed to load sentence_transformers/PyTorch (likely due to DLL error). "
         "Using local fallback mock."

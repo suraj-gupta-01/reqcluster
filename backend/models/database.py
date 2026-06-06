@@ -40,10 +40,9 @@ from sqlalchemy import (
     UniqueConstraint,
     create_engine,
     event,
-    text,
 )
 from sqlalchemy.orm import declarative_base, sessionmaker
-from sqlalchemy.pool import NullPool, QueuePool, StaticPool
+from sqlalchemy.pool import QueuePool, StaticPool
 
 logger = logging.getLogger(__name__)
 
