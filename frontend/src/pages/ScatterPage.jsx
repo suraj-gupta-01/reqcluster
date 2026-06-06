@@ -108,7 +108,7 @@ export default function ScatterPage() {
         })
 
         traces.push({
-          type: 'scatter',
+          type: 'scattergl',
           mode: 'markers',
           name,
           x: reqs.map(r => r.umap_x),

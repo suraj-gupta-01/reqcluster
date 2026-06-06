@@ -46,9 +46,13 @@ def api_db(tmp_path, monkeypatch):
     app.dependency_overrides[routes.get_db] = override_get_db
     routes.pipeline_progress.clear()
 
+    original_session_local = routes.SessionLocal
+    routes.SessionLocal = TestingSessionLocal
+
     with TestClient(app) as client:
         yield client, TestingSessionLocal, engine
 
+    routes.SessionLocal = original_session_local
     routes.pipeline_progress.clear()
     engine.dispose()
 
@@ -244,8 +248,18 @@ def test_cluster_base_mode_still_works_without_enrichment(api_db, monkeypatch):
         json={"session_id": session_id, "embedding_mode": "base"},
     )
 
-    assert response.status_code == 200
-    assert response.json()["total_clusters"] == 2
+    assert response.status_code == 202
+    assert response.json()["status"] == "processing"
+
+    # Verify the background task execution completes and updates the database
+    db = SessionLocal()
+    try:
+        s = db.query(DbSessionModel).filter(DbSessionModel.id == session_id).first()
+        assert s.status == "done"
+        assert s.total_clusters == 2
+    finally:
+        db.close()
+
     assert calls["kwargs"]["embedding_mode"] == "base"
     assert calls["kwargs"]["enriched_texts"] is None
 
@@ -280,7 +294,17 @@ def test_cluster_hybrid_uses_persisted_enriched_texts(api_db, monkeypatch):
         },
     )
 
-    assert response.status_code == 200
+    assert response.status_code == 202
+    assert response.json()["status"] == "processing"
+
+    # Verify background execution completes
+    db = SessionLocal()
+    try:
+        s = db.query(DbSessionModel).filter(DbSessionModel.id == session_id).first()
+        assert s.status == "done"
+    finally:
+        db.close()
+
     assert calls["kwargs"]["embedding_mode"] == "hybrid"
     assert len(calls["kwargs"]["enriched_texts"]) == 4
     assert calls["kwargs"]["enriched_texts"][0].startswith("Original requirement:")

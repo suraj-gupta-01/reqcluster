@@ -287,7 +287,11 @@ def patch_pipeline(monkeypatch):
     monkeypatch.setattr(
         pipeline,
         "reduce_embeddings",
-        lambda embeddings: (embeddings[:, :10], embeddings[:, :2]),
+        lambda embeddings, return_reducers=False: (
+            (embeddings[:, :10], embeddings[:, :2], None, None)
+            if return_reducers
+            else (embeddings[:, :10], embeddings[:, :2])
+        ),
     )
     monkeypatch.setattr(
         pipeline,

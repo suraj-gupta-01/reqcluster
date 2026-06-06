@@ -16,6 +16,7 @@ env/
 embeddings/
 outputs/
 backend/cache/
+data/models/
 .pytest_cache/
 
 # Transient graphify artifacts (graph.html / graph.json / GRAPH_REPORT.md are kept)

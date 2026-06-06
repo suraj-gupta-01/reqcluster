@@ -141,14 +141,15 @@ class EnrichmentResultOut(BaseModel):
 
 class ClusterResponse(BaseModel):
     session_id: int
-    total_clusters: int
-    noise_count: int
-    clusters: List[ClusterOut]
+    total_clusters: Optional[int] = None
+    noise_count: Optional[int] = None
+    clusters: Optional[List[ClusterOut]] = None
     status: str
     embedding_mode: Optional[Literal["base", "enriched", "hybrid"]] = None
     warnings: Optional[List[str]] = None
     embedding_comparison: Optional[Dict[str, Any]] = None
     ablation_report: Optional[Dict[str, Any]] = None
+
 
 
 class ProgressUpdate(BaseModel):

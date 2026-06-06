@@ -99,11 +99,28 @@ export const getGraph = async (sessionId) => {
   return res.data
 }
 
-export const getRequirements = async (sessionId, clusterId = null) => {
+export const getRequirements = async (sessionId, clusterId = null, params = {}) => {
   let url = `/requirements?session_id=${sessionId}`
   if (clusterId !== null) url += `&cluster_id=${clusterId}`
-  const res = await api.get(url)
-  return res.data
+  
+  const config = {}
+  if (params && Object.keys(params).length > 0) {
+    config.params = {}
+    if (params.page !== undefined && params.page !== null) config.params.page = params.page
+    if (params.page_size !== undefined && params.page_size !== null) config.params.page_size = params.page_size
+    if (params.search !== undefined && params.search !== null) config.params.search = params.search
+    if (params.is_noise !== undefined && params.is_noise !== null) config.params.is_noise = params.is_noise
+    if (params.sort_field !== undefined && params.sort_field !== null) config.params.sort_field = params.sort_field
+    if (params.sort_dir !== undefined && params.sort_dir !== null) config.params.sort_dir = params.sort_dir
+  }
+  
+  const res = await api.get(url, config)
+  const data = res.data
+  const totalCountHeader = res.headers?.['x-total-count'] || res.headers?.['X-Total-Count']
+  if (Array.isArray(data)) {
+    data.totalCount = totalCountHeader ? parseInt(totalCountHeader, 10) : data.length
+  }
+  return data
 }
 
 // Phase 3: Refinement helpers

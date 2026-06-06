@@ -66,12 +66,12 @@ Target (Phase 5): 500K+ requirements 100 users 10 sec clustering 200 MB RAM/sess
 ### Week 3-4: Concurrency
 - [ ] Replace `run_in_threadpool` with `ProcessPoolExecutor`
 - [ ] Refactor LLM provider to async with semaphore-limited concurrency
-- [ ] Add 1-second TTL cache to `/progress/{session_id}` endpoint
-- [ ] Implement pagination for `/requirements` and `/graph` endpoints
+- [x] Add 1-second TTL cache to `/progress/{session_id}` endpoint
+- [x] Implement pagination for `/requirements` and `/graph` endpoints
 
 ### Week 4-5: Memory & Monitoring
-- [ ] Use `np.memmap()` for embedding storage instead of RAM
-- [ ] Serialize fitted UMAP models to disk per session
+- [x] Use `np.memmap()` for embedding storage instead of RAM
+- [x] Serialize fitted UMAP models to disk per session
 - [ ] Implement incremental constraint conflict detection (Union-Find)
 - [ ] Add Prometheus metrics + Grafana dashboard
 - [ ] Set up OpenTelemetry distributed tracing

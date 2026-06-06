@@ -1,13 +1,13 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, Path, Query, Response
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, Path, Query, Response, BackgroundTasks
 from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session as DBSession
-from typing import List, Optional
+from typing import List, Optional, Dict, Tuple
 import asyncio
 import json
 import logging
 
-from models.database import get_db, Session, Requirement, Cluster, Graph
+from models.database import get_db, Session, Requirement, Cluster, Graph, SessionLocal
 from models.schemas import (
     UploadResponse, ClusterRequest, ClusterResponse,
     SessionOut, RequirementOut, ClusterOut, ClusterDetail, GraphOut,
@@ -190,12 +190,142 @@ def get_enrichment_results_endpoint(
         raise HTTPException(exc.status_code, exc.message)
 
 
-@router.post("/cluster", response_model=ClusterResponse)
+def run_pipeline_background(
+    session_id: int,
+    min_cluster_size: Optional[int],
+    min_samples: int,
+    similarity_threshold: float,
+    embedding_mode: str,
+    enriched_texts: Optional[List[str | None]],
+    enable_embedding_comparison: bool,
+    run_ablation: bool,
+):
+    """Background worker task to run the clustering pipeline."""
+    db = SessionLocal()
+    try:
+        # Load requirements
+        reqs = db.query(Requirement).filter(
+            Requirement.session_id == session_id
+        ).order_by(Requirement.id.asc()).all()
+
+        if not reqs:
+            raise ValueError(f"No requirements found for session {session_id}.")
+
+        texts = [r.text for r in reqs]
+        req_ids = [r.req_id for r in reqs]
+
+        # Progress callback writing directly to shared memory progress dict
+        def progress_callback(step: str, pct: int, msg: str):
+            pipeline_progress[session_id] = {"step": step, "progress": pct, "message": msg}
+
+        results = run_pipeline(
+            texts=texts,
+            req_ids=req_ids,
+            min_cluster_size=min_cluster_size,
+            min_samples=min_samples,
+            similarity_threshold=similarity_threshold,
+            progress_callback=progress_callback,
+            embedding_mode=embedding_mode,
+            enriched_texts=enriched_texts,
+            enable_embedding_comparison=enable_embedding_comparison,
+            run_ablation=run_ablation,
+        )
+
+        # Serialize and save fitted UMAP models to disk
+        import pickle
+        import os
+        models_dir = os.path.join("data", "models")
+        os.makedirs(models_dir, exist_ok=True)
+
+        reducer_10d = results.get("reducer_10d")
+        reducer_2d = results.get("reducer_2d")
+
+        if reducer_10d is not None:
+            try:
+                with open(os.path.join(models_dir, f"umap_{session_id}_10d.pkl"), "wb") as f:
+                    pickle.dump(reducer_10d, f)
+            except Exception as e:
+                logger.warning(f"Failed to serialize 10d UMAP reducer: {e}")
+
+        if reducer_2d is not None:
+            try:
+                with open(os.path.join(models_dir, f"umap_{session_id}_2d.pkl"), "wb") as f:
+                    pickle.dump(reducer_2d, f)
+            except Exception as e:
+                logger.warning(f"Failed to serialize 2d UMAP reducer: {e}")
+
+        labels = results["labels"]
+        probabilities = results["probabilities"]
+        embeddings_2d = results["embeddings_2d"]
+        cluster_info = results["cluster_info"]
+        graph_data = results["graph_data"]
+
+        # Clear old cluster and graph data
+        db.query(Cluster).filter(Cluster.session_id == session_id).delete()
+        db.query(Graph).filter(Graph.session_id == session_id).delete()
+
+        # Update requirements assignments
+        for i, req in enumerate(reqs):
+            req.cluster_id = int(labels[i])
+            req.membership_prob = float(probabilities[i])
+            req.umap_x = float(embeddings_2d[i, 0])
+            req.umap_y = float(embeddings_2d[i, 1])
+            req.is_noise = bool(labels[i] == -1)
+
+        # Store clusters
+        for cluster_id, info in cluster_info.items():
+            c = Cluster(
+                session_id=session_id,
+                cluster_id=cluster_id,
+                label=info["label"],
+                keywords=info["keywords"],
+                size=info["size"],
+            )
+            db.add(c)
+
+        # Store graph
+        g = Graph(
+            session_id=session_id,
+            nodes=graph_data["nodes"],
+            edges=graph_data["edges"],
+        )
+        db.add(g)
+
+        # Update session
+        session = db.query(Session).filter(Session.id == session_id).first()
+        if session:
+            session.status = "done"
+            session.total_clusters = results["n_clusters"]
+            session.noise_count = results["noise_count"]
+            
+        db.commit()
+        pipeline_progress[session_id] = {"step": "done", "progress": 100, "message": "Complete!"}
+
+    except Exception as exc:
+        logger.exception("Pipeline background task error")
+        try:
+            session = db.query(Session).filter(Session.id == session_id).first()
+            if session:
+                session.status = "error"
+                db.commit()
+        except Exception:
+            logger.exception("Failed to update session status to error")
+        pipeline_progress[session_id] = {
+            "step": "error",
+            "progress": 0,
+            "message": f"Pipeline failed: {str(exc)}"
+        }
+    finally:
+        db.close()
+
+
+@router.post("/cluster", response_model=ClusterResponse, status_code=202)
 async def cluster_requirements_endpoint(
     request: ClusterRequest,
+    background_tasks: BackgroundTasks,
     db: DBSession = Depends(get_db),
 ):
-    """Run the clustering pipeline on an uploaded session."""
+    """Run the clustering pipeline on an uploaded session asynchronously."""
     session = db.query(Session).filter(Session.id == request.session_id).first()
     if not session:
         raise HTTPException(404, f"Session {request.session_id} not found.")
@@ -203,16 +333,14 @@ async def cluster_requirements_endpoint(
     if session.status == "processing":
         raise HTTPException(409, "Clustering already in progress for this session.")
 
-    # Load requirements
-    reqs = db.query(Requirement).filter(
+    # Load requirements to verify existence and prepare data
+    req_count = db.query(Requirement).filter(
         Requirement.session_id == request.session_id
-    ).order_by(Requirement.id.asc()).all()
+    ).count()
 
-    if not reqs:
+    if req_count == 0:
         raise HTTPException(400, "No requirements found for this session.")
 
-    texts = [r.text for r in reqs]
-    req_ids = [r.req_id for r in reqs]
     enriched_texts = None
     if request.embedding_mode != "base":
         try:
@@ -224,123 +352,52 @@ async def cluster_requirements_endpoint(
         except EnrichmentServiceError as exc:
             raise HTTPException(exc.status_code, exc.message)
 
+    # Transition status to processing eagerly
     session.status = "processing"
     db.commit()
 
-    # Progress tracker
+    # Progress tracker initialization
     session_id = request.session_id
     pipeline_progress[session_id] = {"step": "starting", "progress": 0, "message": "Initializing..."}
 
-    def progress_callback(step: str, pct: int, msg: str):
-        pipeline_progress[session_id] = {"step": step, "progress": pct, "message": msg}
+    # Queue background task
+    background_tasks.add_task(
+        run_pipeline_background,
+        session_id=session_id,
+        min_cluster_size=request.min_cluster_size,
+        min_samples=request.min_samples if request.min_samples is not None else 3,
+        similarity_threshold=(
+            request.similarity_threshold
+            if request.similarity_threshold is not None
+            else 0.65
+        ),
+        embedding_mode=request.embedding_mode,
+        enriched_texts=enriched_texts,
+        enable_embedding_comparison=request.enable_embedding_comparison,
+        run_ablation=request.run_ablation,
+    )
 
-    try:
-        # run_pipeline is CPU-bound (SBERT/UMAP/HDBSCAN). Run it in a worker
-        # thread so the event loop stays free to serve progress polling.
-        results = await run_in_threadpool(
-            run_pipeline,
-            texts=texts,
-            req_ids=req_ids,
-            min_cluster_size=request.min_cluster_size,
-            min_samples=request.min_samples if request.min_samples is not None else 3,
-            similarity_threshold=(
-                request.similarity_threshold
-                if request.similarity_threshold is not None
-                else 0.65
-            ),
-            progress_callback=progress_callback,
-            embedding_mode=request.embedding_mode,
-            enriched_texts=enriched_texts,
-            enable_embedding_comparison=request.enable_embedding_comparison,
-            run_ablation=request.run_ablation,
-        )
+    return ClusterResponse(
+        session_id=session_id,
+        status="processing",
+    )
 
-        labels = results["labels"]
-        probabilities = results["probabilities"]
-        embeddings_2d = results["embeddings_2d"]
-        cluster_info = results["cluster_info"]
-        graph_data = results["graph_data"]
 
-        # Clear old cluster data for this session
-        db.query(Cluster).filter(Cluster.session_id == session_id).delete()
-        db.query(Graph).filter(Graph.session_id == session_id).delete()
-
-        # Update requirements with cluster assignments. `reqs` is already
-        # loaded and ordered identically to texts/labels, so mutate in place
-        # instead of re-querying each row.
-        for i, req in enumerate(reqs):
-            req.cluster_id = int(labels[i])
-            req.membership_prob = float(probabilities[i])
-            req.umap_x = float(embeddings_2d[i, 0])
-            req.umap_y = float(embeddings_2d[i, 1])
-            req.is_noise = bool(labels[i] == -1)
-
-        # Store clusters
-        cluster_db_objs = []
-        for cluster_id, info in cluster_info.items():
-            c = Cluster(
-                session_id=session_id,
-                cluster_id=cluster_id,
-                label=info["label"],
-                keywords=info["keywords"],
-                size=info["size"],
-            )
-            db.add(c)
-            cluster_db_objs.append(c)
-
-        # Store graph
-        g = Graph(
-            session_id=session_id,
-            nodes=graph_data["nodes"],
-            edges=graph_data["edges"],
-        )
-        db.add(g)
-
-        # Update session
-        session.status = "done"
-        session.total_clusters = results["n_clusters"]
-        session.noise_count = results["noise_count"]
-        db.commit()
-
-        db.refresh(session)
-        clusters_out = db.query(Cluster).filter(Cluster.session_id == session_id).all()
-
-        pipeline_progress[session_id] = {"step": "done", "progress": 100, "message": "Complete!"}
-
-        return ClusterResponse(
-            session_id=session_id,
-            total_clusters=results["n_clusters"],
-            noise_count=results["noise_count"],
-            clusters=[
-                ClusterOut(
-                    id=c.id,
-                    session_id=c.session_id,
-                    cluster_id=c.cluster_id,
-                    label=c.label,
-                    keywords=c.keywords,
-                    size=c.size,
-                )
-                for c in clusters_out
-            ],
-            status="done",
-            embedding_mode=results.get("embedding_mode"),
-            warnings=results.get("warnings"),
-            embedding_comparison=results.get("embedding_comparison"),
-            ablation_report=results.get("ablation_report"),
-        )
-
-    except Exception:
-        logger.exception("Pipeline error")
-        session.status = "error"
-        db.commit()
-        pipeline_progress[session_id] = {"step": "error", "progress": 0, "message": "Pipeline failed."}
-        raise HTTPException(500, "Pipeline failed.")
+progress_cache: Dict[int, Tuple[float, dict]] = {}
 
 
 @router.get("/progress/{session_id}")
 async def get_progress(session_id: int):
-    """Get pipeline progress for a session."""
+    """Get pipeline progress for a session with a 1-second TTL cache."""
+    import time
+    now = time.time()
+    if session_id in progress_cache:
+        ts, data = progress_cache[session_id]
+        if now - ts < 1.0:
+            return data
+
     progress = pipeline_progress.get(session_id, {"step": "idle", "progress": 0, "message": "Not started"})
+    progress_cache[session_id] = (now, progress)
     return progress
 
 
@@ -426,13 +483,61 @@ def get_graph(session_id: int, db: DBSession = Depends(get_db)):
 @router.get("/requirements", response_model=List[RequirementOut])
 def get_requirements(
     session_id: int,
+    response: Response,
     cluster_id: Optional[int] = None,
+    is_noise: Optional[bool] = None,
+    search: Optional[str] = None,
+    sort_field: Optional[str] = None,
+    sort_dir: Optional[str] = None,
+    page: Optional[int] = Query(None, ge=1),
+    page_size: Optional[int] = Query(None, ge=1),
     db: DBSession = Depends(get_db),
 ):
-    """Get requirements for a session, optionally filtered by cluster."""
+    """Get requirements for a session, optionally filtered by cluster/noise/search, with optional server-side sorting and pagination."""
     query = db.query(Requirement).filter(Requirement.session_id == session_id)
     if cluster_id is not None:
         query = query.filter(Requirement.cluster_id == cluster_id)
+    if is_noise is not None:
+        query = query.filter(Requirement.is_noise == is_noise)
+    if search:
+        search_term = f"%{search}%"
+        from sqlalchemy import or_
+        query = query.filter(
+            or_(
+                Requirement.req_id.ilike(search_term),
+                Requirement.text.ilike(search_term),
+                Requirement.module.ilike(search_term),
+                Requirement.section.ilike(search_term)
+            )
+        )
+
+    # Calculate and expose total count
+    total_count = query.count()
+    response.headers["X-Total-Count"] = str(total_count)
+    response.headers["Access-Control-Expose-Headers"] = "X-Total-Count"
+
+    # Handle sorting
+    sort_col = Requirement.id
+    if sort_field:
+        if sort_field == "req_id":
+            sort_col = Requirement.req_id
+        elif sort_field == "cluster_id":
+            sort_col = Requirement.cluster_id
+        elif sort_field == "membership_prob":
+            sort_col = Requirement.membership_prob
+        elif sort_field == "module":
+            sort_col = Requirement.module
+        elif sort_field == "text":
+            sort_col = Requirement.text
+
+    if sort_dir == "desc":
+        query = query.order_by(sort_col.desc(), Requirement.id.desc())
+    else:
+        query = query.order_by(sort_col.asc(), Requirement.id.asc())
+
+    if page is not None and page_size is not None:
+        query = query.offset((page - 1) * page_size).limit(page_size)
+
     reqs = query.all()
     return reqs
 

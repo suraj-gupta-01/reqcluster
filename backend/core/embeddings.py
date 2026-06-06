@@ -142,7 +142,7 @@ def generate_embeddings(
 
     if use_cache and os.path.exists(cache_file):
         try:
-            embeddings = np.load(cache_file, allow_pickle=False)
+            embeddings = np.load(cache_file, allow_pickle=False, mmap_mode="r")
         except Exception:
             embeddings = None
         if (
