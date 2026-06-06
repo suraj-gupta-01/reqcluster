@@ -280,8 +280,46 @@ path; large ones automatically switch to the fast parallel/approximate path.
   scatter rendering.
 - 140+ automated tests, green in CI; one-command Docker Compose stack.
 
-Measured: a generated 10,000-requirement set clusters end to end in ~90s on
-plain CPU (no GPU); a 6,000-set in ~55s.
+### Performance (measured)
+
+Per-stage wall-clock on an 8-core CPU (no GPU), model warm, embeddings recomputed
+(no cache). Times in seconds:
+
+| N | embed | UMAP | HDBSCAN | label | graph | **total** |
+|---:|---:|---:|---:|---:|---:|---:|
+| 1,000 | 2.2 | 15.3 | 0.0 | 0.0 | 0.1 | **17.6** |
+| 5,000 | 10.4 | 32.2 | 0.2 | 0.0 | 0.2 | **43.0** |
+| 10,000 | 18.5 | 21.1 | 0.2 | 0.1 | 0.6 | **40.5** |
+
+A real-world run (PROMISE-exp, 969 industry requirements) clusters end to end in
+~29s and yields 19 clusters at 10.9% noise.
+
+**Time efficiency - what the numbers show:**
+
+- **End-to-end cost is ~linear**, not quadratic. The only previously super-linear
+  stage (the similarity graph) is now ANN / O(N log N): just **0.6s at 10k**.
+- **UMAP is the dominant stage.** Above the ~4000 adaptive threshold it runs the
+  parallel + PCA + shared-kNN path, so 10k's UMAP (21s) is actually *faster* than
+  5k's (32s) - it stops growing instead of exploding.
+- **Embeddings scale linearly (~1.9 ms/requirement)** and are the largest cost at
+  10k+. With the Redis/file embedding cache they drop to **~0 on re-runs and
+  incremental additions**, so a cached re-cluster of 10k is essentially UMAP-bound (~20s).
+- **HDBSCAN + labeling + graph together stay under ~1s even at 10k.**
+- **GPU (cuML, auto-detected):** UMAP and HDBSCAN fall to seconds, making the run
+  embed-bound - the route to the 50k-in-under-90s target.
+
+### Infrastructure
+
+| Component | Role |
+|---|---|
+| **FastAPI + Uvicorn** | REST API; clustering runs as an async background job with live progress polling (the request returns immediately). |
+| **PostgreSQL** | Primary datastore: `QueuePool` connection pooling, indexed hot query paths. Auto-falls back to **SQLite** (WAL mode) when `DATABASE_URL` is unset, for zero-setup local dev. |
+| **Redis** | Per-text embedding cache (content-hash keyed); file-cache fallback when `REDIS_URL` is unset. |
+| **Embedding store** | Embeddings persisted off-DB (`.npy`) rather than bloating rows. |
+| **GPU (optional)** | cuML UMAP/HDBSCAN used automatically when a CUDA device is present; CPU path otherwise. |
+| **Docker Compose** | One command brings up postgres + redis + backend + frontend (nginx). Backend image pre-downloads the SBERT model and has a healthcheck. |
+| **CI** | GitHub Actions runs the backend test suite + the frontend build on every push/PR. |
+| **LLM** | Offline-first: deterministic mock by default; optional local (Ollama) or OpenAI-compatible provider. No data leaves the network. |
 
 **Remaining roadmap**
 
