@@ -1,5 +1,22 @@
 from __future__ import annotations
 
+"""
+Domain-aware SBERT embedding generation (enriched / hybrid modes).
+
+Adaptive batch sizing
+---------------------
+The batch_size in DomainEmbeddingConfig defaults to 0 which signals
+"auto".  compute_adaptive_batch_size() picks the optimal value at
+runtime based on the number of texts (same thresholds as embeddings.py).
+Pass an explicit positive integer to override.
+
+Redis per-text cache
+--------------------
+Mirrors the caching strategy in embeddings.py: individual text vectors
+are looked up / stored in Redis before calling the SBERT model.  Only
+uncached texts reach the model.  Falls back silently when Redis is absent.
+"""
+
 import hashlib
 import json
 import os
@@ -14,10 +31,14 @@ from typing import Callable, Optional, Sequence
 import numpy as np
 
 from .embeddings import CACHE_DIR as PHASE1_CACHE_DIR
-from .embeddings import MODEL_NAME, get_model
+from .embeddings import MODEL_NAME, get_model, compute_adaptive_batch_size
+from .embedding_cache import get_cached_embeddings_batch, set_cached_embeddings_batch
 
 
 EMBEDDING_DIM = 384
+# Hard upper cap — never send more than this many texts to the model in one
+# forward pass (memory guard).  The default is computed adaptively; see
+# compute_adaptive_batch_size() in embeddings.py.
 MAX_BATCH_SIZE = 512
 MAX_TEXT_CHARS_LIMIT = 100_000
 CACHE_DIR = Path(PHASE1_CACHE_DIR)
@@ -33,7 +54,9 @@ class EmbeddingMode(str, Enum):
 @dataclass(frozen=True)
 class DomainEmbeddingConfig:
     mode: EmbeddingMode = EmbeddingMode.BASE
-    batch_size: int = 64
+    # batch_size=0 means "auto" — compute_adaptive_batch_size() will choose
+    # based on dataset size.  Pass a positive integer to override.
+    batch_size: int = 0
     normalize: bool = True
     fallback_to_base: bool = True
     cache_namespace: str = "v2"
@@ -46,8 +69,8 @@ class DomainEmbeddingConfig:
             raise ValueError("Invalid embedding mode. Use base, enriched, or hybrid.") from exc
         object.__setattr__(self, "mode", mode)
 
-        if not isinstance(self.batch_size, int) or not (1 <= self.batch_size <= MAX_BATCH_SIZE):
-            raise ValueError(f"batch_size must be between 1 and {MAX_BATCH_SIZE}.")
+        if not isinstance(self.batch_size, int) or not (0 <= self.batch_size <= MAX_BATCH_SIZE):
+            raise ValueError(f"batch_size must be between 0 (auto) and {MAX_BATCH_SIZE}.")
         if not isinstance(self.normalize, bool):
             raise ValueError("normalize must be a boolean.")
         if not isinstance(self.fallback_to_base, bool):
@@ -238,29 +261,53 @@ def _encode_texts(
             progress_callback(0, 0)
         return np.empty((0, EMBEDDING_DIM), dtype=np.float32)
 
-    model = get_model()
-    batches: list[np.ndarray] = []
     total = len(embedding_texts)
+    # Resolve adaptive batch size: 0 means auto-select.
+    effective_batch = compute_adaptive_batch_size(
+        total, override=config.batch_size if config.batch_size > 0 else None
+    )
 
-    for start in range(0, total, config.batch_size):
-        batch = embedding_texts[start : start + config.batch_size]
-        encoded = model.encode(
-            batch,
-            batch_size=config.batch_size,
-            convert_to_numpy=True,
-            show_progress_bar=False,
-            normalize_embeddings=config.normalize,
-        )
-        batch_embeddings = np.asarray(encoded, dtype=np.float32)
-        if batch_embeddings.ndim == 1:
-            batch_embeddings = batch_embeddings.reshape(1, -1)
-        if batch_embeddings.shape != (len(batch), EMBEDDING_DIM):
-            raise ValueError("Embedding model returned an unexpected output shape.")
-        batches.append(batch_embeddings)
+    # ── Redis per-text cache lookup ────────────────────────────────────────
+    cached_vectors = get_cached_embeddings_batch(embedding_texts)
+    miss_indices = [i for i, v in enumerate(cached_vectors) if v is None]
+    hit_count = total - len(miss_indices)
+
+    if miss_indices:
+        model = get_model()
+        miss_texts = [embedding_texts[i] for i in miss_indices]
+        miss_batches: list[np.ndarray] = []
+
+        for start in range(0, len(miss_texts), effective_batch):
+            batch = miss_texts[start: start + effective_batch]
+            encoded = model.encode(
+                batch,
+                batch_size=effective_batch,
+                convert_to_numpy=True,
+                show_progress_bar=False,
+                normalize_embeddings=config.normalize,
+            )
+            batch_embeddings = np.asarray(encoded, dtype=np.float32)
+            if batch_embeddings.ndim == 1:
+                batch_embeddings = batch_embeddings.reshape(1, -1)
+            if batch_embeddings.shape != (len(batch), EMBEDDING_DIM):
+                raise ValueError("Embedding model returned an unexpected output shape.")
+            miss_batches.append(batch_embeddings)
+            if progress_callback:
+                encoded_so_far = hit_count + min(start + effective_batch, len(miss_texts))
+                progress_callback(encoded_so_far, total)
+
+        miss_matrix = np.vstack(miss_batches).astype(np.float32, copy=False)
+        # Write back to Redis
+        set_cached_embeddings_batch(miss_texts, miss_matrix)
+
+        for idx, miss_idx in enumerate(miss_indices):
+            cached_vectors[miss_idx] = miss_matrix[idx]
+    else:
         if progress_callback:
-            progress_callback(min(start + config.batch_size, total), total)
+            progress_callback(total, total)
 
-    embeddings = np.vstack(batches).astype(np.float32, copy=False)
+    embeddings = np.vstack(cached_vectors).astype(np.float32, copy=False)
+
     if not np.all(np.isfinite(embeddings)):
         embeddings = np.nan_to_num(embeddings, nan=0.0, posinf=0.0, neginf=0.0).astype(
             np.float32,
