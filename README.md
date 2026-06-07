@@ -282,31 +282,57 @@ path; large ones automatically switch to the fast parallel/approximate path.
 
 ### Performance (measured)
 
-Per-stage wall-clock on an 8-core CPU (no GPU), model warm, embeddings recomputed
-(no cache). Times in seconds:
+Full pipeline (upload → preprocess → embed → UMAP → HDBSCAN → label → graph →
+output) on a 12-core CPU laptop + RTX 2050. `reduce/HDBSCAN/graph` are measured
+end-to-end runs through the project code; `embed` from measured throughput
+(CPU ≈ 447 req/s, GPU ≈ 3,650 req/s); preprocess is sub-second. Times in seconds.
 
-| N | embed | UMAP | HDBSCAN | label | graph | **total** |
-|---:|---:|---:|---:|---:|---:|---:|
-| 1,000 | 2.2 | 15.3 | 0.0 | 0.0 | 0.1 | **17.6** |
-| 5,000 | 10.4 | 32.2 | 0.2 | 0.0 | 0.2 | **43.0** |
-| 10,000 | 18.5 | 21.1 | 0.2 | 0.1 | 0.6 | **40.5** |
+| N | embed CPU | embed GPU | UMAP+reduce | HDBSCAN | graph | **total CPU** | **total GPU-embed** | adaptive method |
+|---:|---:|---:|---:|---:|---:|---:|---:|:--|
+| 500 | 1.1 | 0.1 | ~6 | 0.01 | 0.04 | **~7** | **~6** | seeded / 1-thread |
+| 1,000 | 2.2 | 0.3 | 7.1 | 0.03 | 0.09 | **~9.5** | **~7.5** | seeded / 1-thread |
+| 5,000 | 11.2 | 1.4 | 36.6\* | 0.15 | 0.21 | **~48** | **~38** | parallel + PCA |
+| 10,000 | 22.4 | 2.7 | 23.2 | 0.33 | 0.50 | **~47** | **~27** | parallel + PCA |
+| 35,000 | 78 | 9.6 | 32.4 | 2.9 | 3.0 | **~117** | **~48** | parallel + PCA |
+| 50,000 | 112 | 13.8 | 42.8 | 2.5 | 4.9 | **~163** | **~64** | parallel + PCA |
 
-A real-world run (PROMISE-exp, 969 industry requirements) clusters end to end in
-~29s and yields 19 clusters at 10.9% noise.
+\* The 5k `reduce` is inflated by the one-time numba JIT of the parallel code path
+(first parallel run); warm it is ~20-25s, in line with the 10k figure.
 
-**Time efficiency - what the numbers show:**
+**Single-core vs all-core** (UMAP, the dominant stage): a controlled 8k run gives
+1 core = 52.9s, all 12 cores = 14.8s → **~3.6× faster** (sub-linear; Amdahl). Under
+4,000 requirements the pipeline is single-threaded *by design* for reproducibility,
+so 1-core = all-core there; above 4,000 it auto-parallelizes.
 
-- **End-to-end cost is ~linear**, not quadratic. The only previously super-linear
-  stage (the similarity graph) is now ANN / O(N log N): just **0.6s at 10k**.
-- **UMAP is the dominant stage.** Above the ~4000 adaptive threshold it runs the
-  parallel + PCA + shared-kNN path, so 10k's UMAP (21s) is actually *faster* than
-  5k's (32s) - it stops growing instead of exploding.
-- **Embeddings scale linearly (~1.9 ms/requirement)** and are the largest cost at
-  10k+. With the Redis/file embedding cache they drop to **~0 on re-runs and
-  incremental additions**, so a cached re-cluster of 10k is essentially UMAP-bound (~20s).
-- **HDBSCAN + labeling + graph together stay under ~1s even at 10k.**
-- **GPU (cuML, auto-detected):** UMAP and HDBSCAN fall to seconds, making the run
-  embed-bound - the route to the 50k-in-under-90s target.
+**One-time costs** (first clustering after a server start): SBERT model load ~4s +
+numba JIT ~8s. A real first run (PROMISE-exp, 969 reqs) lands at ~29s including these.
+
+**What the numbers show:**
+- **End-to-end cost is ~linear**, not quadratic — the old O(N²) graph is now ANN /
+  O(N log N) (≤5s even at 50k).
+- **Embeddings dominate at scale**; GPU embeddings roughly **halve** large runs
+  (50k: 163s → 64s) and the file/Redis cache makes re-runs embed-free (~0s).
+- **UMAP is the dominant compute stage**; parallel + PCA keep it flat (10k 23s ≈
+  35k 32s ≈ 50k 43s) instead of exploding. Run-to-run timing varies ±20-30%
+  (parallel scheduling) — use the median.
+- **GPU UMAP/HDBSCAN (cuML)** would cut these further but is Linux/WSL-only.
+
+### Adaptive methods — what runs at each size & how to control it
+
+| Input size N | Reduction method | Embedding | Determinism |
+|---|---|---|---|
+| < 4,000 | seeded single-threaded UMAP + PCA(>50) | CPU/GPU auto | reproducible |
+| ≥ 4,000 | parallel UMAP (`n_jobs=-1`) + PCA + shared kNN | CPU/GPU auto | non-deterministic |
+| CUDA + cuML present | GPU UMAP/HDBSCAN (`cuml`) | GPU | — |
+
+| You want | How |
+|---|---|
+| See active device | `python backend/core/device.py` |
+| GPU embeddings (~8×) | `pip install torch --index-url https://download.pytorch.org/whl/cu121` |
+| GPU UMAP/HDBSCAN | install RAPIDS cuML (Linux/WSL) |
+| Parallel UMAP for small N | `REQCLUSTER_SMALL_N=500` in `.env` |
+| Force single-core | `NUMBA_NUM_THREADS=1` |
+| Tune clustering | Upload-page params, or `POST /api/cluster {min_cluster_size, min_samples, similarity_threshold}` |
 
 ### Infrastructure
 

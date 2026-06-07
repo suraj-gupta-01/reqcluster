@@ -42,7 +42,7 @@ from sqlalchemy import (
     event,
 )
 from sqlalchemy.orm import declarative_base, sessionmaker
-from sqlalchemy.pool import QueuePool, StaticPool
+from sqlalchemy.pool import NullPool, QueuePool
 
 logger = logging.getLogger(__name__)
 
@@ -123,11 +123,15 @@ else:
 
     engine = create_engine(
         _DATABASE_URL,
-        connect_args={"check_same_thread": False},
-        # StaticPool reuses the same in-process connection for all threads —
-        # safe for the single-writer SQLite use-case and avoids file locking
-        # issues on Windows.
-        poolclass=StaticPool,
+        # check_same_thread=False: connections may be used across FastAPI's
+        # threadpool. timeout: wait (don't error) when the DB is briefly locked.
+        connect_args={"check_same_thread": False, "timeout": 30},
+        # NullPool: each request gets its OWN short-lived connection. A shared
+        # connection (StaticPool) breaks under concurrency - one request's
+        # commit/rollback invalidates another request's open cursor
+        # ("Cursor needed to be reset ..."). WAL mode (below) lets these
+        # per-request connections read concurrently while writes serialize.
+        poolclass=NullPool,
     )
 
     # Enable WAL mode so reads don't block writes even under SQLite.
