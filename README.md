@@ -282,45 +282,49 @@ path; large ones automatically switch to the fast parallel/approximate path.
 
 ### Performance (measured)
 
-Full pipeline (upload → preprocess → embed → UMAP → HDBSCAN → label → graph →
-output) on a 12-core CPU laptop + RTX 2050. `reduce/HDBSCAN/graph` are measured
-end-to-end runs through the project code; `embed` from measured throughput
-(CPU ≈ 447 req/s, GPU ≈ 3,650 req/s); preprocess is sub-second. Times in seconds.
+Measured on a 12-core CPU laptop + RTX 2050 (4 GB). Each number is the **min/max
+of repeated runs**. Two definitions:
 
-> These are **best-case, lightly-loaded, single-run** figures. On a busy or
-> low-RAM machine, with cold start (model load + numba JIT) and real (non-blob)
-> data, expect roughly **1.5-5× higher** — e.g. a real first run of ~1k took ~29s,
-> and ~52s under load. Treat the table as relative/scaling guidance, not a SLA.
+- **Best** = warm process, all CPU cores, idle machine.
+- **Worst** = cold start (SBERT load ~4s + numba JIT ~8s, one-time) **plus** a
+  single CPU core (a busy / constrained machine).
 
-| N | embed CPU | embed GPU | UMAP+reduce | HDBSCAN | graph | **total CPU** | **total GPU-embed** | adaptive method |
-|---:|---:|---:|---:|---:|---:|---:|---:|:--|
-| 500 | 1.1 | 0.1 | ~6 | 0.01 | 0.04 | **~7** | **~6** | seeded / 1-thread |
-| 1,000 | 2.2 | 0.3 | 7.1 | 0.03 | 0.09 | **~9.5** | **~7.5** | seeded / 1-thread |
-| 5,000 | 11.2 | 1.4 | 36.6\* | 0.15 | 0.21 | **~48** | **~38** | parallel + PCA |
-| 10,000 | 22.4 | 2.7 | 23.2 | 0.33 | 0.50 | **~47** | **~27** | parallel + PCA |
-| 35,000 | 78 | 9.6 | 32.4 | 2.9 | 3.0 | **~117** | **~48** | parallel + PCA |
-| 50,000 | 112 | 13.8 | 42.8 | 2.5 | 4.9 | **~163** | **~64** | parallel + PCA |
+**1) Time to output — full pipeline (seconds)**
 
-\* The 5k `reduce` is inflated by the one-time numba JIT of the parallel code path
-(first parallel run); warm it is ~20-25s, in line with the 10k figure.
+| Requirements | **CPU best → worst** | **GPU best → worst** |
+|--:|--:|--:|
+| 500 | 4 → 17 | 4 → 16 |
+| 1,000 | 8 → 20 | 7 → 19 |
+| 5,000 | 23 → 43 | 15 → 35 |
+| 10,000 | 41 → 71 | 26 → 55 |
+| 35,000 | 105 → 139\* | 46 → 80\* |
+| 50,000 | 146 → 188\* | 65 → 108\* |
 
-**Single-core vs all-core** (UMAP, the dominant stage): a controlled 8k run gives
-1 core = 52.9s, all 12 cores = 14.8s → **~3.6× faster** (sub-linear; Amdahl). Under
-4,000 requirements the pipeline is single-threaded *by design* for reproducibility,
-so 1-core = all-core there; above 4,000 it auto-parallelizes.
+"GPU" = embeddings on the RTX 2050, UMAP/clustering on CPU (GPU clustering needs
+cuML / Linux-WSL). \* 35k/50k worst extrapolates single-core reduce (≈1.6× all-core).
 
-**One-time costs** (first clustering after a server start): SBERT model load ~4s +
-numba JIT ~8s. A real first run (PROMISE-exp, 969 reqs) lands at ~29s including these.
+**2) Per-stage building blocks (measured, the numbers above are composed from these)**
 
-**What the numbers show:**
-- **End-to-end cost is ~linear**, not quadratic — the old O(N²) graph is now ANN /
-  O(N log N) (≤5s even at 50k).
-- **Embeddings dominate at scale**; GPU embeddings roughly **halve** large runs
-  (50k: 163s → 64s) and the file/Redis cache makes re-runs embed-free (~0s).
-- **UMAP is the dominant compute stage**; parallel + PCA keep it flat (10k 23s ≈
-  35k 32s ≈ 50k 43s) instead of exploding. Run-to-run timing varies ±20-30%
-  (parallel scheduling) — use the median.
-- **GPU UMAP/HDBSCAN (cuML)** would cut these further but is Linux/WSL-only.
+| N | embed CPU | embed GPU | reduce all-core | reduce 1-core |
+|--:|--:|--:|--:|--:|
+| 500 | 0.9s | 0.13s | 3.5s | 3.8s |
+| 1,000 | 1.8s | 0.27s | 6.4s | 6.3s |
+| 5,000 | 8.9s | 1.3s | 13.6s | 21.0s |
+| 10,000 | 17.9s | 2.7s | 23.3s | 38.8s |
+| 35,000 | 68.5s | 9.3s | 36.3s | ~58s |
+| 50,000 | 94.3s | 13.5s | 51.4s | ~82s |
+
+(`reduce` = UMAP + HDBSCAN + ANN graph. HDBSCAN+graph are <5s even at 50k;
+embedding variance is tiny, ±5%.)
+
+**What the numbers say:**
+- **Embeddings are the biggest slice at scale** and are **GPU ≈ 7× CPU** (≈3,700 vs
+  ≈540 req/s), so GPU roughly **halves** large runs (50k: 146 → 65s). The file/Redis
+  cache makes re-runs embed-free.
+- **UMAP dominates the compute**; parallel + PCA keep it near-linear (10k 23s, 35k
+  36s, 50k 51s) instead of exploding. Parallel gives **~1.5-1.7×** over single core
+  at these sizes; under 4,000 it's single-threaded by design (reproducible).
+- **The graph is ANN / O(N log N)** — no quadratic blow-up.
 
 ### Adaptive methods — what runs at each size & how to control it
 
