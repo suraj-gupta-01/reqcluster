@@ -154,11 +154,15 @@ export default function UploadPage({ onSessionCreated }) {
         <div className="lg:col-span-2 space-y-6">
           {/* Header */}
           <div className="mb-6">
-            <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
-              <Upload className="text-brand-400" size={24} />
-              Upload Requirements
-            </h1>
-            <p className="text-gray-400 mt-1">Import a CSV or XLSX file with your engineering requirements to begin clustering.</p>
+            <div className="font-mono text-[11px] uppercase tracking-[0.22em] text-brand-400/80 mb-2">
+              Stage 01 — Ingest
+            </div>
+            <h1 className="text-3xl font-bold text-white tracking-tight">Upload requirements</h1>
+            <div className="mt-2 h-px w-16 bg-gradient-to-r from-brand-500 to-transparent" />
+            <p className="text-gray-400 mt-3 max-w-lg">
+              Import a CSV or XLSX of engineering requirements. The pipeline embeds, reduces,
+              clusters, labels, and graphs them automatically.
+            </p>
           </div>
 
           {/* Drop zone */}
@@ -167,16 +171,16 @@ export default function UploadPage({ onSessionCreated }) {
             onDragLeave={() => setDragOver(false)}
             onDrop={handleDrop}
             onClick={() => !file && fileInputRef.current?.click()}
-            className={`relative border-2 border-dashed rounded-xl p-10 text-center transition-all cursor-pointer
-              ${dragOver ? 'border-brand-500 bg-brand-600/10' : file ? 'border-gray-700 bg-gray-900/50 cursor-default' : 'border-gray-700 hover:border-gray-600 hover:bg-gray-900/30'}`}
+            className={`relative border border-dashed rounded-2xl p-10 text-center transition-all duration-200 cursor-pointer
+              ${dragOver ? 'border-brand-500 bg-brand-500/[0.07]' : file ? 'border-brand-500/20 bg-white/[0.02] cursor-default' : 'border-brand-500/20 hover:border-brand-500/40 hover:bg-white/[0.02]'}`}
           >
             <input ref={fileInputRef} type="file" accept=".csv,.xlsx,.xls" className="hidden"
               onChange={e => e.target.files[0] && validateAndSetFile(e.target.files[0])} />
 
             {!file ? (
               <div>
-                <div className="w-12 h-12 bg-gray-800 rounded-xl flex items-center justify-center mx-auto mb-4">
-                  <Upload size={22} className={`${dragOver ? 'text-brand-400' : 'text-gray-500'} transition-colors`} />
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-4 border border-brand-500/20 bg-brand-500/[0.06]">
+                  <Upload size={22} className={`${dragOver ? 'text-brand-300' : 'text-brand-400/70'} transition-colors`} />
                 </div>
                 <p className="text-sm font-medium text-gray-300 mb-1">
                   {dragOver ? 'Drop to upload' : 'Drag & drop or click to browse'}
@@ -341,11 +345,11 @@ export default function UploadPage({ onSessionCreated }) {
           {/* Format guide */}
           {phase === 'idle' && !file && (
             <div className="mt-8">
-              <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">Expected CSV/XLSX Format</p>
-              <div className="bg-gray-900 border border-gray-800 rounded-lg p-4 font-mono text-xs text-gray-400 overflow-x-auto">
+              <p className="text-[11px] font-mono uppercase tracking-[0.18em] text-gray-500 mb-3">Expected CSV / XLSX format</p>
+              <div className="panel p-5 font-mono text-xs text-gray-400 overflow-x-auto">
                 <div className="text-gray-600 mb-1"># columns: id, text, module, section</div>
-                <div><span className="text-brand-400">REQ-001</span>,<span className="text-amber-400">"Cooling fan shall activate above 70°C"</span>,<span className="text-emerald-400">Thermal</span>,<span className="text-purple-400">Temperature</span></div>
-                <div><span className="text-brand-400">REQ-002</span>,<span className="text-amber-400">"System shall survive 15g shock"</span>,<span className="text-emerald-400">Mechanical</span>,<span className="text-purple-400">Reliability</span></div>
+                <div><span className="text-brand-400">REQ-001</span>,<span className="text-signal-400">"Cooling fan shall activate above 70°C"</span>,<span className="text-emerald-400">Thermal</span>,<span className="text-brand-300">Temperature</span></div>
+                <div><span className="text-brand-400">REQ-002</span>,<span className="text-signal-400">"System shall survive 15g shock"</span>,<span className="text-emerald-400">Mechanical</span>,<span className="text-brand-300">Reliability</span></div>
               </div>
             </div>
           )}

@@ -5,31 +5,52 @@
 @layer base {
   body {
     @apply bg-gray-950 text-gray-100 antialiased;
-    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    font-family: 'Space Grotesk', system-ui, sans-serif;
   }
 
-  /* Subtle fixed depth layer so glass surfaces have something to refract.
-     Low-intensity teal, no purple, no animation. */
+  /* Depth layer: deep ink with low-intensity teal glows. */
   body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    pointer-events: none;
+    background:
+      radial-gradient(58rem 40rem at 14% -10%, rgba(20, 160, 143, 0.12), transparent 60%),
+      radial-gradient(48rem 38rem at 102% 4%, rgba(13, 129, 117, 0.08), transparent 55%),
+      linear-gradient(180deg, #0a0e0d 0%, #080a0a 100%);
+  }
+
+  /* Blueprint grid - faint engineering lattice that fades toward the bottom. */
+  body::after {
     content: "";
     position: fixed;
     inset: 0;
     z-index: -1;
     pointer-events: none;
-    background:
-      radial-gradient(60rem 40rem at 18% -8%, rgba(20, 160, 143, 0.10), transparent 60%),
-      radial-gradient(50rem 38rem at 100% 0%, rgba(13, 129, 117, 0.08), transparent 55%),
-      linear-gradient(180deg, #0a0d0c 0%, #090b0b 100%);
+    background-image:
+      linear-gradient(rgba(47, 188, 170, 0.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(47, 188, 170, 0.045) 1px, transparent 1px);
+    background-size: 46px 46px;
+    -webkit-mask-image: radial-gradient(120% 90% at 28% -5%, #000 10%, transparent 72%);
+    mask-image: radial-gradient(120% 90% at 28% -5%, #000 10%, transparent 72%);
   }
 
-  ::selection { background: rgba(20, 160, 143, 0.30); }
-  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  /* Visible keyboard focus everywhere (accessibility). */
+  :focus-visible {
+    outline: 2px solid rgba(47, 188, 170, 0.75);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+  ::selection { background: rgba(47, 188, 170, 0.32); }
+  ::-webkit-scrollbar { width: 9px; height: 9px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { @apply bg-gray-700/60 rounded-full; border: 2px solid transparent; background-clip: padding-box; }
+  ::-webkit-scrollbar-thumb { @apply bg-gray-700/50 rounded-full; border: 2px solid transparent; background-clip: padding-box; }
   ::-webkit-scrollbar-thumb:hover { @apply bg-brand-600/70; }
 
   select option {
-    background-color: #111827;
+    background-color: #0e1413;
     color: #f3f4f6;
   }
 }
@@ -37,20 +58,34 @@
 @layer components {
   /* Frosted glass surface (not glossy). Solid fallback for reduced transparency. */
   .glass {
-    @apply rounded-2xl border border-white/[0.06];
-    background: rgba(17, 22, 22, 0.55);
+    @apply rounded-2xl;
+    border: 1px solid rgba(47, 188, 170, 0.1);
+    background: rgba(15, 21, 20, 0.6);
     -webkit-backdrop-filter: blur(18px) saturate(140%);
     backdrop-filter: blur(18px) saturate(140%);
-    box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.04) inset, 0 16px 50px -18px rgba(0, 0, 0, 0.65);
+    box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.04) inset, 0 16px 50px -18px rgba(0, 0, 0, 0.7);
   }
 
   .card {
-    @apply rounded-2xl border border-white/[0.06];
-    background: rgba(20, 26, 26, 0.5);
+    @apply rounded-2xl;
+    border: 1px solid rgba(47, 188, 170, 0.1);
+    background: rgba(17, 23, 22, 0.55);
     -webkit-backdrop-filter: blur(16px) saturate(135%);
     backdrop-filter: blur(16px) saturate(135%);
-    box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.04) inset, 0 14px 44px -16px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.04) inset, 0 14px 44px -16px rgba(0, 0, 0, 0.62);
   }
+
+  /* Engineered panel with corner tick marks - opt-in via `.panel`. */
+  .panel { @apply card relative; }
+  .panel::before, .panel::after {
+    content: "";
+    position: absolute;
+    width: 10px; height: 10px;
+    border-color: rgba(47, 188, 170, 0.5);
+    pointer-events: none;
+  }
+  .panel::before { top: 8px; left: 8px; border-top: 1.5px solid; border-left: 1.5px solid; }
+  .panel::after { bottom: 8px; right: 8px; border-bottom: 1.5px solid; border-right: 1.5px solid; }
 
   .btn-primary {
     @apply inline-flex items-center justify-center gap-2 font-semibold text-white px-4 py-2 rounded-xl

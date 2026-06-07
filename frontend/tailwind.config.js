@@ -17,9 +17,14 @@ export default {
           800: '#11514c',
           900: '#11433f',
         },
+        // Warm signal accent, used sparingly for active/live "instrument" states.
+        signal: {
+          400: '#f4b860',
+          500: '#e89d3c',
+        },
       },
       fontFamily: {
-        sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+        sans: ['"Space Grotesk"', 'system-ui', 'sans-serif'],
         mono: ['"JetBrains Mono"', 'Fira Code', 'monospace'],
       },
       boxShadow: {
