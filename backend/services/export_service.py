@@ -98,18 +98,27 @@ def _gather(db: DBSession, session_id: int) -> Dict[str, Any]:
     }
 
 
+def _csv_safe(value: Any) -> Any:
+    """Neutralize CSV/formula injection. A spreadsheet treats a cell starting with
+    = + - @ (or tab/CR) as a live formula; prefix those with an apostrophe so the
+    requirement text is shown literally, not executed."""
+    if isinstance(value, str) and value[:1] in ("=", "+", "-", "@", "\t", "\r"):
+        return "'" + value
+    return value
+
+
 def _export_csv(data: Dict[str, Any]) -> str:
     cluster_label = {c["cluster_id"]: c["label"] for c in data["clusters"]}
     out = io.StringIO()
     writer = csv.writer(out)
     writer.writerow(["req_id", "text", "module", "section", "cluster_id", "cluster_label", "is_noise"])
     for r in data["requirements"]:
-        writer.writerow([
+        writer.writerow([_csv_safe(v) for v in (
             r.get("req_id"), r.get("text"), r.get("module"), r.get("section"),
             r.get("cluster_id"),
             cluster_label.get(r.get("cluster_id"), "Noise" if r.get("cluster_id") == -1 else ""),
             r.get("is_noise"),
-        ])
+        )])
     return out.getvalue()
 
 

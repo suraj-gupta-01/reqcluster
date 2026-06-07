@@ -23,8 +23,8 @@ def load_dotenv():
                             if k and k not in os.environ:
                                 os.environ[k] = v
                 break
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"warning: could not read env file {path}: {e}", file=sys.stderr)
 
 load_dotenv()
 

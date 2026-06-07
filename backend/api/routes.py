@@ -58,7 +58,9 @@ from services.export_service import ExportServiceError, export_session
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-# In-memory progress store
+# In-memory progress store. NOTE: process-local — correct for a single worker
+# (the default). With multiple uvicorn workers, move this to the DB or Redis so
+# /api/progress polls hit the same state regardless of which worker serves them.
 pipeline_progress: dict = {}
 
 # Reject uploads larger than this to avoid loading huge files into memory.
@@ -226,29 +228,6 @@ def run_pipeline_background(
             enable_embedding_comparison=enable_embedding_comparison,
             run_ablation=run_ablation,
         )
-
-        # Serialize and save fitted UMAP models to disk
-        import pickle
-        import os
-        models_dir = os.path.join("data", "models")
-        os.makedirs(models_dir, exist_ok=True)
-
-        reducer_10d = results.get("reducer_10d")
-        reducer_2d = results.get("reducer_2d")
-
-        if reducer_10d is not None:
-            try:
-                with open(os.path.join(models_dir, f"umap_{session_id}_10d.pkl"), "wb") as f:
-                    pickle.dump(reducer_10d, f)
-            except Exception as e:
-                logger.warning(f"Failed to serialize 10d UMAP reducer: {e}")
-
-        if reducer_2d is not None:
-            try:
-                with open(os.path.join(models_dir, f"umap_{session_id}_2d.pkl"), "wb") as f:
-                    pickle.dump(reducer_2d, f)
-            except Exception as e:
-                logger.warning(f"Failed to serialize 2d UMAP reducer: {e}")
 
         labels = results["labels"]
         probabilities = results["probabilities"]

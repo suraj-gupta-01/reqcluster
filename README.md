@@ -287,6 +287,11 @@ output) on a 12-core CPU laptop + RTX 2050. `reduce/HDBSCAN/graph` are measured
 end-to-end runs through the project code; `embed` from measured throughput
 (CPU ≈ 447 req/s, GPU ≈ 3,650 req/s); preprocess is sub-second. Times in seconds.
 
+> These are **best-case, lightly-loaded, single-run** figures. On a busy or
+> low-RAM machine, with cold start (model load + numba JIT) and real (non-blob)
+> data, expect roughly **1.5-5× higher** — e.g. a real first run of ~1k took ~29s,
+> and ~52s under load. Treat the table as relative/scaling guidance, not a SLA.
+
 | N | embed CPU | embed GPU | UMAP+reduce | HDBSCAN | graph | **total CPU** | **total GPU-embed** | adaptive method |
 |---:|---:|---:|---:|---:|---:|---:|---:|:--|
 | 500 | 1.1 | 0.1 | ~6 | 0.01 | 0.04 | **~7** | **~6** | seeded / 1-thread |

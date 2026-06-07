@@ -115,9 +115,10 @@ def run_pipeline(
         step("embedding_comparison", 35, "Comparing base and selected embeddings...")
         embedding_comparison = compare_embeddings(base_embeddings, embeddings)
 
-    # Step 2: UMAP
+    # Step 2: UMAP. We don't keep the fitted reducers - they were only pickled to
+    # disk and never loaded, and they hold a full copy of the data (large at scale).
     step("umap", 36 if enable_embedding_comparison else 32, "Running UMAP dimensionality reduction...")
-    embeddings_10d, embeddings_2d, reducer_10d, reducer_2d = reduce_embeddings(embeddings, return_reducers=True)
+    embeddings_10d, embeddings_2d = reduce_embeddings(embeddings)
     step("umap", 55, "UMAP complete")
 
     # Step 3: HDBSCAN
@@ -174,8 +175,6 @@ def run_pipeline(
         "embeddings": embeddings,
         "embeddings_10d": embeddings_10d,
         "embeddings_2d": embeddings_2d,
-        "reducer_10d": reducer_10d,
-        "reducer_2d": reducer_2d,
         "labels": labels,
         "probabilities": probabilities,
         "cluster_info": cluster_info,

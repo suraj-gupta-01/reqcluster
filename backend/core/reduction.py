@@ -6,7 +6,10 @@ try:
     import torch
     import cuml
     GPU_AVAILABLE = torch.cuda.is_available()
-except ImportError:
+except Exception:
+    # Not just ImportError: a CPU-only torch whose native DLLs fail to load
+    # raises OSError (e.g. Windows WinError 1114). That must also fall back to
+    # the CPU path instead of crashing the whole import.
     GPU_AVAILABLE = False
 
 

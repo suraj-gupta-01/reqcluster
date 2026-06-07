@@ -104,11 +104,18 @@ def build_similarity_graph(
     """Build the similarity graph (nodes + weighted edges)."""
     n = len(texts)
 
+    # Cap stored text per node: the full corpus duplicated into the graph JSON
+    # bloats the DB row and the /api/graph payload at scale. A hover-length
+    # snippet keeps the dashboard tooltip working; full text lives in /requirements.
+    def _snippet(s, limit: int = 200) -> str:
+        s = str(s or "")
+        return s if len(s) <= limit else s[:limit].rstrip() + "…"
+
     nodes = [
         {
             "id": i,
             "node_id": req_ids[i] if i < len(req_ids) else f"REQ-{i}",
-            "requirement_text": texts[i],
+            "requirement_text": _snippet(texts[i]),
             "cluster_id": int(labels[i]),
             "x": float(umap_2d[i, 0]),
             "y": float(umap_2d[i, 1]),
