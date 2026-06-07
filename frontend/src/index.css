@@ -144,6 +144,17 @@
   .animate-fade-in {
     animation: fade-in 0.35s ease-out both;
   }
+
+  /* Center each page's content so wide screens balance the margins instead of
+     dumping all the slack on the right. Full-bleed pages (no max-width) are
+     unaffected. The width cap keeps line-length comfortable on ultrawide. */
+  .app-main > * {
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .app-main > *:not([class*="max-w-"]) {
+    max-width: 96rem;
+  }
 }
 
 @keyframes fade-in {

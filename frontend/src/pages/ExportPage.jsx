@@ -47,7 +47,7 @@ export default function ExportPage() {
   }, [])
 
   return (
-    <div className="p-8 max-w-5xl animate-fade-up">
+    <div className="p-8 max-w-6xl animate-fade-up">
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-1">
           <Download size={20} className="text-brand-400" />

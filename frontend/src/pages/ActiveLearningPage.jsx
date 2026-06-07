@@ -106,7 +106,7 @@ export default function ActiveLearningPage() {
   }, [])
 
   return (
-    <div className="p-8 max-w-5xl animate-fade-up">
+    <div className="p-8 max-w-6xl animate-fade-up">
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">

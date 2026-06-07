@@ -128,7 +128,7 @@ export default function RefinementPage() {
   const pendingCount = [...mergeSuggestions, ...splitSuggestions].filter(s => s.status === 'pending').length
 
   return (
-    <div className="p-8 max-w-5xl">
+    <div className="p-8 max-w-6xl">
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-1">

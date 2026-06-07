@@ -117,7 +117,7 @@ export default function ReviewQueuePage() {
   const currentItems = activeTab === 'pending' ? pendingItems : historyItems
 
   return (
-    <div className="p-8 max-w-5xl">
+    <div className="p-8 max-w-6xl">
       
       {/* Header */}
       <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">

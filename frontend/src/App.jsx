@@ -262,7 +262,7 @@ function AppContent() {
       <CommandBar status={sessionStatus} />
       <div className="flex flex-1 min-h-0">
         <PipelineRail sessionId={sessionId} sessionStatus={sessionStatus} pendingCount={pendingCount} />
-        <main className="flex-1 overflow-auto min-w-0">
+        <main className="flex-1 overflow-auto min-w-0 app-main">
           <Routes>
             <Route path="/" element={<UploadPage onSessionCreated={(id, status) => { setUploadSessionId(id); setSessionStatus(status) }} />} />
             <Route path="/enrichment" element={<EnrichmentPage />} />
