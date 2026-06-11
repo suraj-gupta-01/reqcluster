@@ -44,17 +44,25 @@ silhouette (-1..1) rates geometric separation.
 Per-stage, measured end-to-end through the live app (GPU + Postgres + Redis),
 **warm, all CPU cores**. Seconds.
 
-| Size | Embed (GPU) | UMAP | HDBSCAN + label + graph | Persist (Postgres) | **TOTAL** |
-|---|--:|--:|--:|--:|--:|
-| **2k**  | 0.6 | 7  | 0.5 | 0.3 | **~9 s** |
-| **10k** | 3.4 | 26 | 1.5 | 1.0 | **~32 s** |
-| **35k** | 14.1 | 75 | 5.5 | 2.7 | **~97 s** |
+Two measured runs are shown — embeddings start from an empty cache (fresh GPU
+encode) both times. UMAP varies run-to-run (parallel, non-deterministic, plus
+CPU/GPU contention from the resident local-LLM stack), so treat it as a band.
 
-- **GPU embeddings** are ~7× CPU (35k: 14 s vs ~78 s on CPU); Redis makes re-runs
-  embed-free.
-- **UMAP dominates** (CPU). At 35k the low-noise setting (`n_neighbors=70`) makes
-  UMAP ~75 s — the deliberate cost of clean clusters (it was ~27 s / 38% noise
-  before). HDBSCAN, labeling, ANN graph, and the Postgres write stay small.
+| Size | Embed (GPU) | UMAP | HDBSCAN | Label | Graph | Persist | **TOTAL** |
+|---|--:|--:|--:|--:|--:|--:|--:|
+| **2k**  | 0.5¹ | 7-19 | 0.0 | 0.0 | 0.1 | 0.5 | **~9-25 s** |
+| **10k** | 4.8 | 26-38 | 0.3 | 0.1 | 1.0 | 1.5 | **~32-46 s** |
+| **35k** | 13.6 | 45-75 | 2.4 | 0.2 | 3.4 | 1.1 | **~66-97 s** |
+
+¹ 2k's first run also pays a one-time ~4 s SBERT model load.
+
+- **GPU embeddings confirmed** (`SBERT model loaded on cuda:0`): 35k embeds in
+  **13.6 s** (vs ~94 s on CPU). Redis makes re-runs embed-free.
+- **UMAP dominates** (CPU). The low-noise `n_neighbors` scaling makes 35k UMAP the
+  largest stage. HDBSCAN, labeling, ANN graph, and the Postgres write stay small.
+- ⚠️ **Gotcha:** `uv run` re-syncs the venv and **reverts CUDA torch to the CPU
+  build**, silently dropping SBERT to CPU. Launch via `run-gpu.sh`/`.ps1` (which
+  auto-reinstall CUDA torch and use the venv Python directly), not `uv run`.
 
 ### Worst case (measured deltas, not estimates)
 - **Cold start** (first clustering after a server start): + SBERT load ~4 s
