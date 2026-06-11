@@ -139,6 +139,7 @@ async def enrich_requirements_endpoint(
         "progress": 0,
         "message": "Starting enrichment...",
     }
+    _prune_progress_stores()
 
     def progress_callback(step: str, pct: int, msg: str):
         pipeline_progress[session_id] = {"step": step, "progress": pct, "message": msg}
@@ -285,7 +286,7 @@ def run_pipeline_background(
             "embedding_mode": embedding_mode,
         }
 
-    except Exception as exc:
+    except Exception:
         logger.exception("Pipeline background task error")
         try:
             session = db.query(Session).filter(Session.id == session_id).first()
@@ -297,7 +298,8 @@ def run_pipeline_background(
         pipeline_progress[session_id] = {
             "step": "error",
             "progress": 0,
-            "message": f"Pipeline failed: {str(exc)}"
+            # Full exception is logged above; don't leak internal details to clients.
+            "message": "Pipeline failed. Check the server logs for details.",
         }
     finally:
         db.close()
@@ -343,6 +345,7 @@ async def cluster_requirements_endpoint(
     # Progress tracker initialization
     session_id = request.session_id
     pipeline_progress[session_id] = {"step": "starting", "progress": 0, "message": "Initializing..."}
+    _prune_progress_stores()
 
     # Queue background task
     background_tasks.add_task(
@@ -369,6 +372,18 @@ async def cluster_requirements_endpoint(
 
 progress_cache: Dict[int, Tuple[float, dict]] = {}
 
+# Cap the process-local progress stores so a long-lived server doesn't leak one
+# dict entry per session forever. Oldest (insertion-order) entries are evicted
+# first; in practice those are completed sessions no longer being polled.
+_MAX_PROGRESS_ENTRIES = 2000
+
+
+def _prune_progress_stores() -> None:
+    while len(pipeline_progress) > _MAX_PROGRESS_ENTRIES:
+        pipeline_progress.pop(next(iter(pipeline_progress)), None)
+    while len(progress_cache) > _MAX_PROGRESS_ENTRIES:
+        progress_cache.pop(next(iter(progress_cache)), None)
+
 
 @router.get("/progress/{session_id}")
 async def get_progress(session_id: int):
@@ -382,6 +397,7 @@ async def get_progress(session_id: int):
 
     progress = pipeline_progress.get(session_id, {"step": "idle", "progress": 0, "message": "Not started"})
     progress_cache[session_id] = (now, progress)
+    _prune_progress_stores()
     return progress
 
 
@@ -497,7 +513,7 @@ def get_requirements(
     sort_field: Optional[str] = None,
     sort_dir: Optional[str] = None,
     page: Optional[int] = Query(None, ge=1),
-    page_size: Optional[int] = Query(None, ge=1),
+    page_size: Optional[int] = Query(None, ge=1, le=1000),
     db: DBSession = Depends(get_db),
 ):
     """Get requirements for a session, optionally filtered by cluster/noise/search, with optional server-side sorting and pagination."""

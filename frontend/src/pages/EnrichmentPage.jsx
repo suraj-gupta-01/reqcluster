@@ -33,7 +33,7 @@ import EnrichmentStatusCard from '../components/EnrichmentStatusCard.jsx'
 const MISSING_ENRICHMENT_MESSAGE = 'Run enrichment for this session before clustering with enriched or hybrid embeddings.'
 
 const initialEnrichmentOptions = {
-  provider_name: 'mock',
+  provider_name: 'local',
   embedding_mode: 'hybrid',
   batch_size: 8,
   max_concurrency: 4,
@@ -386,7 +386,7 @@ export default function EnrichmentPage() {
           <p className="text-gray-400 max-w-3xl">
             Run LLM enrichment, inspect domain context, then cluster with base, enriched, or hybrid embeddings.
             Base clustering is the Phase 1 behavior. Hybrid uses the original requirement plus LLM-enriched context.
-            The Mock provider is offline and safe for testing.
+            Local runs the real on-device model (qwen2.5:3b); Mock is an offline stand-in for testing only.
           </p>
         </div>
         <div className="flex gap-2">
@@ -431,9 +431,9 @@ export default function EnrichmentPage() {
               value={enrichmentOptions.provider_name}
               onChange={value => updateEnrichmentOption('provider_name', value)}
               options={[
-                ['mock', 'Mock'],
+                ['local', 'Local LLM (on-device)'],
                 ['openai_compatible', 'Cloud LLM'],
-                ['local', 'Local LLM'],
+                ['mock', 'Mock (testing only)'],
               ]}
             />
             <SelectControl

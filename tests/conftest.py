@@ -3,6 +3,8 @@ import types
 from importlib.util import find_spec
 from pathlib import Path
 
+import pytest
+
 
 ROOT = Path(__file__).resolve().parents[1]
 BACKEND = ROOT / "backend"
@@ -10,6 +12,27 @@ BACKEND = ROOT / "backend"
 for path in (str(ROOT), str(BACKEND)):
     if path not in sys.path:
         sys.path.insert(0, path)
+
+
+@pytest.fixture(autouse=True)
+def _isolate_embedding_cache(monkeypatch):
+    """Keep unit tests hermetic from the live per-text Redis embedding cache.
+
+    The cache (``core.embedding_cache``) holds a process-wide ``_redis_client``
+    singleton.  If any test (or a prior live app run) connects it to a running
+    Redis, later tests silently get cache *hits* instead of calling the model —
+    which makes assertions like ``model.calls == 1`` flaky depending on whether
+    the Docker Redis container happens to be up.  Force the cache into its
+    documented no-op state for every test so the model path is always
+    exercised; production is unaffected.
+    """
+    try:
+        from core import embedding_cache
+    except Exception:
+        return
+    monkeypatch.delenv("REDIS_URL", raising=False)
+    monkeypatch.setattr(embedding_cache, "_redis_client", None, raising=False)
+    monkeypatch.setattr(embedding_cache, "_redis_unavailable", True, raising=False)
 
 
 try:
