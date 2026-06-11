@@ -274,7 +274,16 @@ def run_pipeline_background(
             session.noise_count = results["noise_count"]
             
         db.commit()
-        pipeline_progress[session_id] = {"step": "done", "progress": 100, "message": "Complete!"}
+        pipeline_progress[session_id] = {
+            "step": "done",
+            "progress": 100,
+            "message": "Complete!",
+            "total_clusters": results["n_clusters"],
+            "noise_count": results["noise_count"],
+            "embedding_comparison": results.get("embedding_comparison"),
+            "ablation_report": results.get("ablation_report"),
+            "embedding_mode": embedding_mode,
+        }
 
     except Exception as exc:
         logger.exception("Pipeline background task error")

@@ -534,7 +534,7 @@ def get_enrichment_status(db: DBSession, session_id: int) -> dict:
 
     total = len(reqs)
     pending = max(total - succeeded - failed, 0)
-    status = "not_started"
+    status = "not started"
     if succeeded == total and total > 0:
         status = "complete"
     elif succeeded or failed:

@@ -10,6 +10,8 @@ database and public API. Provides:
 
 from __future__ import annotations
 
+from sqlalchemy import or_
+
 import json
 import logging
 from typing import Any, Dict, Optional
@@ -456,6 +458,18 @@ def apply_suggestion(db: DBSession, request: Any) -> dict:
 
         affected_clusters = [cluster_a, cluster_b]
 
+        # Invalidate any other pending suggestions that touch the affected clusters
+        db.query(RefinementSuggestion).filter(
+            RefinementSuggestion.session_id == session_id,
+            RefinementSuggestion.id != suggestion_id,
+            RefinementSuggestion.status == "pending",
+            or_(
+                RefinementSuggestion.cluster_a_id.in_([cluster_a, cluster_b]),
+                RefinementSuggestion.cluster_b_id.in_([cluster_a, cluster_b]),
+                RefinementSuggestion.cluster_id.in_([cluster_a, cluster_b]),
+            ),
+        ).update({"status": "stale"}, synchronize_session=False)
+
     elif suggestion.suggestion_type == "split":
         cluster_id = suggestion.cluster_id
         if cluster_id is None:
@@ -529,6 +543,18 @@ def apply_suggestion(db: DBSession, request: Any) -> dict:
             db.add(new_cluster)
 
         affected_clusters = [cluster_id, new_cluster_id]
+
+        # Invalidate any other pending suggestions for the now-split cluster
+        db.query(RefinementSuggestion).filter(
+            RefinementSuggestion.session_id == session_id,
+            RefinementSuggestion.id != suggestion_id,
+            RefinementSuggestion.status == "pending",
+            or_(
+                RefinementSuggestion.cluster_a_id == cluster_id,
+                RefinementSuggestion.cluster_b_id == cluster_id,
+                RefinementSuggestion.cluster_id == cluster_id,
+            ),
+        ).update({"status": "stale"}, synchronize_session=False)
 
     else:
         raise RefinementServiceError(400, f"Unknown suggestion type: {suggestion.suggestion_type}")

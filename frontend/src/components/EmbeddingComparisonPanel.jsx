@@ -5,13 +5,7 @@ function fmt(value) {
 }
 
 export default function EmbeddingComparisonPanel({ report }) {
-  if (!report) {
-    return (
-      <div className="card p-4 text-sm text-gray-500">
-        No comparison. Embedding comparison will appear after clustering with comparison enabled.
-      </div>
-    )
-  }
+  if (!report) return null
 
   const aggregate = report.aggregate || {}
   const thresholds = report.delta_threshold_counts || {}

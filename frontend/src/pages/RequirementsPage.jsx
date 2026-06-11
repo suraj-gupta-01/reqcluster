@@ -42,7 +42,7 @@ export default function RequirementsPage() {
   const [totalMatched, setTotalMatched] = useState(0)
   const [expandedEnrichment, setExpandedEnrichment] = useState({})
   const [reloadTrigger, setReloadTrigger] = useState(0)
-  
+
   const [selectedRequirement, setSelectedRequirement] = useState(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
 
@@ -81,7 +81,7 @@ export default function RequirementsPage() {
         ])
         getEnrichmentResults(parseInt(sessionId, 10))
           .then(rows => { if (!cancelled) setEnrichmentRows(rows) })
-          .catch(() => {})
+          .catch(() => { })
         if (!cancelled) {
           setSession(sessionData)
           setClusters(clusData)
@@ -108,7 +108,7 @@ export default function RequirementsPage() {
           sort_field: sortField,
           sort_dir: sortDir,
         }
-        
+
         let targetCluster = null
         if (filterCluster !== 'all') {
           if (filterCluster === '-1') {
@@ -117,17 +117,17 @@ export default function RequirementsPage() {
             targetCluster = parseInt(filterCluster, 10)
           }
         }
-        
+
         if (filterNoise === 'noise') {
           params.is_noise = true
         } else if (filterNoise === 'clustered') {
           params.is_noise = false
         }
-        
+
         if (debouncedSearch) {
           params.search = debouncedSearch
         }
-        
+
         const reqs = await getRequirements(parseInt(sessionId, 10), targetCluster, params)
         if (!cancelled) {
           setRequirements(reqs)
@@ -240,7 +240,7 @@ export default function RequirementsPage() {
                 <th className="text-left px-4 py-3 w-48">
                   {renderSortHeader('cluster_id', 'Cluster')}
                 </th>
-                 <th className="text-left px-4 py-3 w-32">
+                <th className="text-left px-4 py-3 w-32">
                   {renderSortHeader('membership_prob', 'Membership')}
                 </th>
                 <th className="w-40 px-4 py-3 text-right">Actions</th>
@@ -365,15 +365,13 @@ export default function RequirementsPage() {
                         >
                           Reassign
                         </button>
-                        {!r.is_noise && (
-                          <button
-                            type="button"
-                            onClick={() => navigate(`/cluster/${sessionId}/${r.cluster_id}`)}
-                            className="p-1 rounded hover:bg-slate-800 text-slate-500 hover:text-slate-300 transition-colors"
-                          >
-                            <ChevronRight size={14} />
-                          </button>
-                        )}
+                        <button
+                          type="button"
+                          onClick={() => navigate(`/cluster/${sessionId}/${r.cluster_id}`)}
+                          className={`p-1 rounded hover:bg-slate-800 text-slate-500 hover:text-slate-300 transition-colors ${r.is_noise ? 'invisible' : ''}`}
+                        >
+                          <ChevronRight size={14} />
+                        </button>
                       </div>
                     </td>
                   </tr>

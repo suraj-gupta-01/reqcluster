@@ -8,6 +8,7 @@ const STATUS_COLORS = {
   accepted: 'bg-emerald-500/20 text-emerald-400',
   rejected: 'bg-red-500/20 text-red-400',
   applied: 'bg-brand-500/20 text-brand-400',
+  stale: 'bg-gray-500/20 text-gray-500',
 }
 
 function ScoreBadge({ label, value, good }) {

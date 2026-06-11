@@ -22,13 +22,7 @@ function VariantCard({ title, data }) {
 }
 
 export default function AblationReportPanel({ report }) {
-  if (!report) {
-    return (
-      <div className="card p-4 text-sm text-gray-500">
-        No ablation. Ablation report will appear after clustering with ablation enabled.
-      </div>
-    )
-  }
+  if (!report) return null
 
   const base = report.base || {}
   const enriched = report.enriched || {}

@@ -83,10 +83,10 @@ export default function OverviewPage({ onStatusChange }) {
         ])
         getEnrichmentStatus(parseInt(sessionId))
           .then(status => { if (!cancelled) setEnrichmentStatus(status) })
-          .catch(() => {})
+          .catch(() => { })
         getSuggestions(parseInt(sessionId))
           .then(sugs => { if (!cancelled) setRefinementSuggestions(sugs) })
-          .catch(() => {})
+          .catch(() => { })
         if (!cancelled) {
           setSession(sess)
           setClusters(clus)
@@ -192,7 +192,7 @@ export default function OverviewPage({ onStatusChange }) {
               <div className="text-xs text-gray-500">Warnings</div>
             </div>
             <div>
-              <div className="text-lg font-semibold text-brand-400">{enrichmentStatus?.status || 'not_started'}</div>
+              <div className="text-lg font-semibold text-brand-400">{enrichmentStatus?.status || 'not started'}</div>
               <div className="text-xs text-gray-500">Status</div>
             </div>
           </div>

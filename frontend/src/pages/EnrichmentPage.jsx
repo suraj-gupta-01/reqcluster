@@ -22,6 +22,7 @@ import {
   getErrorMessage,
   getProgress,
   getRequirements,
+  getSession,
   getSessions,
 } from '../utils/api.js'
 import AblationReportPanel from '../components/AblationReportPanel.jsx'
@@ -281,14 +282,20 @@ export default function EnrichmentPage() {
     }
   }
 
-  const startClusterPolling = (sessionId) => {
+  const startClusterPolling = (sessionId, onDone) => {
     stopClusterPolling()
     clusterPollRef.current = setInterval(async () => {
       try {
         const progress = await getProgress(sessionId)
         if (!mountedRef.current) return
         setClusterProgress(progress)
-        if (progress.step === 'done' || progress.step === 'error') stopClusterPolling()
+        if (progress.step === 'done') {
+          stopClusterPolling()
+          if (onDone) onDone(progress)
+        } else if (progress.step === 'error') {
+          stopClusterPolling()
+          if (mountedRef.current) setClusterError(progress.message || 'Clustering failed.')
+        }
       } catch {
         stopClusterPolling()
       }
@@ -307,7 +314,6 @@ export default function EnrichmentPage() {
     setClusterResult(null)
     setClustering(true)
     setClusterProgress({ step: 'starting', progress: 0, message: 'Starting clustering...' })
-    startClusterPolling(selectedSessionId)
 
     const payload = {
       session_id: Number(selectedSessionId),
@@ -320,16 +326,30 @@ export default function EnrichmentPage() {
     if (clusterOptions.min_samples !== '') payload.min_samples = Number(clusterOptions.min_samples)
 
     try {
-      const response = await clusterSession(payload)
+      // POST /cluster returns 202 immediately — pipeline runs in background.
+      // We start polling for progress, then fetch the real session result on completion.
+      await clusterSession(payload)
       if (!mountedRef.current) return
-      setClusterResult(response)
-      localStorage.setItem(`reqcluster:lastEmbeddingMode:${selectedSessionId}`, response.embedding_mode || mode)
-      setNotice(`${mode} clustering completed.`)
+
+      startClusterPolling(selectedSessionId, async (doneProgress) => {
+        if (!mountedRef.current) return
+        setClusterResult({
+          total_clusters: doneProgress.total_clusters,
+          noise_count: doneProgress.noise_count,
+          embedding_mode: doneProgress.embedding_mode || mode,
+          embedding_comparison: doneProgress.embedding_comparison || null,
+          ablation_report: doneProgress.ablation_report || null,
+        })
+        localStorage.setItem(`reqcluster:lastEmbeddingMode:${selectedSessionId}`, doneProgress.embedding_mode || mode)
+        setNotice(`${mode} clustering completed.`)
+        setClustering(false)
+      })
     } catch (err) {
-      if (mountedRef.current) setClusterError(getErrorMessage(err, 'Clustering failed.'))
-    } finally {
       stopClusterPolling()
-      if (mountedRef.current) setClustering(false)
+      if (mountedRef.current) {
+        setClusterError(getErrorMessage(err, 'Clustering failed.'))
+        setClustering(false)
+      }
     }
   }
 
@@ -592,12 +612,7 @@ export default function EnrichmentPage() {
             </section>
           )}
 
-          {!clusterResult && (
-            <div className="grid md:grid-cols-2 gap-4">
-              <EmbeddingComparisonPanel report={null} />
-              <AblationReportPanel report={null} />
-            </div>
-          )}
+
         </div>
       </div>
     </div>
