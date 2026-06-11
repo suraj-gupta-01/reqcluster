@@ -45,32 +45,36 @@ Per-stage, measured end-to-end through the live app (GPU + Postgres + Redis),
 **warm, all CPU cores**. Seconds.
 
 Two measured runs are shown — embeddings start from an empty cache (fresh GPU
-encode) both times. UMAP varies run-to-run (parallel, non-deterministic, plus
-CPU/GPU contention from the resident local-LLM stack), so treat it as a band.
+encode). Exact per-stage, **median of 3 runs**, timed directly with a high-res
+timer (not log-parsing). SBERT confirmed on `cuda:0`. Seconds.
 
-| Size | Embed (GPU) | UMAP | HDBSCAN | Label | Graph | Persist | **TOTAL** |
-|---|--:|--:|--:|--:|--:|--:|--:|
-| **2k**  | 0.5¹ | 7-19 | 0.0 | 0.0 | 0.1 | 0.5 | **~9-25 s** |
-| **10k** | 4.8 | 26-38 | 0.3 | 0.1 | 1.0 | 1.5 | **~32-46 s** |
-| **35k** | 13.6 | 45-75 | 2.4 | 0.2 | 3.4 | 1.1 | **~66-97 s** |
+| Stage | **2k** | **10k** | **35k** |
+|---|--:|--:|--:|
+| Embed (GPU) | 1.0 | 3.7 | 11.4 |
+| UMAP (warm) | 12.4 | 29.3 | 47.4 |
+| HDBSCAN | 0.05 | 0.29 | 0.89 |
+| ANN graph | 0.12 | 0.94 | 3.37 |
+| **Compute total** | **13.5** | **35.2** | **63.3** |
+| + Postgres persist | ~0.5 | ~1.5 | ~2.7 |
+| **End-to-end (app)** | **~14** | **~37** | **~66** |
 
-¹ 2k's first run also pays a one-time ~4 s SBERT model load.
-
-- **GPU embeddings confirmed** (`SBERT model loaded on cuda:0`): 35k embeds in
-  **13.6 s** (vs ~94 s on CPU). Redis makes re-runs embed-free.
-- **UMAP dominates** (CPU). The low-noise `n_neighbors` scaling makes 35k UMAP the
-  largest stage. HDBSCAN, labeling, ANN graph, and the Postgres write stay small.
+- **Embed (GPU), HDBSCAN, ANN graph** are exact and stable.
+- **UMAP** dominates and is the variable stage. The **first call in a fresh process
+  pays a one-time numba JIT compile** — measured first-vs-warm UMAP:
+  `2k 20.5→11.3`, `10k 80.3→23.7`, `35k ~47 (already warm)`. Use the **warm
+  median**; the first clustering after a server start adds the JIT (and ~4 s SBERT
+  load) on top, one-time.
+- GPU embeddings: 35k in **11.4 s** vs ~94 s on CPU. Redis makes re-runs embed-free.
 - ⚠️ **Gotcha:** `uv run` re-syncs the venv and **reverts CUDA torch to the CPU
   build**, silently dropping SBERT to CPU. Launch via `run-gpu.sh`/`.ps1` (which
   auto-reinstall CUDA torch and use the venv Python directly), not `uv run`.
 
-### Worst case (measured deltas, not estimates)
-- **Cold start** (first clustering after a server start): + SBERT load ~4 s
-  + numba JIT ~8 s ≈ **+12 s**, one-time.
-- **Single CPU core** (no parallelism): UMAP ~**1.6×** slower (measured 10k:
-  38.8 s single vs 23 s all-core).
-
-So worst-case totals (cold + single core): **2k ~21 s, 10k ~60 s, 35k ~155 s.**
+### Best vs worst (measured)
+- **Best** = warm process, GPU embed, all cores, idle → the table above.
+- **Worst** = cold start (SBERT load ~4 s + numba JIT: huge at 10k, +~50 s) plus
+  single CPU core (UMAP ~1.6× slower) → e.g. a 10k *first* run hit ~80 s of UMAP.
+- **Cleanest way to measure:** warm the process once, run 3×, take the median,
+  with Ollama stopped so the GPU/CPU aren't contended.
 
 ---
 
