@@ -85,6 +85,16 @@ export default function OverviewPage({ onStatusChange }) {
 
   useEffect(() => {
     let cancelled = false
+    // Reset per-session state on navigation so a previous session's clusters /
+    // metrics never bleed into the one being viewed (the "wrong metrics in the
+    // wrong session" / stale 100%-noise bug).
+    setSession(null)
+    setClusters([])
+    setEnrichmentStatus(null)
+    setRefinementSuggestions([])
+    setMetrics(null)
+    setError(null)
+    setLoading(true)
     const load = async () => {
       try {
         const [sess, clus] = await Promise.all([
@@ -97,9 +107,13 @@ export default function OverviewPage({ onStatusChange }) {
         getSuggestions(parseInt(sessionId))
           .then(sugs => { if (!cancelled) setRefinementSuggestions(sugs) })
           .catch(() => { })
-        getMetrics(parseInt(sessionId))
-          .then(m => { if (!cancelled) setMetrics(m) })
-          .catch(() => { })
+        // Only show validation metrics once clustering is done - otherwise an
+        // unclustered session reads as "100% noise", which is misleading.
+        if (sess.status === 'done') {
+          getMetrics(parseInt(sessionId))
+            .then(m => { if (!cancelled) setMetrics(m) })
+            .catch(() => { })
+        }
         if (!cancelled) {
           setSession(sess)
           setClusters(clus)
