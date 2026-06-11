@@ -525,7 +525,11 @@ class LocalLLMProvider:
         payload = {
             "model": self.model,
             "prompt": prompt,
-            "temperature": 0,
+            # Ollama: force valid JSON output (small local models otherwise wrap it
+            # in markdown / add prose, which the strict parser rejects), and put
+            # temperature under "options" - Ollama ignores a top-level "temperature".
+            "format": "json",
+            "options": {"temperature": 0},
             "stream": False,
         }
         headers = {"Content-Type": "application/json"}
@@ -605,7 +609,9 @@ def generate_completion(
             "model": model,
             "prompt": prompt,
             "system": system,
-            "temperature": 0,
+            # Free-text output (summaries/rationales): no JSON format, but put
+            # temperature under "options" so Ollama actually applies it.
+            "options": {"temperature": 0},
             "stream": False,
         }
         headers = {"Content-Type": "application/json"}
