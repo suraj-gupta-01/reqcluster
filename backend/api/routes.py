@@ -408,6 +408,29 @@ def get_clusters(session_id: int, db: DBSession = Depends(get_db)):
     return clusters
 
 
+@router.get("/metrics")
+def get_metrics(session_id: int = Query(..., ge=1), db: DBSession = Depends(get_db)):
+    """Validation metrics for a clustered session.
+
+    Intrinsic always (silhouette, noise, cluster count). Extrinsic when the upload
+    carried ground-truth groups in `module` (ARI, NMI, V-measure, purity/accuracy).
+    """
+    reqs = (
+        db.query(Requirement)
+        .filter(Requirement.session_id == session_id)
+        .order_by(Requirement.id.asc())
+        .all()
+    )
+    if not reqs:
+        raise HTTPException(404, "No requirements found for session.")
+    labels = [r.cluster_id if r.cluster_id is not None else -1 for r in reqs]
+    ground_truth = [r.module for r in reqs]
+    coords = [[r.umap_x or 0.0, r.umap_y or 0.0] for r in reqs]
+    from core.metrics import compute_metrics
+
+    return compute_metrics(labels, ground_truth, coords)
+
+
 @router.get("/cluster/{cluster_id}", response_model=ClusterDetail)
 def get_cluster_detail(
     cluster_id: int,

@@ -82,6 +82,14 @@ export default function OverviewPage({ onStatusChange }) {
 
   useEffect(() => {
     let cancelled = false
+    // Reset per-session state on navigation so a previous session's clusters never
+    // bleed into the one being viewed.
+    setSession(null)
+    setClusters([])
+    setEnrichmentStatus(null)
+    setRefinementSuggestions([])
+    setError(null)
+    setLoading(true)
     const load = async () => {
       try {
         const [sess, clus] = await Promise.all([

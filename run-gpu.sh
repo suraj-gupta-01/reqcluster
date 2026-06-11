@@ -40,18 +40,18 @@ export DATABASE_URL="postgresql://reqcluster:reqcluster_dev_password@localhost:5
 export REDIS_URL="redis://localhost:6379"
 export CORS_ORIGINS="http://localhost:5173,http://localhost:3000"
 
-# Optional local LLM
-LLM_MODEL="${1:-}"
-if [ -n "$LLM_MODEL" ]; then
-  echo "==> 3/5  Local LLM: $LLM_MODEL (Ollama)"
+# Local LLM on the GPU by default. Pass "mock" to force the offline provider.
+LLM_MODEL="${1:-qwen2.5:3b}"
+if [ "$LLM_MODEL" = "mock" ]; then
+  echo "==> 3/5  LLM provider: mock (offline, deterministic)"
+  export REQCLUSTER_LLM_PROVIDER="mock"
+else
+  echo "==> 3/5  Local LLM on GPU: $LLM_MODEL (Ollama)"
   ollama pull "$LLM_MODEL"
   export REQCLUSTER_LLM_PROVIDER="local"
   export REQCLUSTER_LOCAL_LLM_URL="http://localhost:11434/api/generate"
   export REQCLUSTER_LOCAL_LLM_MODEL="$LLM_MODEL"
   export REQCLUSTER_LOCAL_LLM_TIMEOUT_SECONDS="120"
-else
-  echo "==> 3/5  LLM provider: mock (offline)"
-  export REQCLUSTER_LLM_PROVIDER="mock"
 fi
 
 echo "==> 4/5  Backend (GPU embeddings) on http://localhost:8000"

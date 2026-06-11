@@ -124,6 +124,8 @@ erDiagram
 
 ## The pipeline
 
+![ReqCluster AI requirements clustering pipeline](docs/pipeline-diagram.png)
+
 ```mermaid
 flowchart LR
     A[Upload CSV/XLSX] --> B[Preprocess: clean · dedup]
@@ -349,6 +351,22 @@ embedding variance is tiny, ±5%.)
   36s, 50k 51s) instead of exploding. Parallel gives **~1.5-1.7×** over single core
   at these sizes; under 4,000 it's single-threaded by design (reproducible).
 - **The graph is ANN / O(N log N)** — no quadratic blow-up.
+
+### Accuracy & validation (measured)
+
+Clusters are validated against ground-truth groups (the `module` column) via
+`GET /api/metrics`, also shown in the UI (Overview → *Validation metrics*).
+Accuracy = cluster **purity**; ARI / V-measure are external scores (0-1). On the
+generated UAV-FMS datasets (ground-truth = subsystem):
+
+| Dataset | Accuracy (purity) | ARI | V-measure | Silhouette | Noise |
+|---|--:|--:|--:|--:|--:|
+| 2k  | **98.3%** | 0.956 | 0.977 | 0.825 | 0.7% |
+| 10k | **98.0%** | 0.893 | 0.951 | 0.544 | 4.6% |
+| 35k | **95.7%** | 0.811 | 0.912 | 0.091 | 6.5% |
+
+Full accuracy + per-stage and Intelligence-stage (enrichment/refinement/dependency)
+timing tables, plus best/worst cases, are in **[metrics.md](metrics.md)**.
 
 ### Adaptive methods — what runs at each size & how to control it
 
