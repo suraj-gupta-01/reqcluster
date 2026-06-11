@@ -124,6 +124,8 @@ erDiagram
 
 ## The pipeline
 
+![ReqCluster AI requirements clustering pipeline](docs/pipeline-diagram.png)
+
 ```mermaid
 flowchart LR
     A[Upload CSV/XLSX] --> B[Preprocess: clean · dedup]

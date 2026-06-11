@@ -94,11 +94,6 @@ export const getClusterDetail = async (sessionId, clusterId) => {
   return res.data
 }
 
-export const getMetrics = async (sessionId) => {
-  const res = await api.get(`/metrics?session_id=${sessionId}`)
-  return res.data
-}
-
 export const getGraph = async (sessionId) => {
   const res = await api.get(`/graph?session_id=${sessionId}`)
   return res.data
