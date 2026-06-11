@@ -12,7 +12,7 @@ similarity) instead of LLM calls, matching the Phase 2 mock-first approach.
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
-from typing import Any, Dict, List, Optional, Protocol, Sequence
+from typing import Dict, List, Optional, Protocol
 
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity

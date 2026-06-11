@@ -68,6 +68,7 @@ def _seed(SessionLocal):
     ("sysml", "application/xml"),
     ("jama", "application/json"),
     ("csv", "text/csv"),
+    ("pdf", "application/pdf"),
 ])
 def test_export_formats(api_db, fmt, ctype):
     client, SessionLocal = api_db
@@ -83,7 +84,7 @@ def test_export_formats(api_db, fmt, ctype):
 def test_export_unsupported_format(api_db):
     client, SessionLocal = api_db
     sid = _seed(SessionLocal)
-    res = client.get(f"/api/export/pdf?session_id={sid}")
+    res = client.get(f"/api/export/docx?session_id={sid}")
     assert res.status_code == 400
 
 
@@ -91,3 +92,40 @@ def test_export_missing_session(api_db):
     client, _ = api_db
     res = client.get("/api/export/csv?session_id=999")
     assert res.status_code == 404
+
+
+def test_concurrent_reads_do_not_error(api_db):
+    """Many parallel reads must not raise (regression for the SQLite cursor /
+    StaticPool concurrency bug)."""
+    import concurrent.futures as cf
+
+    client, SessionLocal = api_db
+    sid = _seed(SessionLocal)
+
+    def hit(_):
+        return client.get(f"/api/clusters?session_id={sid}").status_code
+
+    with cf.ThreadPoolExecutor(max_workers=12) as ex:
+        codes = list(ex.map(hit, range(60)))
+    assert all(c == 200 for c in codes), codes
+
+
+def test_csv_export_sanitizes_formula_injection(api_db):
+    """A requirement whose text starts with '=' must not export as a live formula."""
+    client, SessionLocal = api_db
+    db = SessionLocal()
+    try:
+        s = Session(name="inj", filename="inj.csv", status="done",
+                    total_requirements=1, total_clusters=1)
+        db.add(s); db.flush()
+        db.add(Requirement(session_id=s.id, req_id="R1", text="=1+2",
+                           cluster_id=0, module="M", section="S", is_noise=False))
+        db.add(Cluster(session_id=s.id, cluster_id=0, label="G", keywords=["x"], size=1))
+        db.commit()
+        sid = s.id
+    finally:
+        db.close()
+    res = client.get(f"/api/export/csv?session_id={sid}")
+    assert res.status_code == 200
+    assert "'=1+2" in res.text          # neutralized
+    assert ",=1+2" not in res.text       # not a raw formula cell

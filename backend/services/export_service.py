@@ -4,22 +4,24 @@ from __future__ import annotations
 
 import csv
 import io
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List
 
 from sqlalchemy.orm import Session as DBSession
 
 from export.jama_connector import export_jama
+from export.pdf_report import export_pdf
 from export.reqif_exporter import export_reqif
 from export.sysml_xmi_exporter import export_sysml_xmi
 from models.database import Cluster, DependencyTree, Requirement, Session, utcnow
 
-SUPPORTED_FORMATS = {"reqif", "sysml", "jama", "csv"}
+SUPPORTED_FORMATS = {"reqif", "sysml", "jama", "csv", "pdf"}
 
 _MEDIA = {
     "reqif": ("application/xml", "reqif"),
     "sysml": ("application/xml", "xmi"),
     "jama": ("application/json", "json"),
     "csv": ("text/csv", "csv"),
+    "pdf": ("application/pdf", "pdf"),
 }
 
 
@@ -58,6 +60,8 @@ def _gather(db: DBSession, session_id: int) -> Dict[str, Any]:
             "section": r.section,
             "cluster_id": r.cluster_id,
             "is_noise": r.is_noise,
+            "umap_x": r.umap_x,
+            "umap_y": r.umap_y,
         }
         for r in reqs
     ]
@@ -94,23 +98,36 @@ def _gather(db: DBSession, session_id: int) -> Dict[str, Any]:
     }
 
 
+def _csv_safe(value: Any) -> Any:
+    """Neutralize CSV/formula injection. A spreadsheet treats a cell starting with
+    = + - @ (or tab/CR) as a live formula; prefix those with an apostrophe so the
+    requirement text is shown literally, not executed."""
+    if isinstance(value, str) and value[:1] in ("=", "+", "-", "@", "\t", "\r"):
+        return "'" + value
+    return value
+
+
 def _export_csv(data: Dict[str, Any]) -> str:
     cluster_label = {c["cluster_id"]: c["label"] for c in data["clusters"]}
     out = io.StringIO()
     writer = csv.writer(out)
     writer.writerow(["req_id", "text", "module", "section", "cluster_id", "cluster_label", "is_noise"])
     for r in data["requirements"]:
-        writer.writerow([
+        writer.writerow([_csv_safe(v) for v in (
             r.get("req_id"), r.get("text"), r.get("module"), r.get("section"),
             r.get("cluster_id"),
             cluster_label.get(r.get("cluster_id"), "Noise" if r.get("cluster_id") == -1 else ""),
             r.get("is_noise"),
-        ])
+        )])
     return out.getvalue()
 
 
-def export_session(db: DBSession, session_id: int, fmt: str) -> Tuple[str, str, str]:
-    """Return (content, media_type, filename) for the requested export format."""
+def export_session(db: DBSession, session_id: int, fmt: str):
+    """Return (content, media_type, filename) for the requested export format.
+
+    `content` is str for text formats and bytes for PDF (FastAPI's Response
+    accepts both).
+    """
     fmt = (fmt or "").strip().lower()
     if fmt not in SUPPORTED_FORMATS:
         raise ExportServiceError(
@@ -124,6 +141,8 @@ def export_session(db: DBSession, session_id: int, fmt: str) -> Tuple[str, str, 
         content = export_sysml_xmi(data)
     elif fmt == "jama":
         content = export_jama(data)
+    elif fmt == "pdf":
+        content = export_pdf(data)
     else:
         content = _export_csv(data)
 

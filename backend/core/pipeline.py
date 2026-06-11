@@ -59,7 +59,7 @@ def run_pipeline(
         step("embedding", 5, f"Generating embeddings for {n} requirements...")
         embeddings = generate_embeddings(
             texts,
-            batch_size=64,
+            # batch_size omitted → adaptive sizing based on len(texts)
             progress_callback=lambda cur, tot: step(
                 "embedding", int(5 + 25 * cur / max(tot, 1)), f"Embedding {cur}/{tot}..."
             ),
@@ -82,7 +82,7 @@ def run_pipeline(
             5,
             f"Generating {mode.value} embeddings for {n} requirements...",
         )
-        config = DomainEmbeddingConfig(mode=mode, batch_size=64, fallback_to_base=True)
+        config = DomainEmbeddingConfig(mode=mode, fallback_to_base=True)
         embeddings = generate_domain_embeddings(
             texts,
             enriched_texts,
@@ -104,7 +104,7 @@ def run_pipeline(
         else:
             base_embeddings = generate_embeddings(
                 texts,
-                batch_size=64,
+                # batch_size omitted → adaptive
                 progress_callback=lambda cur, tot: step(
                     "embedding_base",
                     int(31 + 4 * cur / max(tot, 1)),
@@ -115,7 +115,8 @@ def run_pipeline(
         step("embedding_comparison", 35, "Comparing base and selected embeddings...")
         embedding_comparison = compare_embeddings(base_embeddings, embeddings)
 
-    # Step 2: UMAP
+    # Step 2: UMAP. We don't keep the fitted reducers - they were only pickled to
+    # disk and never loaded, and they hold a full copy of the data (large at scale).
     step("umap", 36 if enable_embedding_comparison else 32, "Running UMAP dimensionality reduction...")
     embeddings_10d, embeddings_2d = reduce_embeddings(embeddings)
     step("umap", 55, "UMAP complete")

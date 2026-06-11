@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Loader, Search, ChevronRight, ArrowUpDown, Sparkles, AlertTriangle, ChevronDown } from 'lucide-react'
-import { getRequirements, getClusters, getEnrichmentResults, submitFeedback } from '../utils/api.js'
+import { getRequirements, getClusters, getEnrichmentResults, submitFeedback, getSession } from '../utils/api.js'
 import { getClusterColor } from '../utils/colors.js'
 import MoveToClusterModal from '../components/MoveToClusterModal.jsx'
 
@@ -27,16 +27,21 @@ export default function RequirementsPage() {
   const [requirements, setRequirements] = useState([])
   const [clusters, setClusters] = useState([])
   const [enrichmentRows, setEnrichmentRows] = useState([])
+  const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [requirementsLoading, setRequirementsLoading] = useState(true)
   const [error, setError] = useState(null)
 
   const [search, setSearch] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
   const [filterCluster, setFilterCluster] = useState('all')
   const [filterNoise, setFilterNoise] = useState('all') // all | noise | clustered
   const [sortField, setSortField] = useState('req_id')
   const [sortDir, setSortDir] = useState('asc')
   const [page, setPage] = useState(1)
+  const [totalMatched, setTotalMatched] = useState(0)
   const [expandedEnrichment, setExpandedEnrichment] = useState({})
+  const [reloadTrigger, setReloadTrigger] = useState(0)
   
   const [selectedRequirement, setSelectedRequirement] = useState(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -49,41 +54,95 @@ export default function RequirementsPage() {
         requirement_id: selectedRequirement.id,
         ...payload
       })
-      // Reload requirements and clusters to keep all sizes and labels in sync
-      const [reqs, clus] = await Promise.all([
-        getRequirements(parseInt(sessionId)),
-        getClusters(parseInt(sessionId)),
-      ])
-      setRequirements(reqs)
-      setClusters(clus)
       setIsModalOpen(false)
       setSelectedRequirement(null)
+      setReloadTrigger(prev => prev + 1)
     } catch (err) {
       alert(err?.response?.data?.detail || 'Failed to reassign cluster.')
     }
   }
 
+  // Debounce search input
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search)
+    }, 300)
+    return () => clearTimeout(handler)
+  }, [search])
+
+  // Load static session and cluster metadata
   useEffect(() => {
     let cancelled = false
-    const load = async () => {
+    const loadMetadata = async () => {
       try {
-        const [reqs, clus] = await Promise.all([
-          getRequirements(parseInt(sessionId)),
-          getClusters(parseInt(sessionId)),
+        const [sessionData, clusData] = await Promise.all([
+          getSession(parseInt(sessionId, 10)),
+          getClusters(parseInt(sessionId, 10)),
         ])
-        getEnrichmentResults(parseInt(sessionId))
+        getEnrichmentResults(parseInt(sessionId, 10))
           .then(rows => { if (!cancelled) setEnrichmentRows(rows) })
           .catch(() => {})
-        if (!cancelled) { setRequirements(reqs); setClusters(clus) }
+        if (!cancelled) {
+          setSession(sessionData)
+          setClusters(clusData)
+        }
       } catch {
-        if (!cancelled) setError('Failed to load requirements.')
+        if (!cancelled) setError('Failed to load session details.')
       } finally {
         if (!cancelled) setLoading(false)
       }
     }
-    load()
+    loadMetadata()
     return () => { cancelled = true }
-  }, [sessionId])
+  }, [sessionId, reloadTrigger])
+
+  // Load paginated requirements page
+  useEffect(() => {
+    let cancelled = false
+    const loadRequirements = async () => {
+      setRequirementsLoading(true)
+      try {
+        const params = {
+          page,
+          page_size: PAGE_SIZE,
+          sort_field: sortField,
+          sort_dir: sortDir,
+        }
+        
+        let targetCluster = null
+        if (filterCluster !== 'all') {
+          if (filterCluster === '-1') {
+            params.is_noise = true
+          } else {
+            targetCluster = parseInt(filterCluster, 10)
+          }
+        }
+        
+        if (filterNoise === 'noise') {
+          params.is_noise = true
+        } else if (filterNoise === 'clustered') {
+          params.is_noise = false
+        }
+        
+        if (debouncedSearch) {
+          params.search = debouncedSearch
+        }
+        
+        const reqs = await getRequirements(parseInt(sessionId, 10), targetCluster, params)
+        if (!cancelled) {
+          setRequirements(reqs)
+          setTotalMatched(reqs.totalCount ?? reqs.length)
+        }
+      } catch (err) {
+        console.error(err)
+        if (!cancelled) setError('Failed to load requirements.')
+      } finally {
+        if (!cancelled) setRequirementsLoading(false)
+      }
+    }
+    loadRequirements()
+    return () => { cancelled = true }
+  }, [sessionId, page, filterCluster, filterNoise, sortField, sortDir, debouncedSearch, reloadTrigger])
 
   const clusterLabelMap = useMemo(() => {
     const m = {}
@@ -97,43 +156,8 @@ export default function RequirementsPage() {
     return map
   }, [enrichmentRows])
 
-  const filtered = useMemo(() => {
-    let list = requirements
-
-    if (search) {
-      const q = search.toLowerCase()
-      list = list.filter(r =>
-        r.text?.toLowerCase().includes(q) ||
-        r.req_id?.toLowerCase().includes(q) ||
-        r.module?.toLowerCase().includes(q) ||
-        r.section?.toLowerCase().includes(q)
-      )
-    }
-
-    if (filterCluster !== 'all') {
-      list = list.filter(r => String(r.cluster_id) === filterCluster)
-    }
-
-    if (filterNoise === 'noise') list = list.filter(r => r.is_noise)
-    else if (filterNoise === 'clustered') list = list.filter(r => !r.is_noise)
-
-    list = [...list].sort((a, b) => {
-      let av, bv
-      if (sortField === 'req_id') { av = a.req_id || ''; bv = b.req_id || '' }
-      else if (sortField === 'cluster_id') { av = a.cluster_id ?? 999; bv = b.cluster_id ?? 999 }
-      else if (sortField === 'membership_prob') { av = a.membership_prob ?? 0; bv = b.membership_prob ?? 0 }
-      else if (sortField === 'module') { av = a.module || ''; bv = b.module || '' }
-      else { av = a.text || ''; bv = b.text || '' }
-      if (av < bv) return sortDir === 'asc' ? -1 : 1
-      if (av > bv) return sortDir === 'asc' ? 1 : -1
-      return 0
-    })
-
-    return list
-  }, [requirements, search, filterCluster, filterNoise, sortField, sortDir])
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
-  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+  const totalPages = Math.max(1, Math.ceil(totalMatched / PAGE_SIZE))
+  const paginated = requirements
 
   const handleSort = (field) => {
     if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
@@ -162,7 +186,7 @@ export default function RequirementsPage() {
       <div className="flex-shrink-0">
         <h1 className="text-xl font-bold text-white">Requirements</h1>
         <p className="text-sm text-gray-400 mt-0.5">
-          {filtered.length} of {requirements.length} requirements
+          {totalMatched} of {session?.total_requirements || 0} requirements
         </p>
       </div>
 
@@ -223,7 +247,16 @@ export default function RequirementsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-800/50">
-              {paginated.length === 0 ? (
+              {requirementsLoading ? (
+                <tr>
+                  <td colSpan={6} className="text-center py-12">
+                    <div className="flex items-center justify-center gap-2 text-gray-500">
+                      <Loader size={16} className="animate-spin text-brand-400" />
+                      <span>Loading requirements...</span>
+                    </div>
+                  </td>
+                </tr>
+              ) : paginated.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="text-center py-12 text-gray-500">
                     No requirements match your filters.
@@ -354,7 +387,7 @@ export default function RequirementsPage() {
         {totalPages > 1 && (
           <div className="flex items-center justify-between px-4 py-3 border-t border-gray-800 flex-shrink-0">
             <span className="text-xs text-gray-500">
-              Page {page} of {totalPages} · {filtered.length} results
+              Page {page} of {totalPages} · {totalMatched} results
             </span>
             <div className="flex gap-2">
               <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}

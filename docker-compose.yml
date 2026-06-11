@@ -1,6 +1,49 @@
-version: "3.9"
-
 services:
+  # ──────────────────────────────────────────────────────────────────────────
+  # PostgreSQL — primary datastore for production and Docker deployments.
+  # The backend will use SQLite if DATABASE_URL is not set (local dev only).
+  # ──────────────────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:15-alpine
+    container_name: reqcluster-postgres
+    environment:
+      POSTGRES_DB: reqcluster
+      POSTGRES_USER: reqcluster
+      POSTGRES_PASSWORD: reqcluster_dev_password   # change in production!
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U reqcluster -d reqcluster"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Redis — per-text embedding cache (optional but strongly recommended).
+  # The backend falls back to file-only cache when REDIS_URL is not set.
+  # ──────────────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: reqcluster-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    restart: unless-stopped
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Backend
+  # ──────────────────────────────────────────────────────────────────────────
   backend:
     build:
       context: .
@@ -15,6 +58,15 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - CORS_ORIGINS=http://localhost:3000
+      # PostgreSQL connection (uses the postgres service above)
+      - DATABASE_URL=postgresql://reqcluster:reqcluster_dev_password@postgres:5432/reqcluster
+      # Redis connection (uses the redis service above)
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 15s
@@ -23,6 +75,9 @@ services:
       start_period: 60s
     restart: unless-stopped
 
+  # ──────────────────────────────────────────────────────────────────────────
+  # Frontend
+  # ──────────────────────────────────────────────────────────────────────────
   frontend:
     build:
       context: .
@@ -34,3 +89,7 @@ services:
       backend:
         condition: service_healthy
     restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:

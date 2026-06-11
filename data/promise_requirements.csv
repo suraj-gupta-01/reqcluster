@@ -1,0 +1,970 @@
+id,text,module,section
+REQ-0001,The system shall refresh the display every 60 seconds.,Performance,PROMISE-exp
+REQ-0002,The application shall match the color of the schema set forth by Department of Homeland Security,Look-and-Feel,PROMISE-exp
+REQ-0003,If projected  the data must be readable.  On a 10x10 projection screen  90% of viewers must be able to read Event / Activity data from a viewing distance of 30,Usability,PROMISE-exp
+REQ-0004,The product shall be available during normal business hours. As long as the user has access to the client PC  the system will be available 99% of the time during the first six months of operation.,Availability,PROMISE-exp
+REQ-0005,If projected  the data must be understandable. On a 10x10 projection screen  90% of viewers must be able to determine that Events or Activities are occuring in current time from a viewing distance of 100,Usability,PROMISE-exp
+REQ-0006,The product shall ensure that it can only be accessed by authorized users.  The product will be able to distinguish between authorized and unauthorized users in all access attempts,Security,PROMISE-exp
+REQ-0007,The product shall be intuitive and self-explanatory. 90% of new users shall be able to start the display of Events or Activities within 90 minutes of using the product.,Usability,PROMISE-exp
+REQ-0008,The product shall respond fast to keep up-to-date data in the display.,Performance,PROMISE-exp
+REQ-0009,The system shall have a MDI form that allows for the viewing of the graph and the data table.,Functional,PROMISE-exp
+REQ-0010,The system shall display Events in a vertical table by time.,Functional,PROMISE-exp
+REQ-0011,The system shall display the Events in a graph by time.,Functional,PROMISE-exp
+REQ-0012,The system shall display Events or Activities.,Functional,PROMISE-exp
+REQ-0013,The display shall have two regions:  left 2/3 of the display is graphical  right 1/3 of the display is a data table,Functional,PROMISE-exp
+REQ-0014,The data displayed in both the nodes within the graph and the rows in the table are MSEL Summary data,Functional,PROMISE-exp
+REQ-0015,The table side of the display shall be split into 2 regions: sequential and temporal.,Functional,PROMISE-exp
+REQ-0016,The top 1/4 of the table will hold events that are to occur sequentially.,Functional,PROMISE-exp
+REQ-0017,The bottom 3/4 of the table will hold events that occur according to its relevance to current time.,Functional,PROMISE-exp
+REQ-0018,The system shall color code events according to their variance from current time.,Functional,PROMISE-exp
+REQ-0019,The system shall display data from the Sync Matrix 1.0 and Exercise Management Tool 1.0 applications,Functional,PROMISE-exp
+REQ-0020,The system shall link Events back to either the Sync Matrix 1.0 or the Exercise Managment Tool 1.0 applications for modifications.,Functional,PROMISE-exp
+REQ-0021,The system shall allow modification of the display.,Functional,PROMISE-exp
+REQ-0022,The system shall offer a display of all the Events in the exercise.,Functional,PROMISE-exp
+REQ-0023,The system shall filter data by: Venues and Key Events.,Functional,PROMISE-exp
+REQ-0024,The system shall allow a user to define the time segments,Functional,PROMISE-exp
+REQ-0025,The system shall display the local and exercise time in separate clocks,Functional,PROMISE-exp
+REQ-0026,The system shall offer the ability to pause and resume the refresh of data.,Functional,PROMISE-exp
+REQ-0027,The system shall provide charts for the Activity or Event actual versus assumed time.,Functional,PROMISE-exp
+REQ-0028,The system shall provide a history report of changes made to the Activity or Event data,Functional,PROMISE-exp
+REQ-0029,The look and feel of the system shall conform to the user interface standards of the smart device.,Look-and-Feel,PROMISE-exp
+REQ-0030,The user interface shall have standard menus buttons for navigation,Look-and-Feel,PROMISE-exp
+REQ-0031,The system shall have a professional appearance,Look-and-Feel,PROMISE-exp
+REQ-0032,The product shall have a consistent color scheme and fonts.,Look-and-Feel,PROMISE-exp
+REQ-0033,The system shall be used by realtors with no training.,Usability,PROMISE-exp
+REQ-0034,The system shall be intuitive and self explanatory.,Usability,PROMISE-exp
+REQ-0035,The product shall be easy for a realtor to learn.,Usability,PROMISE-exp
+REQ-0036,The product shall use symbols and words that are naturally understandable by the realtor community.,Usability,PROMISE-exp
+REQ-0037,The product shall produce search results in an acceptable time,Performance,PROMISE-exp
+REQ-0038,The search results shall be returned no later 30 seconds  after the user has entered the search criteria,Performance,PROMISE-exp
+REQ-0039,The product shall generate a CMA report in an acceptable time.,Performance,PROMISE-exp
+REQ-0040,The CMA report shall be returned no later 60 seconds after the user has entered the CMA report criteria.,Performance,PROMISE-exp
+REQ-0041,The product shall synchronize contacts and appointments in an acceptable time.,Performance,PROMISE-exp
+REQ-0042,The product shall synchronize with the office system every hour.,Performance,PROMISE-exp
+REQ-0043,The product shall be available for use 24 hours per day 365 days  per year,Availability,PROMISE-exp
+REQ-0044,Out of 1000 accesses to the system the system is available 999 times.,Availability,PROMISE-exp
+REQ-0045,The product shall operate in offline mode whenever internet connection is unavailable.,Fault-Tolerance,PROMISE-exp
+REQ-0046,The product shall allow the user to view previously downloaded search results CMA reports  and appointments.,Fault-Tolerance,PROMISE-exp
+REQ-0047,The product shall retain user preferences in the event of a failure.,Fault-Tolerance,PROMISE-exp
+REQ-0048,100% of saved user preferences shall be restored when system comes back online.,Fault-Tolerance,PROMISE-exp
+REQ-0049,The product shall be able to support multiple remote users,Scalability,PROMISE-exp
+REQ-0050,The product shall be able support 1000 simultaneous users.,Scalability,PROMISE-exp
+REQ-0051,The product shall be capable of handling the existing 1000 users. This number is expected to grow 5 times within the next year.,Scalability,PROMISE-exp
+REQ-0052,The product shall be installed by an untrained realtor without recourse to separately-printed instructions.,Usability,PROMISE-exp
+REQ-0053,90% of untrained realtors shall be able to install the product on their device without printed instructions,Usability,PROMISE-exp
+REQ-0054,The product is expected to run on Windows CE and Palm operating systems.,Portability,PROMISE-exp
+REQ-0055,Only registered realtors shall be able to access the system.,Security,PROMISE-exp
+REQ-0056,Every user of the system shall be authenticated and authorized.,Security,PROMISE-exp
+REQ-0057,The product shall prevent its data from incorrect data being introduced.,Security,PROMISE-exp
+REQ-0058,The system shall allow a real estate agent to query MLS information,Functional,PROMISE-exp
+REQ-0059,The user shall be able to get driving directions to a selected property,Functional,PROMISE-exp
+REQ-0060,The user shall be able to download appointments and contact information for clients,Functional,PROMISE-exp
+REQ-0061,The system shall display clear property images in the search results,Functional,PROMISE-exp
+REQ-0062,The system shall update or create new property listings in the MLS,Functional,PROMISE-exp
+REQ-0063,Realtor shall be able to generate a CMA report based on property criteria,Functional,PROMISE-exp
+REQ-0064,The system shall be able to call the seller or buyer to schedule an appointment,Functional,PROMISE-exp
+REQ-0065,The realtor shall be notified of new client appointments after automatic synchronization with office system,Functional,PROMISE-exp
+REQ-0066,The realtor shall be able to retrieve a map showing property locations for a specified area,Functional,PROMISE-exp
+REQ-0067,The system shall notify the realtor when a seller or buyer responds to an appointment request,Functional,PROMISE-exp
+REQ-0068,The product shall allow the user to save the property search results.,Functional,PROMISE-exp
+REQ-0069,The system shall be easy to use by the Program Administrators/Nursing Staff Members.,Usability,PROMISE-exp
+REQ-0070,All of the users shall be able to use the system after one day of training.,Usability,PROMISE-exp
+REQ-0071,The system shall help the user avoid making mistakes while scheduling classes and clinicals for the nursing students.,Usability,PROMISE-exp
+REQ-0072,The number of mistakes noted by the students shall be decreased by 50% in the first year.,Usability,PROMISE-exp
+REQ-0073,The system shall be intuitive to the Program Administrators/Nursing Staff Members.,Usability,PROMISE-exp
+REQ-0074,2 out of 3 Program Administrators/Nursing Staff Members shall successfully be able to use the system to manage the scheduling of classes and clinicals.,Usability,PROMISE-exp
+REQ-0075,The system shall use symbols and words that are naturally understandable by the user community.,Usability,PROMISE-exp
+REQ-0076,The verbiage used within the system shall be consistent with Standard English and the terminology of the national Nursing Community.,Usability,PROMISE-exp
+REQ-0077,Staff members shall be able to complete a set of tasks in a timely manner.,Performance,PROMISE-exp
+REQ-0078,The response time of general student management tasks shall take no longer than 5 seconds and the response time of schedule generation shall take no longer than 30 seconds.,Performance,PROMISE-exp
+REQ-0079,The system shall be available for use between the hours of 8am and 6pm.,Availability,PROMISE-exp
+REQ-0080,The system shall achieve 95% up time.,Availability,PROMISE-exp
+REQ-0081,system shall be able to handle all of the user requests/usage during business hours.,Scalability,PROMISE-exp
+REQ-0082,The system shall cater to 10 simultaneous users from 9am to 5pm.,Scalability,PROMISE-exp
+REQ-0083,The system shall be capable of processing 100% of nursing students and their classes for the next 10 years.,Scalability,PROMISE-exp
+REQ-0084,The system shall be expected to manage the nursing program curriculum and class/clinical scheduling for a minimum of 5 years.,Scalability,PROMISE-exp
+REQ-0085,The system shall able to operate within a business office environment typical of the Nursing Department at DePaul University.,Operational,PROMISE-exp
+REQ-0086,The system shall be used within the specifications defined by the computers used by the Program Administrators/Nursing Staff Members.,Operational,PROMISE-exp
+REQ-0087,The system shall operate within the Windows XP Professional operating system.,Operational,PROMISE-exp
+REQ-0088,The system shall interface with CampusConnect\92s central server,Operational,PROMISE-exp
+REQ-0089,The system shall interface with the faculty central server.,Operational,PROMISE-exp
+REQ-0090,The system shall interface with the student master server.,Operational,PROMISE-exp
+REQ-0091,We must be able to interface with any HTML browser.,Operational,PROMISE-exp
+REQ-0092,Only authorized users shall have access to clinical site information.,Security,PROMISE-exp
+REQ-0093,Program Administrators/Nursing Staff Members are the only people who shall have access to clinical site details.,Security,PROMISE-exp
+REQ-0094,Only authorized users shall have access to students\92 personal information.,Security,PROMISE-exp
+REQ-0095,Dr Susan Poslusny and Dr Julie Donalek are the only people who shall have access to students\92 personal information.,Security,PROMISE-exp
+REQ-0096,Only authorized users shall have access to the portion of the system that interfaces with CampusConnect.,Security,PROMISE-exp
+REQ-0097,Fit Criterion: Dr Susan Poslusny and Karen Sysol are the only people who shall have access to the final class section scheduling for the system that interfaces with CampusConnect.,Security,PROMISE-exp
+REQ-0098,The system shall have basic data integrity checking to reduce the possibility of incorrect or invalid data being introduced.,Security,PROMISE-exp
+REQ-0099,The system shall protect private information in accordance with the organization\92s information policy.,Security,PROMISE-exp
+REQ-0100,The system shall be built such that it is as secure as possible from malicious interference.,Security,PROMISE-exp
+REQ-0101,The system shall use the organization\92s standard virus protection software to help monitor threats to itself.,Security,PROMISE-exp
+REQ-0102,A cohort shall be associated to one Program of Study offered by the department.,Functional,PROMISE-exp
+REQ-0103,Program Administrators and Nursing Staff Members shall be able to add a listing of students to a cohort.,Functional,PROMISE-exp
+REQ-0104,Program Administrators and Nursing Staff Members shall be able to add a single student to a cohort,Functional,PROMISE-exp
+REQ-0105,Students added to a cohort shall be eligible for the cohort\92s Program of Study.,Functional,PROMISE-exp
+REQ-0106,Program Administrators and Nursing Staff Members shall be able to specify the preferred sequence of classes for a given cohort.,Functional,PROMISE-exp
+REQ-0107,For each class within a sequence for a cohort  Program Administrators and Nursing Staff Members shall be able to specify which quarter that class will be offered.,Functional,PROMISE-exp
+REQ-0108,Program Administrators and Nursing Staff Members shall be able to add new classes to a sequence of classes,Functional,PROMISE-exp
+REQ-0109,Program Administrators and Nursing Staff Members shall be able to add clinical classes or sections to a sequence of classes,Functional,PROMISE-exp
+REQ-0110,Program Administrators and Nursing Staff Members shall be able to add a new cohort to the system  identified by start month and year.,Functional,PROMISE-exp
+REQ-0111,Program Administrators and Nursing Staff Members shall be able to add new classes for the nursing department into the system.,Functional,PROMISE-exp
+REQ-0112,A class shall be either a non-clinical class or a clinical class.,Functional,PROMISE-exp
+REQ-0113,A non-clinical class shall specify the course name  lecture room requirements  and instructor needs.,Functional,PROMISE-exp
+REQ-0114,A clinical class shall specify the course name  lecture room requirements  clinical site needs  lecture instructor needs  and clinical lab instructor needs.,Functional,PROMISE-exp
+REQ-0115,Program Administrators/Nursing Staff Members shall be able to create a new Program of Study.,Functional,PROMISE-exp
+REQ-0116,A Program of Study shall consist of a program name and listing of required classes (both clinical and non-clinical) that must be completed.,Functional,PROMISE-exp
+REQ-0117,Program Administrators and Nursing Staff Members shall have the ability to specify which classes are required for a Program of Study,Functional,PROMISE-exp
+REQ-0118,The system shall be able to display a report of needed classes for a given quarter for all cohorts of all programs for Program Administrators/Nursing Staff Members\92 planning purposes.,Functional,PROMISE-exp
+REQ-0119,The report of needed classes shall include (but not be limited to) classes to be offered  number of sections needed  number of labs needed  and room types needed.,Functional,PROMISE-exp
+REQ-0120,Classes for a given cohort shall not conflict with regards to the time and day that they are offered.,Functional,PROMISE-exp
+REQ-0121,Program Administrators and Nursing Staff Members shall be able to add a new clinical site into the system.,Functional,PROMISE-exp
+REQ-0122,Clinical site information shall include (but not be limited to) the name of the site  contact person  and contact information.,Functional,PROMISE-exp
+REQ-0123,Program Administrators and Nursing Staff Members shall be able to add a new clinical lab section for an existing clinical class into the System.,Functional,PROMISE-exp
+REQ-0124,A clinical lab section shall include the clinical site name  the class  instructor  day and time of the lab.,Functional,PROMISE-exp
+REQ-0125,Program Administrators and Nursing Staff Members shall be able to add a student who has registered for a clinical class to a clinical lab section for that class.,Functional,PROMISE-exp
+REQ-0126,The system shall allow a Program Administrator or Nursing staff member to remove a student from a clinical lab section.,Functional,PROMISE-exp
+REQ-0127,The system shall allow a Program Administrator/Nursing Staff Member to move a student from one clinical lab section to another clinical lab section corresponding to the same clinical class.,Functional,PROMISE-exp
+REQ-0128,Program Administrators/Nursing Staff Members shall be able to cancel a clinical lab section only if there are no students registered for that clinical lab section.,Functional,PROMISE-exp
+REQ-0129,A Program Administrator/Nursing Staff Member shall be able to add a new nursing student to the system.,Functional,PROMISE-exp
+REQ-0130,A staff member shall have the ability to manage the progress of a part time student  which includes modifying their sequence of classes and timeline of classes.,Functional,PROMISE-exp
+REQ-0131,The system shall be able to display a printable summary for individual cohorts  which will include the students enlisted  the Program of study  sequence of classes  cohort progress through the program  and timeline of completion.,Functional,PROMISE-exp
+REQ-0132,The system shall be able to display a printable summary for individual clinical sites  which will include information on labs being held at that site for the given quarter (Clinical site  general information on labs held at that location  dates and times of all labs held there).,Functional,PROMISE-exp
+REQ-0133,The system shall be able to display a printable summary for individual clinical labs  which will include (but not be limited to) class name  class number  lab section  listing of students enrolled  instructor  day(s)  time  and location.,Functional,PROMISE-exp
+REQ-0134,The system shall be able to display a printable summary for individual nursing students  which will include (but not be limited to) student name  student ID  admission date  classes  credits  GPA  and the cohort that the student is enrolled in.,Functional,PROMISE-exp
+REQ-0135,The system shall be able to display a printable summary of the system log.,Functional,PROMISE-exp
+REQ-0136,The system shall contain contact information (e-mail and phone number) for all people relevant to the system  including (but not limited to) staff members  students  lecture instructors  clinical lab instructors  and clinical site administrators.,Functional,PROMISE-exp
+REQ-0137,The system will use the stored e-mail addresses as a primary means of communicating information to affected parties.,Functional,PROMISE-exp
+REQ-0138,The system will notify affected parties for routine communication purposes  including but not limited to informing students of upcoming offered classes (timeline) and what their schedule will be/shall be.,Functional,PROMISE-exp
+REQ-0139,The system will notify affected parties when changes occur affecting clinicals  including but not limited to clinical section capacity changes  and clinical section cancellations.,Functional,PROMISE-exp
+REQ-0140,The system will notify affected parties when changes occur affecting classes  including but not limited to class cancellations  class section detail changes  and changes to class offerings for a given quarter.,Functional,PROMISE-exp
+REQ-0141,The system will notify affected parties when changes occur affecting cohorts  including but not limited to changes to the sequence for a cohort\92s program of study and changes to a given week\92s schedule (lab cancelled this week due to instructor illness).,Functional,PROMISE-exp
+REQ-0142,The system will notify affected parties when changes occur affecting specific students  including but not limited to changing a student\92s status from full time to part time and moving a student to a different clinical section.,Functional,PROMISE-exp
+REQ-0143,Program Administrators/Nursing Staff Members shall have the ability to modify information relating to cohorts including cohort identifier  program of study  preferred sequence of classes and quarters that a cohort will be taking specific classes.,Functional,PROMISE-exp
+REQ-0144,Program Administrators/Nursing Staff Members shall have the ability to modify information relating to a Program of Study within the Nursing Department including the Program of study name  and required classes for that Program of Study.,Functional,PROMISE-exp
+REQ-0145,Program Administrators/Nursing Staff Members shall have the ability to modify information relating to a Clinical Site  including the clinical site name  site contact person  contact information  and address.,Functional,PROMISE-exp
+REQ-0146,Program Administrators/Nursing Staff Members shall have the ability to modify information relating to a Clinical Lab Section  including the clinical site name the department/section for the lab  the class instructor day and time of lab and contact information.,Functional,PROMISE-exp
+REQ-0147,Program Administrators/Nursing Staff Members shall have the ability to modify information relating to a Nursing Student  including student ID  student name phone number e-mail status (full time or part time) and program of study.,Functional,PROMISE-exp
+REQ-0148,The Disputes application shall comply with the corporate standards for user interface creation for internally and externally used applications.,Look-and-Feel,PROMISE-exp
+REQ-0149,All screens created as part of the Disputes application must comply with corporate standards for interface creation.,Look-and-Feel,PROMISE-exp
+REQ-0150,The list of dispute cases that are displayed after a search is performed must be color coded for easy identification of dispute cases based upon the dispute case status.,Usability,PROMISE-exp
+REQ-0151,100% of the cardmember and merchant services representatives shall use the Disputes application regularly after a 2-day training course.,Usability,PROMISE-exp
+REQ-0152,100% of cardmember services representatives shall be able to successfully create a dispute case on the first encounter after completing the training course.,Usability,PROMISE-exp
+REQ-0153,100% of merchant services representatives shall be able to successfully perform a follow up action on a dispute case on the first encounter after completing the training course.,Usability,PROMISE-exp
+REQ-0154,The maximum wait time for a user navigating from one screen to another within the Disputes application shall be no more than 5 seconds.,Performance,PROMISE-exp
+REQ-0155,The Disputes application shall support 350 concurrent users without any degradation of performance in the application.,Performance,PROMISE-exp
+REQ-0156,The Disputes application shall be available 24x7x365  with the exception of the following scheduled maintenance windows.  Monday \96 Saturday 3:00am to 4:00am EST Sunday 1:00amd to 5:00am EST,Operational,PROMISE-exp
+REQ-0157,The Disputes application shall interface with the Statement Database. The Statement Database provides the transaction details to the Disputes System. All transaction details must be obtained from the Statement Database,Operational,PROMISE-exp
+REQ-0158,The Disputes application shall interface with the Cardmember Information Database. The Cardmember Information Database provides detailed information with regard to a cardmember. All cardmember detail information must be obtained from the Cardmember Information Database.,Operational,PROMISE-exp
+REQ-0159,The Disputes applications shall interface with the Merchant Information Database. The Merchant Information Database provides detailed information with regard to the merchant. All merchant detail information shall be obtained from the Merchant Information Database.,Operational,PROMISE-exp
+REQ-0160,The Disputes application shall interface with the Letters application.  This will allow the Disputes application to request letters as part of the dispute initiation and dispute follow up process. All letter requests must be sent to the Print Letter Utility application.,Operational,PROMISE-exp
+REQ-0161,The Disputes application shall interface with the Cardmember Posting and Billing System.  This will allow the Disputes application to request adjustments to cardmember and merchant\92s accounts. All adjustment requests must be sent to the Cardmember Posting and Billing System.,Operational,PROMISE-exp
+REQ-0162,The Disputes application shall ensure that only users with the appropriate access level are allowed to initiate dispute requests.,Security,PROMISE-exp
+REQ-0163,Only users with Update access must be able to initiate dispute requests.,Security,PROMISE-exp
+REQ-0164,The Disputes application shall ensure that only authorized users are allowed to logon to the application.,Security,PROMISE-exp
+REQ-0165,All authorized users  once authenticated must be able to logon to the Disputes System,Security,PROMISE-exp
+REQ-0166,The Disputes System shall generate a User Report that details any new users that have been added and any changes to an existing user\92s access level. The report will be reviewed for auditing purposes.,Security,PROMISE-exp
+REQ-0167,All additions of new users and modifications to user\92s access shall be recorded on the User Report.,Security,PROMISE-exp
+REQ-0168,If a user account is revoked  it can only be re-instantiated by the System Administrator.,Security,PROMISE-exp
+REQ-0169,Only the System Administrator shall be able to reset a revoked user logon account,Security,PROMISE-exp
+REQ-0170,The Disputes application shall manipulate and view business data. Users will not have direct access to data files or databases.,Security,PROMISE-exp
+REQ-0171,All updates to data files or database must be initiated from the Disputes System.,Security,PROMISE-exp
+REQ-0172,The Disputes application must conform to the legal requirements as specified by the Merchant Operating Regulations.,Legal,PROMISE-exp
+REQ-0173,All business rules specified in the Disputes System shall be in compliance with the Merchant Operating Regulations.,Legal,PROMISE-exp
+REQ-0174,The Disputes application must conform to the legal requirements as specified by Regulation E and Regulation Z that govern credit card disputes processing.,Legal,PROMISE-exp
+REQ-0175,All business rules specified in the Disputes System shall be in compliance to the guidelines of Regulation E and Regulation Z.,Legal,PROMISE-exp
+REQ-0176,The Disputes application must maintain a detailed history of every action that a user takes on a dispute case.  This ensures a complete audit trail if questions arise later on with regard to a particular dispute case.,Legal,PROMISE-exp
+REQ-0177,All actions that modify an existing dispute case must be recorded in the case history.,Legal,PROMISE-exp
+REQ-0178,The Disputes System must be accessible by both internal and external users.,Functional,PROMISE-exp
+REQ-0179,The Disputes System must prevent users from accessing any dispute cases that do not belong to their cardholder base.,Functional,PROMISE-exp
+REQ-0180,The Disputes System will facilitate direct data entry of a dispute case via a user interface that supports real time responses to the users.,Functional,PROMISE-exp
+REQ-0181,The Disputes System must provide different levels of access with regard to disputes case initiation and follow-up actions.,Functional,PROMISE-exp
+REQ-0182,The Disputes System shall provide view access capability for authorized users of the application.,Functional,PROMISE-exp
+REQ-0183,The Disputes System shall provide update access capability for authorized users of the application.,Functional,PROMISE-exp
+REQ-0184,The Disputes System must allow the users to select disputable transactions (based on the age of the transaction) from a user interface and initiate a dispute (ticket retrieval request or chargeback notification) on the selected transaction.,Functional,PROMISE-exp
+REQ-0185,The Disputes System must provide the user the ability to initiate a single dispute case on multiple transactions that belong to a single merchant.,Functional,PROMISE-exp
+REQ-0186,The Disputes System will provide the user the ability to create or initiate a ticket retrieval request.   As part of ticket retrieval creation process the system must prompt the user to enter all the required information to create the ticket retrieval request.  The ticket retrieval request is a document that is sent to merchant inquiring the validity of a transaction.,Functional,PROMISE-exp
+REQ-0187,The Disputes System must allow the user to create three unique types of ticket retrieval requests.  The three types of ticket retrieval requests are (1) Request for original receipt (2) Request for a copy of the receipt or (3) Request for a portfolio. A portfolio consists of documentation that would provide proof of a purchase such as the documentation that is received from a car rental agency that is more than a sales receipt.,Functional,PROMISE-exp
+REQ-0188,The Disputes System must prevent external users from requesting original receipts. Requests for original receipts are restricted to internal users.,Functional,PROMISE-exp
+REQ-0189,The Disputes System must provide a confirmation to the user upon the creation of ticket retrieval request that contains the following information; the dispute case number  the type of retrieval requested (copy  original or portfolio)  and the date that the merchant response is due.,Functional,PROMISE-exp
+REQ-0190,The Disputes System shall allow the user to create or initiate a chargeback request.  The system must prompt the user to enter the required information to initiate a chargeback request. The chargeback request results in a printed chargeback notification that is sent to merchant indicating that their account will be charged back if no proof is provided that the disputed transaction is valid.,Functional,PROMISE-exp
+REQ-0191,The Disputes System must provide a confirmation to the user upon the creation of a chargeback request. The confirmation must contain the following information; the dispute case number  the type of chargeback requested (pending or immediate)  and the date that the merchant response is due.,Functional,PROMISE-exp
+REQ-0192,The Disputes System shall prevent the creation of duplicate dispute requests 100% of the time.,Functional,PROMISE-exp
+REQ-0193,The Disputes System shall accurately provide a list of possible reason codes for a given transaction.  The list of possible reason codes must be derived based on the type of transaction and the industry that the merchant belongs to  according to the business rules defined for the Disputes System.,Functional,PROMISE-exp
+REQ-0194,The Disputes System must provide the ability to view existing dispute cases.,Functional,PROMISE-exp
+REQ-0195,The Disputes System must provide Search functionality.  The search method must include the ability to search by (1) the dispute case number  (2) the merchant account number  (3) the cardmember account number and (4) the issuer number.  In addition to the above criteria  the search functionality must further allow the user to limit the results of the search by a date range  the type of dispute (ticket retrieval request or chargeback notification)  the case status (open  closed or all) and the dispute reason code.,Functional,PROMISE-exp
+REQ-0196,A list of all disputes cases that meet the entered search criteria must be provided to the user.  The list of cases must differentiate the type and/or status of the case by color -coding the line item in the list.  For example all open cases will be yellow and all closed cases will be gray.,Functional,PROMISE-exp
+REQ-0197,The Disputes System shall provide the users the ability to view the history of all activities that have occurred on the dispute case.,Functional,PROMISE-exp
+REQ-0198,The Dispute System shall provide the users with the ability to follow up on a dispute case via follow-up actions.  The list of available follow up actions for a given dispute case must be filtered by the status of the case and the access level of the user.,Functional,PROMISE-exp
+REQ-0199,The Disputes System shall record the name of the user and the date for any activity that creates or modifies the disputes case in the system.  A detailed history of the actions taken on the case  including the date and the user that performed the action must be maintained for auditing purposes.,Functional,PROMISE-exp
+REQ-0200,For any systematic (non-user initiated) action that occurs on a case such as the disputes aging process  a case activity will be generated.  Upon the next logon the user that initiated the dispute case must be notified that a systematic action has occurred on the dispute case.,Functional,PROMISE-exp
+REQ-0201,All letter requests must be formatted according to guidelines specified by the Print Letter Utility system.,Functional,PROMISE-exp
+REQ-0202,Any disputes cases that have been closed for over 6 months must be purged from the online disputes database.,Functional,PROMISE-exp
+REQ-0203,The product must support Internet Explorer 5.5 and above.,Operational,PROMISE-exp
+REQ-0204,The product must support Mozilla Firefox 1.0 and above.,Operational,PROMISE-exp
+REQ-0205,The product shall interface with the Choice Parts System.  This provides the feed of recycled parts data.,Operational,PROMISE-exp
+REQ-0206,The product shall run on the existing hardware for all environments.,Operational,PROMISE-exp
+REQ-0207,The product shall adhere to the corporate Architecture guidelines,Operational,PROMISE-exp
+REQ-0208,The product shall comply with corporate User Interface Guidelines,Look-and-Feel,PROMISE-exp
+REQ-0209,The product shall comply with corporate color scheme,Look-and-Feel,PROMISE-exp
+REQ-0210,The appearance of the product shall appear professional,Look-and-Feel,PROMISE-exp
+REQ-0211,The product shall be easy to use by Adjusters and Collision Estimators.  95% of Adjusters and Collision Estimators shall find the product easy to use.,Usability,PROMISE-exp
+REQ-0212,The product shall increase productivity of Collision Estimators. 80% of the Collision Estimators shall agree their productivity has increase within 1 month of using the product.,Usability,PROMISE-exp
+REQ-0213,Users shall feel satisfied using the product.  85% of all users will be satisfied with the product.,Usability,PROMISE-exp
+REQ-0214,The product shall be easy to learn by Adjusters and Collision Estimators.  The product shall be learned with two days onsite training,Usability,PROMISE-exp
+REQ-0215,The user shall easily locate instructions while using the product.  User help can be found within 90% of the system.,Usability,PROMISE-exp
+REQ-0216,The search for recycled parts shall take no longer than 15 seconds.  The search results shall be returned in under 15 seconds.,Performance,PROMISE-exp
+REQ-0217,The search for the preferred repair facility shall take no longer than 8 seconds.  The preferred repair facility is returned within 8 seconds,Performance,PROMISE-exp
+REQ-0218,The recycled parts audit report shall be returned to the user within 10 seconds.  The audit report shall be returned within 10 seconds.,Performance,PROMISE-exp
+REQ-0219,The preferred repair facility ratings shall be saved within 5 seconds. The save shall occur within 5 seconds.,Performance,PROMISE-exp
+REQ-0220,The product shall adhere to the corporate online availability schedule.  The application is brought down only within 98% of the scheduled outages per the availability schedule.,Availability,PROMISE-exp
+REQ-0221,The product shall achieve a 98% uptime. The product shall not fail more than 2% of the available online time.,Availability,PROMISE-exp
+REQ-0222,The product shall be able to handle up to 1500 simultaneous users. The system shall perform with 1500 users as a time.,Scalability,PROMISE-exp
+REQ-0223,The average number of recycled parts records per day shall be 50 000.,Scalability,PROMISE-exp
+REQ-0224,The product shall be able to handle 10 000 concurrent users within 2 years of the initial launch.,Scalability,PROMISE-exp
+REQ-0225,For estimators  the product shall be able to be operated in a repair facility during dirty and noisy conditions.,Operational,PROMISE-exp
+REQ-0226,The product shall interface with the ChoiceParts system once per day at approximately 1:00 AM.,Operational,PROMISE-exp
+REQ-0227,The maintenance of the product will fall within the established corporate maintenance windows.,Operational,PROMISE-exp
+REQ-0228,The product shall be supported using the corporate support center.,Operational,PROMISE-exp
+REQ-0229,Product installations and upgrades shall be handled by the middleware technology team within established launch time frames.,Operational,PROMISE-exp
+REQ-0230,Only adjusters can request recycled parts audit reports. No users without an adjuster role shall request recycled parts audits.,Security,PROMISE-exp
+REQ-0231,Only adjusters with a supervisor role can update preferred repair facility ratings. Users without the supervisor role cannot access the repair facility ratings.,Security,PROMISE-exp
+REQ-0232,Only collision estimators shall search for recycled parts.  Users without the collision estimator role shall not have access to the search for recycled parts.,Security,PROMISE-exp
+REQ-0233,Only valid data shall be entered into the system. No invalid data shall be entered into the system.,Security,PROMISE-exp
+REQ-0234,One insurance company shall not be able to view another insurance companys claim data.,Security,PROMISE-exp
+REQ-0235,The product shall free of computer viruses.,Security,PROMISE-exp
+REQ-0236,The system shall prevent malicious attacks including denial of service.,Security,PROMISE-exp
+REQ-0237,The product must comply with Sarbanes-Oxley.,Legal,PROMISE-exp
+REQ-0238,The product shall comply with the estimatics laws relating to recycled parts usage.,Legal,PROMISE-exp
+REQ-0239,The product shall comply with insurance regulations regarding claims processing.,Legal,PROMISE-exp
+REQ-0240,The user shall search for the preferred repair facility using vehicle  vehicle location  and radius in miles,Functional,PROMISE-exp
+REQ-0241,The vehicle data shall include vehicle year make and model,Functional,PROMISE-exp
+REQ-0242,The vehicle location shall include street address city state and zipcode,Functional,PROMISE-exp
+REQ-0243,The system shall resolve the zipcode for the street address  city  and state if zipcode is unknown.,Functional,PROMISE-exp
+REQ-0244,The search radius shall be between 1 and 30 miles,Functional,PROMISE-exp
+REQ-0245,The system shall locate the preferred repair facility with the highest ratings for the input criteria,Functional,PROMISE-exp
+REQ-0246,The adjuster shall enter the preferred repair facility on the estimate assignment.,Functional,PROMISE-exp
+REQ-0247,The adjuster shall be able to override the preferred repair facitlity on the estimate assignment.,Functional,PROMISE-exp
+REQ-0248,The preferred repair facility shall be returned to the user.,Functional,PROMISE-exp
+REQ-0249,The system shall return a list of repair facilities within the radius if the preferred repair facility cannot be determined.,Functional,PROMISE-exp
+REQ-0250,The estimator shall search for available recycled parts using damaged vehicle parts information.,Functional,PROMISE-exp
+REQ-0251,The estimator shall search for available recycled parts using a list of preferred parts suppliers.,Functional,PROMISE-exp
+REQ-0252,The system shall search for available recycled parts for the supplied vehicle parts and suppliers.,Functional,PROMISE-exp
+REQ-0253,The estimator shall search by zipcode with a radius of 30 miles if no parts are found for the preferred parts suppliers,Functional,PROMISE-exp
+REQ-0254,The system shall retain the available recycled parts and suppliers returned from the search.,Functional,PROMISE-exp
+REQ-0255,The available recycled parts information and their suppliers shall be returned to the user.,Functional,PROMISE-exp
+REQ-0256,The estimator shall apply selected recycled parts to the collision estimate.,Functional,PROMISE-exp
+REQ-0257,The estimator shall not apply recycled parts to the collision estimate if no available parts are returned.,Functional,PROMISE-exp
+REQ-0258,The adjuster shall review the collision estimate.,Functional,PROMISE-exp
+REQ-0259,The adjuster shall request a recycled parts audit of the collision estimate.,Functional,PROMISE-exp
+REQ-0260,The recycled parts search results provided to the estimator shall be retrieved by the system.,Functional,PROMISE-exp
+REQ-0261,The system shall generate an audit report based on the available recycled parts and the collision estimate.,Functional,PROMISE-exp
+REQ-0262,The audit report shall include the total number of recycled parts used in the estimate.,Functional,PROMISE-exp
+REQ-0263,The audit report shall include the number of available recycled parts from the original search results.,Functional,PROMISE-exp
+REQ-0264,The audit report shall include the percentage of available recycled parts used in the estimate,Functional,PROMISE-exp
+REQ-0265,The audit report shall include the total score of the audit which sums the indivual line items.,Functional,PROMISE-exp
+REQ-0266,The audit report shall be displayed to the user.,Functional,PROMISE-exp
+REQ-0267,The audit report shall be available to other adjusters at later points in time.,Functional,PROMISE-exp
+REQ-0268,The user shall select to view the preferred repair facility ratings.,Functional,PROMISE-exp
+REQ-0269,The current repair facility ratings shall be displayed to the user.,Functional,PROMISE-exp
+REQ-0270,The system will display a blank set of ratings if there are not ratings yet defined.,Functional,PROMISE-exp
+REQ-0271,The user shall enter new ratings based on the audit report,Functional,PROMISE-exp
+REQ-0272,The ratings shall be from a scale of 1-10,Functional,PROMISE-exp
+REQ-0273,The ratings shall include categories for attempted use of recycled parts and actual use of recycled parts,Functional,PROMISE-exp
+REQ-0274,The user shall select to save the preferred repair facility ratings.,Functional,PROMISE-exp
+REQ-0275,The preferred repair facility ratings shall be saved by the system.,Functional,PROMISE-exp
+REQ-0276,The product must work with most database management systems (DBMS) on the market  whether the DBMS is colocated with the product on the same machine or is located on a different machine on the computer network.,Operational,PROMISE-exp
+REQ-0277,The product will function alongside server software on any operating system where the Java runtime can be installed.,Operational,PROMISE-exp
+REQ-0278,The product will require collaboration with a database management system (DBMS).  The DBMS may be located on the same machine as the product or on a separate machine residing on the same computer network.,Operational,PROMISE-exp
+REQ-0279,The product must make use of web/application server technology.  Open source examples include Apache web server  Tomcat  and the JBoss application server.,Operational,PROMISE-exp
+REQ-0280,A database management system such as Oracle  DB2  MySql or HSQL will need to be integrated with the product.,Operational,PROMISE-exp
+REQ-0281,The product\92s Look and Feel shall be able to incorporate aspects of the customer\92s organization such as logo  branding  and identity,Look-and-Feel,PROMISE-exp
+REQ-0282,The product shall have a conservative and professional appearance.,Look-and-Feel,PROMISE-exp
+REQ-0283,The product shall make the users want to use it. 80% of the users surveyed report they are regularly using the product after the first 2 weeks post-launch.,Usability,PROMISE-exp
+REQ-0284,The product shall be easy to use. 90% of users will be able to successfully reserve a conference room within 5 minutes of product use.,Usability,PROMISE-exp
+REQ-0285,The product shall give users feedback when necessary. 80% of the users surveyed report that the product accurately confirms their actions.,Usability,PROMISE-exp
+REQ-0286,The product shall allow the user to select a chosen language from one of the target market countries.,Usability,PROMISE-exp
+REQ-0287,The product shall allow for customization of start page and views preferences.,Usability,PROMISE-exp
+REQ-0288,An employee will be able to successfully use the product within a few minutes.  After informally navigating the product for less than 15 minutes  users shall be able to successfully setup meetings and reserve conference rooms.,Usability,PROMISE-exp
+REQ-0289,The product shall use a standard navigation menu familiar to most web users.,Usability,PROMISE-exp
+REQ-0290,The product shall allow for intuitive searching of available conference rooms.,Usability,PROMISE-exp
+REQ-0291,The product shall conform to the Americans with Disabilities Act.,Usability,PROMISE-exp
+REQ-0292,The response shall be fast enough to avoid interrupting the user\92s flow of thought.  90% of tasks shall complete within 5 seconds.  98% of tasks shall complete within 8 seconds.,Performance,PROMISE-exp
+REQ-0293,Aside from server failure  the software product shall achieve 99.99% up time.,Availability,PROMISE-exp
+REQ-0294,The product shall create an exception log of problems encountered within the product for transmission to our company for analysis and resolution.,Fault-Tolerance,PROMISE-exp
+REQ-0295,The product shall be capable of handling up to 1 000 concurrent requests.  This number will increase to 2 000 by Release 2.  The concurrency capacity must be able to handle peak scheduling times such as early morning and late afternoon hours.,Scalability,PROMISE-exp
+REQ-0296,The product shall be able to process 10 000 transactions per hour within two years of its launch.  This number will increase to 20 000 by Release 2.,Scalability,PROMISE-exp
+REQ-0297,The product shall be expected to operate for at least 5 years for each customer installation.,Scalability,PROMISE-exp
+REQ-0298,The product shall be used in office environments.,Operational,PROMISE-exp
+REQ-0299,The product must be able to interface with any HTML browser.  The product shall transmit data between the user and the product without problems. The product shall display HTML properly in 80% of all HTML browsers tested (minimum is to test 8 browsers).,Operational,PROMISE-exp
+REQ-0300,The product must be able to interface with various database management systems. The product shall communicate successfully with the database management system on 100% of all transactions.,Operational,PROMISE-exp
+REQ-0301,The product must be able to interface with various email servers. The product shall be able to send email.,Operational,PROMISE-exp
+REQ-0302,The product shall be available for distribution via the Internet as a binary or ZIP file.,Operational,PROMISE-exp
+REQ-0303,The product shall be available for distribution as a packaged CD.,Operational,PROMISE-exp
+REQ-0304,The product will be available for licensing as a one-server  two-five servers  or five-or-more servers license.,Operational,PROMISE-exp
+REQ-0305,A new user must be able to be added to the system within 10 minutes. 90% of new users are able to log into the system within 10 minutes.,Usability,PROMISE-exp
+REQ-0306,The product must be designed using Design Patterns and coding best practices.  90% of maintenance software developers are able to integrate new functionality into the product with 2 working days.,Maintainability,PROMISE-exp
+REQ-0307,The product must be highly configurable for use with various database management systems for the end users.  80% of end users are able to integrate new database management systems with the product without changing the product\92s software code.,Maintainability,PROMISE-exp
+REQ-0308,Maintenance releases will be offered to customers once a year.  The releases shall take no longer than 5 minutes for 80% of the customer base to install.,Maintainability,PROMISE-exp
+REQ-0309,Every registered user will have access to the product\92s support site via the Internet.  70% of registered users shall find a solution to their problem within 5 minutes of using the support site.,Usability,PROMISE-exp
+REQ-0310,The customer shall be able to easily integrate new building maps with the product throughout the product\92s lifecycle.  Integration of new maps with the product shall be possible with little to no support from product support staff.,Maintainability,PROMISE-exp
+REQ-0311,The product shall be translated into foreign languages other than the target market countries\92 languages in future releases.  For each emerging target market  it shall take no more than 5 days to configure the product for that market\92s language.,Usability,PROMISE-exp
+REQ-0312,The product is expected to integrate with multiple database management systems. The product will operate with Oracle  SQL Server  DB2  MySQL  HSQL  and MS Access.,Operational,PROMISE-exp
+REQ-0313,The product shall be able to be installed in any operating environment within 2 days.,Operational,PROMISE-exp
+REQ-0314,The product shall ensure that only company employees or external users with company-approved user IDs may have product access.  100% of all logons shall be by either company employees or external users with company-approved user IDs.,Security,PROMISE-exp
+REQ-0315,Only managers are able to perform search queries for reservations by user.  100% of all search queries for reservations by user shall be from logons of only management logons.,Security,PROMISE-exp
+REQ-0316,The product shall ensure that the database\92s data corresponds to the data entered by the user.  Each conference room reservation in the system will contain the same information as was entered by the user.,Security,PROMISE-exp
+REQ-0317,The product shall prevent the input of malicious data.  The product and/or adjacent hardware/software systems\92 data shall remain 100% uncorrupted each time malicious data is input into the product.,Security,PROMISE-exp
+REQ-0318,The product and/or dependent databases/filesystems shall remain operational as a result of the input of malicious data.  The product and/or dependent databases/filesystems shall not crash 100% of the time that malicious data is input into the product.,Fault-Tolerance,PROMISE-exp
+REQ-0319,The product shall have the ability to receive automatic software updates as new threats emerge. 100% of customers will be able to receive automatic software updates transmitted to the installed product.,Security,PROMISE-exp
+REQ-0320,The language of the product shall accommodate all of the target market countries. 90% of survey respondents from each target market country will find that the language of the product is acceptable.,Scalability,PROMISE-exp
+REQ-0321,The product shall be able to display calendar dates and times according to the user\92s locale.  90% of survey respondents from each target market country will find that the date and time formatting of the product is correct.,Usability,PROMISE-exp
+REQ-0322,The product must be developed with the J2SE/J2EE programming language libraries,Operational,PROMISE-exp
+REQ-0323,The product shall record meeting entries.,Functional,PROMISE-exp
+REQ-0324,The product will notify employees of meeting invitations.,Functional,PROMISE-exp
+REQ-0325,The product shall have the ability to send meeting reminders to employees.,Functional,PROMISE-exp
+REQ-0326,The product shall assign the organizers contact information to each meeting they create.,Functional,PROMISE-exp
+REQ-0327,The product will record meeting acknowledgements.,Functional,PROMISE-exp
+REQ-0328,The product shall store new conference rooms.,Functional,PROMISE-exp
+REQ-0329,The product shall update existing conference rooms.,Functional,PROMISE-exp
+REQ-0330,The product will be able to delete conference rooms.,Functional,PROMISE-exp
+REQ-0331,The product shall be able to store new room equipment.,Functional,PROMISE-exp
+REQ-0332,The product will update existing room equipment.,Functional,PROMISE-exp
+REQ-0333,The product shall be able to delete room equipment.,Functional,PROMISE-exp
+REQ-0334,The product shall allow an organizer to invite other employees to meetings.,Functional,PROMISE-exp
+REQ-0335,Each time a conference room is reserved  the conference room schedule shall be updated to reflect the time and date of the reservation.,Functional,PROMISE-exp
+REQ-0336,The product shall record the transportation status of equipment reserved.,Functional,PROMISE-exp
+REQ-0337,The product shall display a map of the company building showing conference room locations.,Functional,PROMISE-exp
+REQ-0338,The product shall record updated meeting agendas.,Functional,PROMISE-exp
+REQ-0339,The product shall send a meeting confirmation to the meeting organizer.,Functional,PROMISE-exp
+REQ-0340,The product shall display room equipment according to search parameters.,Functional,PROMISE-exp
+REQ-0341,The product shall display conference rooms according to search parameters.,Functional,PROMISE-exp
+REQ-0342,The product shall record different meeting types.,Functional,PROMISE-exp
+REQ-0343,The product shall record all the equipment that has been reserved.,Functional,PROMISE-exp
+REQ-0344,The product shall notify building personnel of equipment transport requests.,Functional,PROMISE-exp
+REQ-0345,The product will allow priviledged users to view meeting schedules in multiple reporting views.,Functional,PROMISE-exp
+REQ-0346,The product shall be able to send meeting notifications via different kinds of end-user specified methods.,Functional,PROMISE-exp
+REQ-0347,The product shall have a customizable Look and Feel.,Functional,PROMISE-exp
+REQ-0348,The product shall have an intuitive user interface.,Functional,PROMISE-exp
+REQ-0349,The product will display an available status for unreserved conference rooms.,Functional,PROMISE-exp
+REQ-0350,Recreation of Inventory Quantity Adjustment for the period of previous 30 days shall take no more than 30min.,Performance,PROMISE-exp
+REQ-0351,The System shall allow for a minimum of  6 users to work at the same time.,Performance,PROMISE-exp
+REQ-0352,The System shall utilize currently owned computer equipment.,Operational,PROMISE-exp
+REQ-0353,The System shall be able to automatically backup business data and restore them on demand.,Operational,PROMISE-exp
+REQ-0354,The System shall maintain consistent security.  Any changes in user passwords and/or permissions should take affect in all parts of the System.,Security,PROMISE-exp
+REQ-0355,The System shall granularly control access rights to all major subsystems.  It should be possible to assign access rights to all subsystems independently.,Security,PROMISE-exp
+REQ-0356,The System shall meet all applicable accounting standards.  The final version of the System must successfully pass independent audit performed by a certified auditor.,Legal,PROMISE-exp
+REQ-0357,The System shall not require additional third party licenses resulting in royalty fees.,Operational,PROMISE-exp
+REQ-0358,The System shall allow generation of Inventory Quantity Adjustment documents on demand.,Functional,PROMISE-exp
+REQ-0359,The System shall allow on demand generation of all Inventory Quantity Adjustment documents since certain point of time.,Functional,PROMISE-exp
+REQ-0360,The IQA subsystem shall take into account current inventory status and adjust inventory of substitutionary ingredients accordingly.,Functional,PROMISE-exp
+REQ-0361,The System shall allow entering  storing and modifying product formulas.,Functional,PROMISE-exp
+REQ-0362,Product formulas shall allow use of semi-products  which have own formulas.,Functional,PROMISE-exp
+REQ-0363,Product formula ingredients shall allow defining substitutionary ingredients.,Functional,PROMISE-exp
+REQ-0364,Product formula substitutionary ingredients shall be entered automatically by the PFE subsystem.,Functional,PROMISE-exp
+REQ-0365,Formula substitutionary ingredients shall be kept in persisted order,Functional,PROMISE-exp
+REQ-0366,Product shall allow entering  storing and modifying product menus used by POS terminals.,Functional,PROMISE-exp
+REQ-0367,PME Subsystem shall allow building product menus based on the list of products kept in the accounting system.,Functional,PROMISE-exp
+REQ-0368,PME Subsystem shall allow keeping submenus within menus and products within submenus in a managed and persisted order.,Functional,PROMISE-exp
+REQ-0369,PME Subsystem shall allow for a product to exist in more than one submenu,Functional,PROMISE-exp
+REQ-0370,The RMS System shall have Windows XP look and feel and use GUI futures making its use intuitive.,Functional,PROMISE-exp
+REQ-0371,The System shall generate Inventory Quantity Adjustment document based on product daily sales data and product formulas.,Functional,PROMISE-exp
+REQ-0372,The System shall generate Inventory Quantity Adjustment document automatically when daily Product Sales data is available.,Functional,PROMISE-exp
+REQ-0373,Administrator shall be able to activate a pre-paid card via the Administration section in under 5 seconds.,Performance,PROMISE-exp
+REQ-0374,Customer shall be able to check the status of their prepaid card  by entering in the PIN number  in under 5 seconds.,Performance,PROMISE-exp
+REQ-0375,System shall let customers register on the website as a \93pay as you go\94 user in under 5 minutes.,Performance,PROMISE-exp
+REQ-0376,System shall let customers register on the website as a \93unlimited movie subscriber\94 user in under 10 minutes.,Performance,PROMISE-exp
+REQ-0377,System shall let existing customers log into the website with their email address and password in under 5 seconds.,Performance,PROMISE-exp
+REQ-0378,System shall let customers cancel their account  process shall take no longer than 2 minutes.  Database will mark the account as inactive  and user will not be able to log into the website.,Performance,PROMISE-exp
+REQ-0379,System shall let administrator de-activate a customer account in under 1 minute. Customer will no longer be able to access the website.,Performance,PROMISE-exp
+REQ-0380,System shall let administrator add/remove movies on the website in under 5 minutes.  Entered movie information will be stored in the database and will now be available on the website.,Performance,PROMISE-exp
+REQ-0381,System shall let the administrator add/remove categories on the website in under 5 minutes.,Performance,PROMISE-exp
+REQ-0382,System shall let Izogn Manager access sales and usage statistics in under 2 minutes.,Performance,PROMISE-exp
+REQ-0383,System shall let administrators generate unique pre-paid pins in under 2 minutes and generate an Excel file with the generated PINs.,Performance,PROMISE-exp
+REQ-0384,The website shall be attractive to all audiences.  The website shall appear to be fun and the colors should be bright and vibrant.,Look-and-Feel,PROMISE-exp
+REQ-0385,The website should have an African feel  but should not alienate non-Africans.  The website should use animation on pages which are describing the services  to grab the users attention and encourage them to sign up.,Look-and-Feel,PROMISE-exp
+REQ-0386,The website design should be modern  clean  and concise.,Look-and-Feel,PROMISE-exp
+REQ-0387,The product should be able to be used by 90% of novice users on the Internet.,Usability,PROMISE-exp
+REQ-0388,Users should only have to navigate through a maximum of 4 pages  to create an account with the website.,Usability,PROMISE-exp
+REQ-0389,Users should be able to access their streaming movies in under 2 clicks after logging into the website.,Usability,PROMISE-exp
+REQ-0390,An anonymous survey will show that 70% of customers are comfortable purchasing streaming movies after 2 weeks using the website.,Usability,PROMISE-exp
+REQ-0391,An anonymous survey will show that 95% of customers are comfortable using and purchasing pre-paid cards after a month of using the system.,Usability,PROMISE-exp
+REQ-0392,The product shall retain the customer\92s buying preferences and information.,Usability,PROMISE-exp
+REQ-0393,The product shall be easy for customers with novice skills on the  Internet to purchase and watch streaming movies.  Customers should be able to purchase and watch a pre-determined movie in under 3 minutes.,Usability,PROMISE-exp
+REQ-0394,The product shall use symbols and words that are naturally understandable by users familiar with websites,Usability,PROMISE-exp
+REQ-0395,The website will use standard Internet conventions when interacting with the user.,Usability,PROMISE-exp
+REQ-0396,Any interface between a user and the automated system shall have a maximum response time of 5 seconds  unless noted by an exception below.,Performance,PROMISE-exp
+REQ-0397,When purchasing a streaming movie or pre-paid card via credit card  the processing time should have a maximum response time of 15 seconds.,Performance,PROMISE-exp
+REQ-0398,When streaming a movie  the buffering time should take no longer than 10 seconds (plus any latency on the user\92s connection.),Performance,PROMISE-exp
+REQ-0399,While streaming a movie  buffering should only occur if there is latency in the user\92s connection.,Performance,PROMISE-exp
+REQ-0400,All credit card information will be secured on the server  and only accessible by authorized Izogn administrators.  Information will be encrypted in the database.,Security,PROMISE-exp
+REQ-0401,The website shall be available for use 24 hours per day  365 days per year.,Availability,PROMISE-exp
+REQ-0402,The website shall achieve 99.5% up time.,Availability,PROMISE-exp
+REQ-0403,All movies shall be streamed on demand  at any time of the day.,Availability,PROMISE-exp
+REQ-0404,The website shall continue to operate if the streaming server goes down.,Fault-Tolerance,PROMISE-exp
+REQ-0405,The website shall continue to operate if the payment gateway goes down.,Fault-Tolerance,PROMISE-exp
+REQ-0406,The streaming server will support 50 simultaneous streaming connections.,Scalability,PROMISE-exp
+REQ-0407,The streaming server will support a maximum of 700 movies; new servers can be added to support more movies.,Scalability,PROMISE-exp
+REQ-0408,The server will support a maximum of 1 000 simultaneous users.,Scalability,PROMISE-exp
+REQ-0409,The website shall be capable of supporting 100 000 customers.,Scalability,PROMISE-exp
+REQ-0410,The product shall be expected to operate within the maximum maintenance budget for a minimum of 2 years.,Maintainability,PROMISE-exp
+REQ-0411,All aspects of the website shall be accessed by a web browser over the Internet.,Operational,PROMISE-exp
+REQ-0412,The same hardware supporting the current website will be used to support the new system.,Operational,PROMISE-exp
+REQ-0413,We must be able to interface with the following browsers: IE 5.X  6.0  Netscape 6.x  7.x  8.x and Firefox 1.0.,Operational,PROMISE-exp
+REQ-0414,Website must interface with the CyberSource API to process credit card transactions.,Operational,PROMISE-exp
+REQ-0415,Website must be fully operational with MSN TV2.,Operational,PROMISE-exp
+REQ-0416,Movies shall be encoded and streamed via Windows Media Player 9.0.,Operational,PROMISE-exp
+REQ-0417,Movies shall be encoded for 56k and 256k streams.,Operational,PROMISE-exp
+REQ-0418,Promotional updates to the website should take a day to update.,Maintainability,PROMISE-exp
+REQ-0419,Izogn Administrator must be able to update the category listings on the website within 2 minutes.,Performance,PROMISE-exp
+REQ-0420,Izogn Administrator must be able to add new products to the website within 2 minutes.,Performance,PROMISE-exp
+REQ-0421,The system will provide a 24 hour 800 toll free number for support to its customers.,Availability,PROMISE-exp
+REQ-0422,The website will provide a help section with answers and solutions to common problems.,Usability,PROMISE-exp
+REQ-0423,Velkat staff will be available for phone support between 7am-7pm  M-F to provide technical support to the Izogn administrators.,Availability,PROMISE-exp
+REQ-0424,The product shall be able to be installed in the specified environment within 1 working day.,Operational,PROMISE-exp
+REQ-0425,Only registered customers can purchase streaming movies.,Security,PROMISE-exp
+REQ-0426,A customer can only stream a movie if they purchased it  and are within the 2 day viewing period.,Security,PROMISE-exp
+REQ-0427,Only authorized personnel can access customer records in the database.,Security,PROMISE-exp
+REQ-0428,Only administrators can activate a pre-paid card.,Security,PROMISE-exp
+REQ-0429,Only authorized personnel can access sales information.,Security,PROMISE-exp
+REQ-0430,The website shall prevent its data from being corrupted when incorrect data is entered in.,Security,PROMISE-exp
+REQ-0431,The website shall protect itself from intentional abuse  and notify the administrator at all occurrences.,Security,PROMISE-exp
+REQ-0432,Data integrity scripts will be run on a weekly basis to verify the integrity of the database.,Security,PROMISE-exp
+REQ-0433,The website shall make its user aware of its information practices before collection data from them via a Privacy Policy  accessible on all pages of the website.,Security,PROMISE-exp
+REQ-0434,The system shall notify customers of changes to its information policy.,Security,PROMISE-exp
+REQ-0435,The system shall reveal private information only in compliance with the organization\92s information policy.,Security,PROMISE-exp
+REQ-0436,All customer information will be stored on a secure database  accessible only to authorized personnel.,Security,PROMISE-exp
+REQ-0437,All credit card information will be encrypted in the database.,Security,PROMISE-exp
+REQ-0438,The streaming server will have anti-virus software to prevent infection of malicious viruses.,Security,PROMISE-exp
+REQ-0439,The website should cater to all tribes in Nigeria.,Look-and-Feel,PROMISE-exp
+REQ-0440,The website shall not be offensive to religious or ethnic groups.,Look-and-Feel,PROMISE-exp
+REQ-0441,The website should appeal to all Africans  not only Nigerians.,Look-and-Feel,PROMISE-exp
+REQ-0442,The website should use Flash to provide animation on the home page.,Operational,PROMISE-exp
+REQ-0443,IzognMovies shall meet the licensing requirements set forth by the appropriate organizations in order to stream African movies.,Legal,PROMISE-exp
+REQ-0444,The website will comply with W3C standards.,Legal,PROMISE-exp
+REQ-0445,The PHP code will comply with PEAR standards.,Legal,PROMISE-exp
+REQ-0446,The website will allow customers to search for movies by title  actor  or director.,Functional,PROMISE-exp
+REQ-0447,viewing a movie details the website will display the movies description actor and director entered in by the administrator.,Functional,PROMISE-exp
+REQ-0448,Website shall request  and authorize credit card payment before allowing a user to stream a movie.,Functional,PROMISE-exp
+REQ-0449,shall be able to stream purchased movie via Windows Media Player  for up to 2 days aftere purchase date.,Functional,PROMISE-exp
+REQ-0450,Website shall allow customers to browse movies by categories entered in by izogn administrator.,Functional,PROMISE-exp
+REQ-0451,Website shall allow customers to view reviews of selected movies by other customers.,Functional,PROMISE-exp
+REQ-0452,Website shall allow customers to add their own movie review for a selected movie.,Functional,PROMISE-exp
+REQ-0453,Website shall allow the Izogn administrator to approve a review posted by a customer.,Functional,PROMISE-exp
+REQ-0454,System will allow customers to pay for a streaming movie with a pre-paid card.,Functional,PROMISE-exp
+REQ-0455,Website shall allow customers to purchase pre-paid cards of $5  $10  or $20 value either by credit card or mail-in payment option.,Functional,PROMISE-exp
+REQ-0456,System shall automatically update the main page of the website every Friday  and show the 4 latest movies that have been added to the website.,Functional,PROMISE-exp
+REQ-0457,System shall allow users to update their billing and contact information via the \93My Account\94 section of the website.,Functional,PROMISE-exp
+REQ-0458,Pre-paid cards shall be distributed via email or via a printed paper card.,Functional,PROMISE-exp
+REQ-0459,Movies can only be streamed if the customer has purchased a movie  and is within the 2-day time period to stream the movie.,Functional,PROMISE-exp
+REQ-0460,Website must be able to support free trial periods with various parameters set by the Izogn Manager.,Functional,PROMISE-exp
+REQ-0461,All streaming movie sales will be logged in the database  and accessible by the administrator.,Functional,PROMISE-exp
+REQ-0462,All registered customer information shall be stored and maintained in the database  even after the customer cancels their account.,Functional,PROMISE-exp
+REQ-0463,Daily usage statistics should be logged  and accessible by the administrator.,Functional,PROMISE-exp
+REQ-0464,The owner shall have free access to all of the streaming movies.,Functional,PROMISE-exp
+REQ-0465,Total lead cycle time must be completed in 5 minutes for 90% of lead volume between the business hours of 8AM CST to 8PM CST; then 3 minutes for 99% of lead volume during off business hours.,Performance,PROMISE-exp
+REQ-0466,No lead evaluation will complete in a time period longer than 25 seconds for 97% of all leads processed.,Performance,PROMISE-exp
+REQ-0467,For leads that process longer than 25 seconds the system will record the event and duration,Performance,PROMISE-exp
+REQ-0468,The process must fit within the processing time conditions set forth by the Auto Rep Assignment process in which a lead is assigned within 3 minutes of the total life cycle.,Performance,PROMISE-exp
+REQ-0469,The lead washing process will operate within the established physical web service structure.,Operational,PROMISE-exp
+REQ-0470,The washing process must use a non binding  neutral data format  such as xml  when receiving and processing lead data.,Operational,PROMISE-exp
+REQ-0471,Defect reports will be available to technical units on a 24x7 basis.,Availability,PROMISE-exp
+REQ-0472,Washing parameters will be updated during scheduled maintenance hours.,Maintainability,PROMISE-exp
+REQ-0473,The vendor will verify the invalid lead.,Functional,PROMISE-exp
+REQ-0474,Vendor will submit a credit validation record to be applied to the enterprise billing system.,Functional,PROMISE-exp
+REQ-0475,If a lead is scored to the high range the system will supply the lead data and score to the enterprise system.,Functional,PROMISE-exp
+REQ-0476,The leads washing functionality will validate all leads received by the web service for valid data,Functional,PROMISE-exp
+REQ-0477,The leads washing functionality will insert all leads captured by the web service.,Functional,PROMISE-exp
+REQ-0478,If the leads score falls within the high average score then it will be process by the ARA functionality.,Functional,PROMISE-exp
+REQ-0479,If the leads score falls within the medium average then it will be set for manual verification by an Enrollment Coordinator through the eleads system.,Functional,PROMISE-exp
+REQ-0480,If the leads score falls within the low average then it will be returned to the supplying vendor,Functional,PROMISE-exp
+REQ-0481,The leads washing functionality will compile both contact and academic scoring information for a total score.,Functional,PROMISE-exp
+REQ-0482,The leads washing functionality will use the parameters supplied by corporate and schools to score part of the lead.,Functional,PROMISE-exp
+REQ-0483,The leads washing functionality will return the lead data supplied to the vendor along with the reason of rejection.,Functional,PROMISE-exp
+REQ-0484,The leads washing functionality will have an interface in which lead data parameters can be maintained.,Functional,PROMISE-exp
+REQ-0485,The leads washing functionality will verify the users authentication and rights to make parameter updates.,Functional,PROMISE-exp
+REQ-0486,The leads washing functionality will store any potential lead duplicates returned by the enterprise system.,Functional,PROMISE-exp
+REQ-0487,Prior to submitting the lead to the enterprise system the leads washing functionality will assign the lead to an admissions rep.,Functional,PROMISE-exp
+REQ-0488,The leads washing functionality shall receive a period list of available reps from the enterprise system.,Functional,PROMISE-exp
+REQ-0489,The product shall simulate the look of ships at sea.,Look-and-Feel,PROMISE-exp
+REQ-0490,The product shall display the grids within a circle as a view from a periscope.,Look-and-Feel,PROMISE-exp
+REQ-0491,The product shall display each type of ship in a grid using an image of the specific type of ship.,Look-and-Feel,PROMISE-exp
+REQ-0492,When the offensive player takes a shot  the product shall simulate the sound of a ship at sea.,Look-and-Feel,PROMISE-exp
+REQ-0493,When a shot is marked as a miss  the product shall simulate the sound of a shot missing its target.,Look-and-Feel,PROMISE-exp
+REQ-0494,When a shot is marked as a hit  the product shall simulate the sound of a shot hitting its target.,Look-and-Feel,PROMISE-exp
+REQ-0495,When a ship is sunk  the product shall simulate the sound of a sinking ship.,Look-and-Feel,PROMISE-exp
+REQ-0496,The product shall be available 24 hours per day  seven days per week.,Availability,PROMISE-exp
+REQ-0497,The product shall able to handle a large number of games simultaneously.,Performance,PROMISE-exp
+REQ-0498,The response time shall be fast enough to maintain the flow of the game.  The response time shall be no more than 2 seconds for 95% of responses and no more than 4% for the remaining responses.,Performance,PROMISE-exp
+REQ-0499,The product shall protect the identity of the players. The product shall provide players no access to information that might reveal the identity of another player.,Performance,PROMISE-exp
+REQ-0500,The product shall be intuitive and self-explanatory.  Nine out ten users shall be able to successfully complete a game with no training.,Usability,PROMISE-exp
+REQ-0501,The product shall be available to players who understand English  Spanish and French.  The product shall allow the user to select the language upon accessing the product.,Usability,PROMISE-exp
+REQ-0502,The product shall provide players no access to information that might reveal the identity of another player,Security,PROMISE-exp
+REQ-0503,The response time shall be fast enough to maintain the flow of the game. The response time shall be no more than 2 seconds for 95% of responses and no more than 4% for the remaining responses.,Performance,PROMISE-exp
+REQ-0504,The product shall maintain a list of players.,Functional,PROMISE-exp
+REQ-0505,The product shall allow a user to identify himself or herself as a player.,Functional,PROMISE-exp
+REQ-0506,Once a game has been initiated  the product shall make the players assigned to the game unavailable for selection from the list of players.,Functional,PROMISE-exp
+REQ-0507,The product shall allow a user to remove himself or herself from the list of players at any time.,Functional,PROMISE-exp
+REQ-0508,The product shall make inactive players unavailable for selection from the list of players.,Functional,PROMISE-exp
+REQ-0509,The product shall remove players who have been inactive for 24 hours from the list of players.,Functional,PROMISE-exp
+REQ-0510,The product shall allow a player to initiate a game by selecting another available player from the list of players.,Functional,PROMISE-exp
+REQ-0511,Once a game is initiated  the product shall display a defensive grid to each player,Functional,PROMISE-exp
+REQ-0512,Once a game is initiated  the product shall display an offensive grid to each player.,Functional,PROMISE-exp
+REQ-0513,The product shall prevent a player from viewing the offensive or defensive grids of the other player.,Functional,PROMISE-exp
+REQ-0514,Once a game is initiated  the product shall allow each player to position their 5 ships on their respective defensive grids.,Functional,PROMISE-exp
+REQ-0515,The product shall allow a player to position ships horizontally on their grid.,Functional,PROMISE-exp
+REQ-0516,The product shall allow the player to position ships vertically on their grid.,Functional,PROMISE-exp
+REQ-0517,The product shall allow the player to position ships diagonally on their grid,Functional,PROMISE-exp
+REQ-0518,The product shall prevent the player from overlapping ships on their grid.,Functional,PROMISE-exp
+REQ-0519,When both players have positioned their 5 ships on their defensive grids  the product shall define the status of each player for the first turn.,Functional,PROMISE-exp
+REQ-0520,For each turn  the product shall identify one player as offensive status and one player as defensive status.,Functional,PROMISE-exp
+REQ-0521,The product shall maintain the status of each player for a turn  either offensive or defensive.,Functional,PROMISE-exp
+REQ-0522,At the start of each turn  the product shall notify each player of his or her status.,Functional,PROMISE-exp
+REQ-0523,For each turn  the product shall allow the offensive player to define a shot.,Functional,PROMISE-exp
+REQ-0524,For each shot  the product shall examine the defensive grid of the defensive player to determine whether the shot was a hit or miss.,Functional,PROMISE-exp
+REQ-0525,For each shot  the product shall notify the players whether the shot was a hit or miss.,Functional,PROMISE-exp
+REQ-0526,For each shot  the product shall mark the shot as a hit or miss on the defensive grid of the defensive player.,Functional,PROMISE-exp
+REQ-0527,For each shot  the product shall mark the shot as a hit or miss on the offensive grid of the offensive player.,Functional,PROMISE-exp
+REQ-0528,When the hit results in sinking a ship  the product shall notify the players that the ship was sunk.,Functional,PROMISE-exp
+REQ-0529,When the hit results in sinking a ship  the product shall mark the ship as sunk on the defensive grid of the defensive player.,Functional,PROMISE-exp
+REQ-0530,When the hit results in sinking a ship  the product shall indicate the type of ship sunk on the defensive grid of the defensive player.,Functional,PROMISE-exp
+REQ-0531,When the hit results in sinking a ship  the product shall mark the ship as sunk on the offensive grid of the offensive player.,Functional,PROMISE-exp
+REQ-0532,If the shot was marked as a hit  the product shall allow the offensive player to define a shot.,Functional,PROMISE-exp
+REQ-0533,If the shot was marked as a miss  the product shall change the status of the offensive player to defensive,Functional,PROMISE-exp
+REQ-0534,If the shot was marked as a miss  the product shall change the status of the defensive player to offensive,Functional,PROMISE-exp
+REQ-0535,The product shall continue to assign turns until the game is ended.,Functional,PROMISE-exp
+REQ-0536,The product shall end a game when a hit by the offensive player results in sinking the last of the defensive player\92s ships  which had not been previously marked as sunk.,Functional,PROMISE-exp
+REQ-0537,The product shall allow a player to end a game at any time during the game.,Functional,PROMISE-exp
+REQ-0538,When a game is ended  the product shall notify the players that the game is ended.,Functional,PROMISE-exp
+REQ-0539,The notification of the game ending will include the reason the game is ended (i.e.  a player has won the game or a player has ended the game).,Functional,PROMISE-exp
+REQ-0540,When a game is ended  the product shall allow each player to identify himself or herself as an available player in the list of players.,Functional,PROMISE-exp
+REQ-0541,When a game is ended  the product shall allow each player to remove himself or herself from the list of players.,Functional,PROMISE-exp
+REQ-0542,The system shall be easy to use by callers and supervisors. Callers and supervisors must be able to accomplish any system task within 2 minutes.,Usability,PROMISE-exp
+REQ-0543,The system shall be easy to learn by callers and supervisors. Callers and supervisors shall learn how to use the system within 10 minutes.,Usability,PROMISE-exp
+REQ-0544,The system shall be responsive. At the DePaul TeleServices Center  when a supervisor uses the system to view a callers schedule  the system response time must be no more than 2 seconds 90% of the time and no more than 5 seconds the rest of the time.,Performance,PROMISE-exp
+REQ-0545,On a 56k connection  the system response time for all operations must be no more than 6 seconds 90% of the time.,Performance,PROMISE-exp
+REQ-0546,On a 112k connection or faster  the system response time for all operations must be no more than 3 seconds 90% of the time.,Performance,PROMISE-exp
+REQ-0547,The system shall have high availability every day of the year.The system must be available for use between 12:00AM and 6:00PM all days of the year.,Availability,PROMISE-exp
+REQ-0548,The system must be available for use between 7:00AM and 11:59PM all days of the year.,Availability,PROMISE-exp
+REQ-0549,The product shall be internet browser independent.The product must run using Internet Explorer and Netscape Navigator.,Maintainability,PROMISE-exp
+REQ-0550,The product shall ensure that only supervisors can advertise empty time slots.The product must ensure that supervisors are allowed to access advertise empty time slots.,Security,PROMISE-exp
+REQ-0551,The product shall ensure that only supervisors can enter a caller\92s schedule.The product must ensure that supervisors are allowed to access advertise empty time slots.,Security,PROMISE-exp
+REQ-0552,The product shall ensure that only supervisors can view schedule of all callers.The product must ensure that supervisors are allowed to access advertise empty time slots.,Security,PROMISE-exp
+REQ-0553,The interface shall have a simple look. In the interface and usability survey  90% of beta testers must report that the interface is adequately simple.,Look-and-Feel,PROMISE-exp
+REQ-0554,The interface shall be appealing to callers and supervisors. In the interface and usability survey  80% of beta testers must report that the interface is appealing.,Look-and-Feel,PROMISE-exp
+REQ-0555,The product shall provide GUI based Monitoring Services.System Administrators shall monitor message exchanges will predict and determine problems and will also provide internal and external support.,Look-and-Feel,PROMISE-exp
+REQ-0556,The product shall comply with City of Chicago Application Development Guide Framework.Application Development Framework will provide structured Graphical User Interface.,Look-and-Feel,PROMISE-exp
+REQ-0557,The product shall provide Monitoring Services.The product shall be easy for System Administrators and DBAs to use after two weeks of usage.,Usability,PROMISE-exp
+REQ-0558,The product shall provide Error Tracking Services.The product shall help the System Administrators and DBAs to resolve transaction errors 99% of the time.,Usability,PROMISE-exp
+REQ-0559,The product shall provide Portals.The product shall help System Administrators to analyze the transactions with ad-hoc reporting and KPIs (Key Performance Indicators),Usability,PROMISE-exp
+REQ-0560,The product shall provide Asynchronous Messaging.The product shall provide asynchronous messaging to enable parallel processing and reduce the overhead in communications,Performance,PROMISE-exp
+REQ-0561,The product shall provide Multi-threading and Load Balancing.The product shall provide multi-threading technology as well as load balancing to overcome data load spikes and traffic.,Performance,PROMISE-exp
+REQ-0562,The product shall process messages within 2 seconds.The product shall have a maximum message processing time of 2 seconds,Performance,PROMISE-exp
+REQ-0563,The product shall poll the system for messages every second.The product shall poll the system for new messages at a maximum of every 1 second.,Performance,PROMISE-exp
+REQ-0564,The product shall provide Dynamic Change Support and Transparent resource addition.The product shall support Transparent Resource addition and Dynamic Change support to provide scalability and avoid service interruptions of more than 1 day.,Performance,PROMISE-exp
+REQ-0565,The product shall be available 99% of the time. Rationale: To avoid service interruption during busiest customer service response periods. The product shall be available 99.99% of the time for regular business days.,Availability,PROMISE-exp
+REQ-0566,The product shall be robust.The product shall have fault avoidance based on standards adoption.,Fault-Tolerance,PROMISE-exp
+REQ-0567,The product shall be robust with fault tolerance.The product shall have fault tolerance by using recovery technique compensatory transaction and routing around failures.,Fault-Tolerance,PROMISE-exp
+REQ-0568,The product shall be able to process all transactions.The product shall process minimum of 1 million transactions per year.,Scalability,PROMISE-exp
+REQ-0569,The product shall be platform independent.The product shall enable access to any type of development environment and platform.,Operational,PROMISE-exp
+REQ-0570,The product shall interface CSR and Datastream.The product shall exchange messages between CSR and EAM on a real time basis without any direct interfaces between two systems.,Operational,PROMISE-exp
+REQ-0571,The product shall continue to operate during upgrade  change or new resource addition.The product shall be able to continue to operate with no interruption in service due to new resource additions.,Maintainability,PROMISE-exp
+REQ-0572,The product shall be updated on a regular basis.The product will have a new major feature introduced every six months and quarterly maintenance releases every six months.,Maintainability,PROMISE-exp
+REQ-0573,The product shall operate with every platform.The product shall accommodate any new technology without any change in its architecture.,Maintainability,PROMISE-exp
+REQ-0574,The product shall have security.The product shall provide authentication  and authorization.,Security,PROMISE-exp
+REQ-0575,The product shall information Security. The product shall enable privacy by encryption WS-Security and Integrity Checking.,Security,PROMISE-exp
+REQ-0576,The product shall have audit capabilities.The product shall store messages for a minimum of one year for audit and transaction tracking purposes.,Security,PROMISE-exp
+REQ-0577,The system shall use IBM and CCR branding standards. The interface must have one IBM logo and one CCR logo.,Look-and-Feel,PROMISE-exp
+REQ-0578,The system shall be displayable on any work computer a CCR user may have. The system interface shall be formatted to display at 800 by 600 pixel resolution.,Look-and-Feel,PROMISE-exp
+REQ-0579,The system interface will use CCR nomenclature. The system must use the same nomenclature used in the existing WCS system and reports,Look-and-Feel,PROMISE-exp
+REQ-0580,The interface must summarize the data in a fashion that\92s appealing to CCR management. Every report type must have at least one high level summary shown in the results dashboard/interface,Look-and-Feel,PROMISE-exp
+REQ-0581,The system must use a point and click interface. 100% of all selection and navigation functionality must be able to be activated/selected by either a mouse or a keyboard,Usability,PROMISE-exp
+REQ-0582,The interface shall be easy to use. 90% of users should be able to successfully use the system to generate a report on their first use. The interface should adhere to IBM usability standards.,Usability,PROMISE-exp
+REQ-0583,Reports must be easy to generate. Reports must be generated within one button click and exported within one button click (after selecting the report),Usability,PROMISE-exp
+REQ-0584,A user shall be able to use the system without instruction after a short amount of time. After one use a user should understand and remember 90% of the system usage and navigation.,Usability,PROMISE-exp
+REQ-0585,All CCR users shall receive training before the WCS system is deployed. One training session will be held for 100% of CCR users before system deployment (based on a CCR user being available),Usability,PROMISE-exp
+REQ-0586,The WCS system shall use appropriate nomenclature and terminology as defined by the Corporate Community Grants organization. All interfaces and reports will undergo usability tests by CCR users.,Usability,PROMISE-exp
+REQ-0587,The WCS system shall be available at all times as long as IBM\92s internal intranet W3 is accessible. The WCS system will be available 95% of the time IBM\92s internal intranet W3 is available.,Availability,PROMISE-exp
+REQ-0588,The WCS system shall have the ability to connect other designated WCS databases currently not included in the system.,Scalability,PROMISE-exp
+REQ-0589,The WCS system shall have the ability to include data for regions outside the United States and be accessed by users outside of the United States if approved by CCR management.,Scalability,PROMISE-exp
+REQ-0590,The WCS system shall be run in a Windows environment. The WCS shall be accessed by users through the Internet on an IBM computer running a Windows 2000 or above operating system.,Operational,PROMISE-exp
+REQ-0591,The Brio portion of the WCS system must be able to export files in spreadsheet form (Microsoft Excel and Lotus 1-2-3 formats).  Brio will provide buttons in the user interface that produce/export reports in .xls or .123 file formats.,Operational,PROMISE-exp
+REQ-0592,The WCS system must run queries to the WCS databases once again (on a specified day) to update the available data available to CCR users. Queries must be made to external databases for data refresh once a week.,Maintainability,PROMISE-exp
+REQ-0593,All changes  updates  and additions to the WCS system shall be updated in the WCS Developer and WCS User Guides. Every change must be reflected in WCS system documentation,Maintainability,PROMISE-exp
+REQ-0594,The system shall only be accessed by authorized Corporate Community Grants (CCR) employees. Users must be authenticated using their IBM intranet user name and password.,Security,PROMISE-exp
+REQ-0595,The WCS system shall not allow automatic logins by any user. Cookies containing WCS login information about a user will not be stored on a user\92s computer.,Security,PROMISE-exp
+REQ-0596,Each team owner will need to use a username and password in order to be authenticated to reach the team owner\92s page,Security,PROMISE-exp
+REQ-0597,The Commissioner will be the only authorized user per league to adjust league settings.,Security,PROMISE-exp
+REQ-0598,Each page shall contain a navigation menu which shows the index into which the current page is contained.,Look-and-Feel,PROMISE-exp
+REQ-0599,Each page shall contain a similar format with action items in one location and navigation buttons in a different location.,Look-and-Feel,PROMISE-exp
+REQ-0600,The message board shall contain the 5 most recently posted messages on the league page. The messages will contain up to the first 150 characters of the message.,Look-and-Feel,PROMISE-exp
+REQ-0601,A new user shall be able to navigate through the league and team pages within 30 seconds of reaching the start-up page.,Usability,PROMISE-exp
+REQ-0602,Users shall be able to reach the \91add\92  \91drop\92  and \91trade player\92 pages with one click from the team owner\92s page.,Usability,PROMISE-exp
+REQ-0603,Users shall be able to view at least 25 NFL player statistics and points on each page.,Usability,PROMISE-exp
+REQ-0604,The application shall ask the user to confirm dropping a player or trading a player before performing the action.,Usability,PROMISE-exp
+REQ-0605,The application shall be able to complete every user transaction within one fourth of a second of receiving the request over the network.,Performance,PROMISE-exp
+REQ-0606,The application shall have a downtime of at most 10 minutes per year.,Availability,PROMISE-exp
+REQ-0607,The application shall run on a web application server.,Operational,PROMISE-exp
+REQ-0608,A primary database will be used to store cached data for active users.,Operational,PROMISE-exp
+REQ-0609,A secondary database will be used to store historical statistics and data.,Operational,PROMISE-exp
+REQ-0610,Application updates shall occur between 3AM and 6 AM CST on Wednesday morning during the middle of the NFL season.,Maintainability,PROMISE-exp
+REQ-0611,New System version releases shall be released at the beginning of each NFL season.,Maintainability,PROMISE-exp
+REQ-0612,The RFS system should be available 24/7  especially during the budgeting period. The RFS system shall be available 90% of the time all year  and 98% during the budgeting period. 2% of the time  the system will become available within 1 hour of the time that the situation is reported.,Availability,PROMISE-exp
+REQ-0613,98% of the user workstations shall meet the minimum hardware requirements prior to implementation. Minimum Hard Disk Space:  400MB.,Operational,PROMISE-exp
+REQ-0614,98% of the user workstations shall meet the minimum software requirements prior to implementation: Microsoft Internet Explorer 5.0. Microsoft .NET Framework 1.1. Microsoft Internet Explorer Web Controls,Operational,PROMISE-exp
+REQ-0615,The RFS system should be able to easily interface with the BDW environment  in order to load the data. \95	7 data files shall be received from the BDW and loaded into the RFS system within 3 hours one day prior to the start of budgeting process  every year. The data will be as of October month-end. 	Test files (7) shall be loaded up to 5 times throughout the year  from the BDW.,Operational,PROMISE-exp
+REQ-0616,Changes to revenue and expense formulae must be applied to the RFS system  every year  prior to the budgeting process start. Revenue and expense formulae will be updated within one week of their receipt  after which 2 weeks will be allotted to testing of the budget calculations  to be conducted jointly by the project development team and PCG Finance.,Maintainability,PROMISE-exp
+REQ-0617,New branches/complexes/districts/regions and revenue/expense accounts added to the BDW  must be reflected in the RFS system. 100% of the entities (mentioned above) available as of October month-end  will be loaded into the RFS system  prior to the budget start process.,Maintainability,PROMISE-exp
+REQ-0618,Only authorized user shall access the RFS system. ONLY users that exist in the UAS system  with the RFS system assigned to their role(s)  shall access the RFS system and use it.,Security,PROMISE-exp
+REQ-0619,User access should be limited to the permissions granted to their role(s) Each level in the PCG hierarchy will be assigned a role and users will be assigned to these roles. Access to functionality within RFS system is dependent on the privileges/permission assigned to the role..,Security,PROMISE-exp
+REQ-0620,The product must comply with the intranet page standards and requirements of ENET Securities. 95% of the product look & feel will be approved by the Architecture group  prior to implementation. The remaining 5% will be corrected and approved within one month of product release.,Look-and-Feel,PROMISE-exp
+REQ-0621,The intranet pages should display appropriately in all resolutions  from 800x600 and higher. The display of all the pages will be correct in 95% of the resolutions  prior to implementation. The remaining 5% will be corrected within a week of notification of the incorrect display.,Look-and-Feel,PROMISE-exp
+REQ-0622,The users should be able to easily use the system to successfully complete their budgets  within the stipulated time for completion. With a week of training prior to product implementation  98% of the users shall complete their budgets within the stipulated time.,Usability,PROMISE-exp
+REQ-0623,The product interface should be fast. The response time of the product interface should not exceed 2 seconds 90% of the time. For 10% of the time  the response time should not be more than 10 seconds.not be more than 10 seconds.,Performance,PROMISE-exp
+REQ-0624,The system shall operate on Unix and Windows operating systems.,Portability,PROMISE-exp
+REQ-0625,The system shall be evoked by typing “pine” into a command or shell prompt.,Operational,PROMISE-exp
+REQ-0626,The system shall use the SMTP mail protocol.,Operational,PROMISE-exp
+REQ-0627,The system shall support the ability to perform a send and receive operation.,Functional,PROMISE-exp
+REQ-0628,The system shall support the ability to perform a send only operation.,Functional,PROMISE-exp
+REQ-0629,The system shall support the ability to perform a receive only operation.,Functional,PROMISE-exp
+REQ-0630,The system shall use a text-based interface to display a listing of available mail.,Look-and-Feel,PROMISE-exp
+REQ-0631,The system shall have a help system that offers tips and explanation for each screen and each item on the screens upon demand.,Usability,PROMISE-exp
+REQ-0632,The system shall display and embed in each message a date/timestamp of when the message was sent.,Functional,PROMISE-exp
+REQ-0633,The system shall allow a text search that users may use to find mail messages.,Functional,PROMISE-exp
+REQ-0634,The system search feature should support the use of regular expressions in search.,Functional,PROMISE-exp
+REQ-0635,The system shall provide an option to withdraw money.,Functional,PROMISE-exp
+REQ-0636,The system shall query the user for the amount of money.,Functional,PROMISE-exp
+REQ-0637,The system shall query the user for the account type.,Functional,PROMISE-exp
+REQ-0638,The system shall validate the amount is available in the user’s account before releasing funds to the user.,Functional,PROMISE-exp
+REQ-0639,The system shall validate the amount is a multiple of $20.,Functional,PROMISE-exp
+REQ-0640,The system shall debit the user’s account upon withdrawal of funds.,Functional,PROMISE-exp
+REQ-0641,The system shall be able to issue a specific amount of money to the user.,Functional,PROMISE-exp
+REQ-0642,The meeting scheduler system shall be able to select a participant as an important participant.,Functional,PROMISE-exp
+REQ-0643,The meeting scheduler system shall cancel a meeting due to canceling of an important participant.,Functional,PROMISE-exp
+REQ-0644,The meeting scheduler system shall reschedule a meeting to support conflict resolutions.,Functional,PROMISE-exp
+REQ-0645,The meeting scheduler shall be accessed from the Web.,Operational,PROMISE-exp
+REQ-0646,The meeting scheduler system may (optionally) automatically propose another meeting if current meeting is canceled by an important participant.,Functional,PROMISE-exp
+REQ-0647,The meeting scheduler system may provide the “meeting initiator” a summary of the scan of “potential meeting participants” showing available “time slots” and schedule conflicts as a means of informing the “meeting initiator” of the overall results of the system.,Functional,PROMISE-exp
+REQ-0648,The meeting scheduler system may be able to include an agenda for a meeting proposal.,Functional,PROMISE-exp
+REQ-0649,The meeting scheduler system may suggest a “virtual meeting” for available “time slots” if no location is available or feasible for the meeting.,Functional,PROMISE-exp
+REQ-0650,The meeting scheduler system may be able to include a list of required equipment for a meeting proposal.,Functional,PROMISE-exp
+REQ-0651,A meeting scheduler system will temporarily reserve the “time slots” for the proposed meeting.,Functional,PROMISE-exp
+REQ-0652,A meeting scheduler system will inform the “potential meeting participant” of the meeting.,Functional,PROMISE-exp
+REQ-0653,The system must be easy to use by both managers and chefs such that they do not need to read an extensive amount of manuals.,Usability,PROMISE-exp
+REQ-0654,The system must be quickly accessible by both managers and chefs.,Usability,PROMISE-exp
+REQ-0655,The system must be intuitive and simple in the way it displays all relevant data and relationships.,Usability,PROMISE-exp
+REQ-0656,The menus of the system must be easily navigable by the users with buttons that are easy to understand.,Usability,PROMISE-exp
+REQ-0657,All the functions of the system must be available to the user every time the system is turned on.,Availability,PROMISE-exp
+REQ-0658,The calculations performed by the system must comply according to the norms set by the user and should not vary unless explicitly changed by the user.,Legal,PROMISE-exp
+REQ-0659,The client should agree to EULA before using our software.,Legal,PROMISE-exp
+REQ-0660,All Web pages generated by the system shall be fully downloadable in no more than 10 seconds over a 40KBps modem connection.,Performance,PROMISE-exp
+REQ-0661,Responses to queries shall take no longer than 7 seconds to load onto the screen after the user submits the query.,Performance,PROMISE-exp
+REQ-0662,The system shall display confirmation messages to users within 4 seconds after the user submits information to the system.,Performance,PROMISE-exp
+REQ-0663,All network transactions that involve financial information or personally identifiable information shall be encrypted.,Security,PROMISE-exp
+REQ-0664,Users shall be required to log in to the Cafeteria Ordering System for all operations except viewing a menu.,Functional,PROMISE-exp
+REQ-0665,Patrons shall log in according to the restricted computer system access policy.,Security,PROMISE-exp
+REQ-0666,The system shall permit only cafeteria staff members who are on the list of authorized Menu Managers to create or edit menus.,Functional,PROMISE-exp
+REQ-0667,Only users who have been authorized for home access to the corporate Intranet may use the COS from non-company locations.,Security,PROMISE-exp
+REQ-0668,Programmers and application developers will have access to source code to address bugs or system enhancements as deemed necessary. Network Administrator and DBA support is also required to maintain a 24x7 system uptime.,Availability,PROMISE-exp
+REQ-0669,System security and access levels are provided in the online system. There are varying levels of system access and functional authority. Each student’s access is limited to his/her own registration records. Only authorized system administrator(s) has access to all student registration records.,Security,PROMISE-exp
+REQ-0670,The online registration system is “self-service style” system that shall initially address the student registration needs.,Functional,PROMISE-exp
+REQ-0671,All data entry forms for the application should match their Microsoft Excel hardcopy counterparts as closely as possible. Hardcopies of these forms were provided to the design team during the second requirements interview.,Operational,PROMISE-exp
+REQ-0672,95% of users will not need to read the user manual to be able to use the application.,Usability,PROMISE-exp
+REQ-0673,Changes made to the Manage My ID website can be adopted without altering the iOS application.,Maintainability,PROMISE-exp
+REQ-0674,The application should be connected to the Internet.,Availability,PROMISE-exp
+REQ-0675,The application should be connected to the GPS device.,Availability,PROMISE-exp
+REQ-0676,The application should be easy to extend. The code should be written in a way that it favors implementation of new functions.,Maintainability,PROMISE-exp
+REQ-0677,Test environments should be built for the application to allow testing of the applications different functions.,Maintainability,PROMISE-exp
+REQ-0678,The application should be portable with iOS and Android.,Portability,PROMISE-exp
+REQ-0679,The system shall show a tabbed display (or equivalent functionality) with the campus map on one tab and info on the most recently announced building on the other.,Look-and-Feel,PROMISE-exp
+REQ-0680,The system shall allow the user to scroll the campus map from the campus map tab.,Usability,PROMISE-exp
+REQ-0681,The campus map shall provide visual clues regarding what areas have prepared audio and therefore may be selected.,Look-and-Feel,PROMISE-exp
+REQ-0682,The campus map shall have a pause/resume button. The pause and resume button will allow the user to scroll and select other buildings without being interrupted by the automatic search and announce feature.,Look-and-Feel,PROMISE-exp
+REQ-0683,The system shall provide a way to return to the startup screen.,Usability,PROMISE-exp
+REQ-0684,It should generate a report about registered complaint to the admin and response report to the user who has submitted his queries.,Functional,PROMISE-exp
+REQ-0685,The system should maintain correct schedules of labs and the documentation of all the lab equipment.,Functional,PROMISE-exp
+REQ-0686,The system should use the company colors and logos.,Look-and-Feel,PROMISE-exp
+REQ-0687,The system shall be capable of restoring itself to its previous state in the event of failure (e.g. a system crash or power loss).,Fault-Tolerance,PROMISE-exp
+REQ-0688,The system shall be able to display a menu at all times to facilitate manual order taking should the need arise.,Look-and-Feel,PROMISE-exp
+REQ-0689,The system shall utilise periodic 30-second keep-alive messages between tablets and the server to monitor tablet operational status.,Operational,PROMISE-exp
+REQ-0690,The system shall flag tablets that fail to send timely keep-alive messages as non-operational and disassociate the assigned waiter from the tablet.,Fault-Tolerance,PROMISE-exp
+REQ-0691,A waiter password used for tablet login must have a bit-strength of at least 64 bits.,Security,PROMISE-exp
+REQ-0692,A waiter password used for tablet login must be changed every three months.,Security,PROMISE-exp
+REQ-0693,A waiter shall only be able to log into one tablet at any given instance of time.,Security,PROMISE-exp
+REQ-0694,A waiter that attempts to log into a second tablet while already logged into another tablet shall be rejected and notified through both tablets.,Security,PROMISE-exp
+REQ-0695,A display shall not require a user to log in.,Security,PROMISE-exp
+REQ-0696,A surface computer shall not require a user to log in.,Security,PROMISE-exp
+REQ-0697,A tablet shall require a user to log in using a username and password.,Security,PROMISE-exp
+REQ-0698,The system will fully function in major browsers.,Portability,PROMISE-exp
+REQ-0699,The system will support mobile users in some way.,Portability,PROMISE-exp
+REQ-0700,Responses to view information shall take no longer than 5 seconds to appear on the screen.,Performance,PROMISE-exp
+REQ-0701,The system shall accommodate large data items without fault.,Fault-Tolerance,PROMISE-exp
+REQ-0702,System will use secured database.,Security,PROMISE-exp
+REQ-0703,Unauthorised users can only read data without modifying anything.,Security,PROMISE-exp
+REQ-0704,ABS shall handle all expected and unexpected errors in ways that prevent loss in information and long downtime period.,Fault-Tolerance,PROMISE-exp
+REQ-0705,Authenticate and Login user to the web app.,Functional,PROMISE-exp
+REQ-0706,Enable new users to register to the tech support system.,Functional,PROMISE-exp
+REQ-0707,Enable a registered user to change his password if he forgets his password.,Functional,PROMISE-exp
+REQ-0708,Enable a registered user to view his profile. Additional information viz. questions asked by him and answers posted by him are also displayed.,Functional,PROMISE-exp
+REQ-0709,Enable a user to view questions and their corresponding answers.,Functional,PROMISE-exp
+REQ-0710,Enable a logged in user to ask questions.,Functional,PROMISE-exp
+REQ-0711,Enable a logged in user to post answers.,Functional,PROMISE-exp
+REQ-0712,Enable a logged in user to up vote and down vote answers.,Functional,PROMISE-exp
+REQ-0713,Provide an interface for the admin to approve posts so that posts are not visible without admin approval.,Functional,PROMISE-exp
+REQ-0714,Enable the admin to generate reports which contains all the posts and their corresponding replies.,Functional,PROMISE-exp
+REQ-0715,Information transmission should be securely transmitted to server without any changes in information.,Security,PROMISE-exp
+REQ-0716,Be intuitive even to first time users,Look-and-Feel,PROMISE-exp
+REQ-0717,Flea Market system will interface with the web server and RDBMS software using APIs provided by the implementation language,Operational,PROMISE-exp
+REQ-0718,All transactions at the Flea Market require a valid user ID and password.,Security,PROMISE-exp
+REQ-0719,Secure data transfer over the Internet could be provided using SSL encryption that will be configured by the host system administrator.,Security,PROMISE-exp
+REQ-0720,The IP addresses where the transaction was made from will be logged.,Security,PROMISE-exp
+REQ-0721,User passwords will be stored in the database in an encrypted format.,Security,PROMISE-exp
+REQ-0722,Most of the system functions will be controlled using the administrative interface.,Functional,PROMISE-exp
+REQ-0723,Detailed documentation of the code and SRS will enable easy maintenance of the Flea Market.,Maintainability,PROMISE-exp
+REQ-0724,Information recorded must include an optional field for context.,Functional,PROMISE-exp
+REQ-0725,Information should be tagged according to who is entering the data.,Functional,PROMISE-exp
+REQ-0726,It must be able to download the most recent medical record.,Functional,PROMISE-exp
+REQ-0727,It must store the most recent copy of information in its application data folder.,Functional,PROMISE-exp
+REQ-0728,It must only update the parts that have changed when connecting to the server.,Operational,PROMISE-exp
+REQ-0729,It must be able to change and update information on the server.,Operational,PROMISE-exp
+REQ-0730,The application must log the user out when it is exited.,Security,PROMISE-exp
+REQ-0731,A correct combination of username and password is required for a user to login.,Security,PROMISE-exp
+REQ-0732,It should give a drill-down view of all data in the medical record after logging in.,Look-and-Feel,PROMISE-exp
+REQ-0733,The user must be able to set an option to hide information based on who has tagged it.,Functional,PROMISE-exp
+REQ-0734,The user must be able to add photos from his/her photo library to his/her medical record.,Functional,PROMISE-exp
+REQ-0735,It must allow a user to login.,Functional,PROMISE-exp
+REQ-0736,It must allow a user to logout.,Functional,PROMISE-exp
+REQ-0737,All information must be viewable on the website.,Functional,PROMISE-exp
+REQ-0738,All information must be updatable on the website.,Functional,PROMISE-exp
+REQ-0739,It must allow a user to download a backup of their medical information.,Functional,PROMISE-exp
+REQ-0740,Logout must be automatic after 1 hour of inactivity.,Security,PROMISE-exp
+REQ-0741,Full data backups must be created daily.,Security,PROMISE-exp
+REQ-0742,A user must be logged on to be able to view or edit any medical information.,Functional,PROMISE-exp
+REQ-0743,Each account must securely store all of its data.,Security,PROMISE-exp
+REQ-0744,Each account must have a separate identifying account number.,Functional,PROMISE-exp
+REQ-0745,The system shall allow user to choose filling that they want.,Functional,PROMISE-exp
+REQ-0746,The system shall allow user to choose their preferable topping.,Functional,PROMISE-exp
+REQ-0747,The system shall allow user to decorate their doughnut.,Functional,PROMISE-exp
+REQ-0748,The system shall give the user an opportunity for the user to choose the selection of doughnut provided.,Functional,PROMISE-exp
+REQ-0749,The system should take the customer name.,Functional,PROMISE-exp
+REQ-0750,The system should keep the customer contact number.,Functional,PROMISE-exp
+REQ-0751,The system should keep the customer email.,Functional,PROMISE-exp
+REQ-0752,The system should ask the user to key in the pickup date.,Functional,PROMISE-exp
+REQ-0753,The system should require the user to state time when should the doughnut be delivered.,Functional,PROMISE-exp
+REQ-0754,The system should have to keep the location where the doughnut will be send.,Operational,PROMISE-exp
+REQ-0755,The website is available whenever the users want to use it.,Availability,PROMISE-exp
+REQ-0756,The system use SSL (secured socket layer) in all transactions that include any confidential customer information.,Security,PROMISE-exp
+REQ-0757,The system must automatically log out all customers after a period of inactivity.,Security,PROMISE-exp
+REQ-0758,The system should not leave any cookies on the customer’s computer containing the user’s password.,Security,PROMISE-exp
+REQ-0759,The system’s back-end servers shall only be accessible to authenticated administrators.,Security,PROMISE-exp
+REQ-0760,Sensitive data will be encrypted before being sent over insecure connections like the internet.,Security,PROMISE-exp
+REQ-0761,The system provides storage of all databases on redundant computers with automatic switchover.,Operational,PROMISE-exp
+REQ-0762,The reliability of the overall program depends on the reliability of the separate components. The main pillar of reliability of the system is the backup of the database which is continuously maintained and updated to reflect the most recent changes.,Fault-Tolerance,PROMISE-exp
+REQ-0763,An end-user may use this system on any OS; either it is Windows or Linux.,Portability,PROMISE-exp
+REQ-0764,The logo and the current basic design of registration system should be displayed. The system should be attractive according to the clients. The design and the color should make users feel comfortable when using the system instead of flashing useless colors on the screen. The design should also reflect the seriousness of the environment.,Look-and-Feel,PROMISE-exp
+REQ-0765,The system should be able to manage all the information incoming from the database and the catalogue.,Operational,PROMISE-exp
+REQ-0766,The product is Web based therefore it will be used in any environment that allows Web access.,Portability,PROMISE-exp
+REQ-0767,For the system to successfully operate the registration system should be integrated with other IT services and the portal.,Operational,PROMISE-exp
+REQ-0768,The system should need to be entirely self-supporting since the users would be using it only to register courses.,Usability,PROMISE-exp
+REQ-0769,The Web interface should be compatible with standards in order to be usable via all major Web browsers in a wide variety of environments.,Portability,PROMISE-exp
+REQ-0770,Everyone (stakeholders and guests) can have access to the system and the catalogue. Every client must have secure and private access to his/her data. The  and the service man can have access to every part of the system. All these accesses (except the “guest tour” access) require identification through ID and password.,Security,PROMISE-exp
+REQ-0771,The system will develop a security system that will reduce to the minimum the possibility of corruption from systems and/or humans.,Security,PROMISE-exp
+REQ-0772,The Operational Interface shall have a Mean Time Between Failures of no less than 7 days.,Fault-Tolerance,PROMISE-exp
+REQ-0773,The system shall be available 99.5% of the time.,Availability,PROMISE-exp
+REQ-0774,The software system needs a robust security mechanism in place so that unauthorized users are not allowed access to parts of the system.,Security,PROMISE-exp
+REQ-0775,Each user shall either be trusted or not trusted.,Security,PROMISE-exp
+REQ-0776,All source code and development related documents shall be controlled under a version control system.,Maintainability,PROMISE-exp
+REQ-0777,All source code shall adhere to an agreed upon and well-defined set of coding standards for each development language used.,Maintainability,PROMISE-exp
+REQ-0778,Since the software must run on several popular hardware platforms and the goal is to achieve a reasonable level of platform independence.,Portability,PROMISE-exp
+REQ-0779,High level of performance requires high speed network and high level of connectivity.,Performance,PROMISE-exp
+REQ-0780,The available server must be reliable and the network connectivity in the supermarket should be proper for smooth flow of all operations and data.,Operational,PROMISE-exp
+REQ-0781,Every user of the software is provided a unique login ID and a password which is stored in the database hashed by SHA2 algorithm.,Security,PROMISE-exp
+REQ-0782,The software is available for use from the supermarket opening time to the closing time.,Availability,PROMISE-exp
+REQ-0783,The system shall accommodate high number of items and users without any fault.,Fault-Tolerance,PROMISE-exp
+REQ-0784,System use shall not cause any harm to human users.,Security,PROMISE-exp
+REQ-0785,System will use secured database,Security,PROMISE-exp
+REQ-0786,Normal users can just read information but they cannot edit or modify anything except their personal and some other information.,Security,PROMISE-exp
+REQ-0787,System will have different types of users and every user has access constraints.,Security,PROMISE-exp
+REQ-0788,Control the database and keep track of all records of customers and employee details.,Functional,PROMISE-exp
+REQ-0789,Contact with the vendors and give permission to sell their product under the site after testing the product’s quality.,Functional,PROMISE-exp
+REQ-0790,View the details of all employees and control the whole site.,Functional,PROMISE-exp
+REQ-0791,Customers must have a valid login id to enter into the site.,Security,PROMISE-exp
+REQ-0792,New users can sign up by creating new ID.,Functional,PROMISE-exp
+REQ-0793,Can view all available products and can compare them and make a choice for purchasing products.,Functional,PROMISE-exp
+REQ-0794,Can purchase any product through valid credit card.,Functional,PROMISE-exp
+REQ-0795,Can give feedback to the 24X7 Customer Care Service center about their impression for the site and services.,Functional,PROMISE-exp
+REQ-0796,Customer must logout of the site after purchasing products.,Functional,PROMISE-exp
+REQ-0797,Can only visit the site without registration.,Functional,PROMISE-exp
+REQ-0798,Vendors must take permission from the Administrator for selling their products under the site. Administrator will test product’s quality according to its market price to permit vendor for selling purpose.,Functional,PROMISE-exp
+REQ-0799,Can consult with the Administrator regarding product’s quality and advertisements.,Functional,PROMISE-exp
+REQ-0800,View the personal details of the customer.,Functional,PROMISE-exp
+REQ-0801,Responsible for properly allocating the selected product according to the customer’s choice and delivering product to the customer.,Functional,PROMISE-exp
+REQ-0802,Keep track of each product item’s stocks for selling purpose.,Functional,PROMISE-exp
+REQ-0803,Responsible for informing administrator when any product item’s stock goes under the minimum level.,Functional,PROMISE-exp
+REQ-0804,Taking permission from the Administrator for the product to be purchased from vendor.,Functional,PROMISE-exp
+REQ-0805,Responsible for managing stocks of each product items.,Functional,PROMISE-exp
+REQ-0806,Keep track of all the payment transactions made by the customers and update the payment information.,Functional,PROMISE-exp
+REQ-0807,Responsible for contacting the banks for the validation of the a/c number provided by the customer while purchasing and make the transaction from the given a/c.,Functional,PROMISE-exp
+REQ-0808,Consult with the Administrator about the payment details of the customers for the updating of the database.,Functional,PROMISE-exp
+REQ-0809,Provide feasible solutions to the customers on their complaints and queries.,Functional,PROMISE-exp
+REQ-0810,The system should require the user to state time when should the doughnut be delivered,Functional,PROMISE-exp
+REQ-0811,The system is expected to have reasonable short time response. The voter should be able to login and should be able to get response for his requests in 2-3 seconds.,Performance,PROMISE-exp
+REQ-0812,The data transaction between client and server must be encrypted using SSL technology.,Security,PROMISE-exp
+REQ-0813,All the passwords that are generated or accepted must be stored in database in an encrypted form.,Security,PROMISE-exp
+REQ-0814,To prevent attacks the system should generate random word and ask the user to enter it correctly for multiple tryings.,Security,PROMISE-exp
+REQ-0815,The system should warn ECA users about the malfunction of the system.,Fault-Tolerance,PROMISE-exp
+REQ-0816,The system should be simple to use,Look-and-Feel,PROMISE-exp
+REQ-0817,The physician/pharmacist must have a valid user login to access the system.,Functional,PROMISE-exp
+REQ-0818,A failed login will alert the physician/pharmacist.,Functional,PROMISE-exp
+REQ-0819,A list of available patients is displayed after login.,Functional,PROMISE-exp
+REQ-0820,An error message alerts when an invalid patient is entered.,Functional,PROMISE-exp
+REQ-0821,Backspace/reset capability is implemented for typing errors.,Functional,PROMISE-exp
+REQ-0822,Selected or specified patient’s information is loaded.,Functional,PROMISE-exp
+REQ-0823,Return to List is available if the patient loaded is not correct.,Functional,PROMISE-exp
+REQ-0824,Navigation to each selected tab.,Functional,PROMISE-exp
+REQ-0825,The font will be larger enough for easy reading.,Functional,PROMISE-exp
+REQ-0826,Icons will clearly illustrate the feature it represents.,Functional,PROMISE-exp
+REQ-0827,Basic Patient information is showed first.,Functional,PROMISE-exp
+REQ-0828,Customized information is displayed.,Functional,PROMISE-exp
+REQ-0829,Each entry is shown in full.,Functional,PROMISE-exp
+REQ-0830,The text and time/date of a note that has been entered is displayed starting with most recent.,Functional,PROMISE-exp
+REQ-0831,New and Delete buttons will allow the physician/pharmacist to add a notation to the patient’s file.,Functional,PROMISE-exp
+REQ-0832,A description and time/date of each prescription that has been ordered or given is displayed starting with most recent.,Functional,PROMISE-exp
+REQ-0833,All users of the system shall login using some form of unique identification.,Security,PROMISE-exp
+REQ-0834,All login attempts shall be done so in a secure manner.,Security,PROMISE-exp
+REQ-0835,The system shall be compatible with the Microsoft Windows Operating System.,Operational,PROMISE-exp
+REQ-0836,The system shall allow the administrator to remove equipment.,Functional,PROMISE-exp
+REQ-0837,The system shall allow the administrator to install additional distributed location templates.,Functional,PROMISE-exp
+REQ-0838,The system shall allow the administrator to remove physical locations.,Functional,PROMISE-exp
+REQ-0839,The system shall allow administrators to define negotiation rules for the organization.,Functional,PROMISE-exp
+REQ-0840,The system shall give the mediator privileges to schedule location and equipment resources.,Functional,PROMISE-exp
+REQ-0841,The system shall allow the mediator to negotiate a meeting date.,Functional,PROMISE-exp
+REQ-0842,The system shall allow the mediator to solve a date conflict.,Functional,PROMISE-exp
+REQ-0843,The system shall allow the mediator to negotiate a location / equipment.,Functional,PROMISE-exp
+REQ-0844,The system shall allow the mediator to solve a location conflict.,Functional,PROMISE-exp
+REQ-0845,The system shall allow the mediator to send and receive messages from users.,Functional,PROMISE-exp
+REQ-0846,The system shall allow the initiator to view the information of any meetings which they initiated.,Functional,PROMISE-exp
+REQ-0847,The system shall allow the initiator to cancel any meetings which they initiated.,Functional,PROMISE-exp
+REQ-0848,The system shall allow the initiator to send and receive messages from users.,Functional,PROMISE-exp
+REQ-0849,The system shall authenticate users at the beginning each session.,Functional,PROMISE-exp
+REQ-0850,The system shall allow the user to view their schedule.,Functional,PROMISE-exp
+REQ-0851,The system shall notify the user of any schedule changes.,Functional,PROMISE-exp
+REQ-0852,The system shall allow users to send and receive messages.,Functional,PROMISE-exp
+REQ-0853,The system shall request a user response to initiator or mediator messages.,Functional,PROMISE-exp
+REQ-0854,The system shall allow the user to modify the date preference set of an already submitted meeting response.,Functional,PROMISE-exp
+REQ-0855,The system shall allow the user to modify the location preference set of an already submitted meeting response.,Functional,PROMISE-exp
+REQ-0856,The system shall allow the user to modify the equipment requirement set of an already submitted meeting response.,Functional,PROMISE-exp
+REQ-0857,The system shall allow the user to modify the date exclusion set of an already submitted meeting response.,Functional,PROMISE-exp
+REQ-0858,The system shall allow the user to change the password.,Functional,PROMISE-exp
+REQ-0859,The system shall allow the user to view past attended meetings.,Functional,PROMISE-exp
+REQ-0860,The system shall allow the user to view pending meetings.,Functional,PROMISE-exp
+REQ-0861,The system shall show the meetings to the user in ascending time order by default.,Functional,PROMISE-exp
+REQ-0862,The system shall allow users to view equipment information.,Functional,PROMISE-exp
+REQ-0863,The system shall allow users to view other users’ information.,Functional,PROMISE-exp
+REQ-0864,The system shall allow user to specify custom meeting locations.,Functional,PROMISE-exp
+REQ-0865,The system shall allow users to view location information.,Functional,PROMISE-exp
+REQ-0866,The system shall allow users to search  for available distributed location templates(if any).,Functional,PROMISE-exp
+REQ-0867,The system shall allow users to view information concerning the available distributed location templates(if any).,Functional,PROMISE-exp
+REQ-0868,The web application shall add no more than 5 seconds of perceivable overhead time to any necessary web and database transaction time.,Performance,PROMISE-exp
+REQ-0869,The system shall utilize HTTPS communication to ensure data confidentiality.,Security,PROMISE-exp
+REQ-0870,User authentication and privileges are defined outside the scope of the sytem by the Microsoft Active Directroy Server.,Security,PROMISE-exp
+REQ-0871,Personal information security is defined outside the scope of the SDMS by the database server.,Security,PROMISE-exp
+REQ-0872,Users shall be required to log into the system for all operations except the operations on the login page.,Security,PROMISE-exp
+REQ-0873,The system shall run on Windows Server 2003.,Portability,PROMISE-exp
+REQ-0874,The system shall be compatible with IIS6.0 and above or  Apache 2.0 and above.,Portability,PROMISE-exp
+REQ-0875,The system shall display all the products that can be configured.,Functional,PROMISE-exp
+REQ-0876,The system shall allow user to select the product to configure.,Functional,PROMISE-exp
+REQ-0877,The system shall display all the available components of the product to configure.,Functional,PROMISE-exp
+REQ-0878,The system shall enable user to add one or more component to the configuration.,Functional,PROMISE-exp
+REQ-0879,The system shall notify the user about any conflict in the current configuration.,Functional,PROMISE-exp
+REQ-0880,The system shall allow user to confirm the completion of current configuration.,Functional,PROMISE-exp
+REQ-0881,The system shall display detailed information of the selected products.,Functional,PROMISE-exp
+REQ-0882,The system shall provide browsing options to see product details.,Functional,PROMISE-exp
+REQ-0883,The system shall display detailed product categorization to the user.,Functional,PROMISE-exp
+REQ-0884,The system shall enable user to enter the search text on the screen.,Functional,PROMISE-exp
+REQ-0885,The system shall enable user to select multiple options on the screen to search.,Functional,PROMISE-exp
+REQ-0886,The system shall display all the matching products based on the search.,Functional,PROMISE-exp
+REQ-0887,The system shall display only 10 matching result on the current screen.,Functional,PROMISE-exp
+REQ-0888,The system shall enable user to navigate between the search results.,Functional,PROMISE-exp
+REQ-0889,The system shall notify the user when no matching product is found on the search.,Functional,PROMISE-exp
+REQ-0890,The system shall allow user to create profile and set his credential.,Functional,PROMISE-exp
+REQ-0891,The system shall authenticate user credentials to view the profile.,Functional,PROMISE-exp
+REQ-0892,The system shall allow user to update the profile information.,Functional,PROMISE-exp
+REQ-0893,The system shall display both the active and completed order history in the customer profile.,Functional,PROMISE-exp
+REQ-0894,The system shall allow user to select the order from the order history.,Functional,PROMISE-exp
+REQ-0895,The system shall display the detailed information about the selected order.,Functional,PROMISE-exp
+REQ-0896,The system shall display the most frequently searched items by the user in the profile.,Functional,PROMISE-exp
+REQ-0897,The system shall allow user to register for newsletters and surveys in the profile.,Functional,PROMISE-exp
+REQ-0898,The system shall allow user to select the support type he wants.,Functional,PROMISE-exp
+REQ-0899,The system shall allow user to enter the customer and product information for the support.,Functional,PROMISE-exp
+REQ-0900,The system shall display the customer support contact numbers on the screen.,Functional,PROMISE-exp
+REQ-0901,The system shall allow user to enter the contact number for support personnel to call.,Functional,PROMISE-exp
+REQ-0902,The system shall display the online help upon request.,Functional,PROMISE-exp
+REQ-0903,The system shall display the FAQ’s upon request.,Functional,PROMISE-exp
+REQ-0904,The system shall maintain customer email information as a required part of customer profile.,Functional,PROMISE-exp
+REQ-0905,The system shall send an order confirmation to the user through email.,Functional,PROMISE-exp
+REQ-0906,The system shall display detailed invoice for current order once it is confirmed.,Functional,PROMISE-exp
+REQ-0907,The system shall optionally allow user to print the invoice.,Functional,PROMISE-exp
+REQ-0908,The system shall provide shopping cart during online purchase.,Functional,PROMISE-exp
+REQ-0909,The system shall allow user to add/remove products in the shopping cart.,Functional,PROMISE-exp
+REQ-0910,The system shall display different shipping options provided by shipping department.,Functional,PROMISE-exp
+REQ-0911,The system shall enable user to select the shipping method during payment process.,Functional,PROMISE-exp
+REQ-0912,The system shall display the shipping charges.,Functional,PROMISE-exp
+REQ-0913,The system shall display tentative duration for shipping.,Functional,PROMISE-exp
+REQ-0914,The system shall allow user to enter the order information for tracking.,Functional,PROMISE-exp
+REQ-0915,The system shall display the current tracking information about the order.,Functional,PROMISE-exp
+REQ-0916,The system shall calculate tax for the order.,Functional,PROMISE-exp
+REQ-0917,The system shall display tax information for the order.,Functional,PROMISE-exp
+REQ-0918,The system shall display available payment methods for payment.,Functional,PROMISE-exp
+REQ-0919,The system shall allow user to select the payment method for order.,Functional,PROMISE-exp
+REQ-0920,The system shall display the orders that are eligible to change.,Functional,PROMISE-exp
+REQ-0921,The system shall allow user to select the order to be changed.,Functional,PROMISE-exp
+REQ-0922,The system shall allow user to cancel the order.,Functional,PROMISE-exp
+REQ-0923,The system shall notify the user about any changes made to the order.,Functional,PROMISE-exp
+REQ-0924,The system shall enable the user to enter their reviews and ratings.,Functional,PROMISE-exp
+REQ-0925,The system shall display all the available financing options.,Functional,PROMISE-exp
+REQ-0926,The system shall allow user to select the financing option.,Functional,PROMISE-exp
+REQ-0927,The system shall notify the use about the financing request.,Functional,PROMISE-exp
+REQ-0928,The system shall allow user to view detailed sitemap.,Functional,PROMISE-exp
+REQ-0929,The system shall display all the available promotions to the user.,Functional,PROMISE-exp
+REQ-0930,The system shall allow user to select available promotion.,Functional,PROMISE-exp
+REQ-0931,The system shall allow user to confirm the purchase.,Functional,PROMISE-exp
+REQ-0932,The system shall enable user to enter the payment information.,Functional,PROMISE-exp
+REQ-0933,The system shall provide a uniform look and feel between all the web pages.,Look-and-Feel,PROMISE-exp
+REQ-0934,The system shall provide a digital image for each product in the product catalog.,Usability,PROMISE-exp
+REQ-0935,The system shall provide use of icons and toolbars.,Usability,PROMISE-exp
+REQ-0936,The system shall provide handicap access.,Usability,PROMISE-exp
+REQ-0937,The system shall provide multi language support.,Usability,PROMISE-exp
+REQ-0938,The system shall provide a contractual agreement with an internet service provider for T3 access with 99.9999% availability.,Availability,PROMISE-exp
+REQ-0939,The system shall provide a contractual agreement with an internet service provider who can provide 99.999% availability through their network facilities onto the internet.,Availability,PROMISE-exp
+REQ-0940,The product shall be based on web and has to be run from a web server.,Operational,PROMISE-exp
+REQ-0941,The product shall take initial load time depending on internet connection strength which also depends on the media from which the product is run.,Performance,PROMISE-exp
+REQ-0942,The performance shall depend upon hardware components of the client/customer.,Performance,PROMISE-exp
+REQ-0943,The system shall use secure sockets in all transactions that include any confidential customer information.,Security,PROMISE-exp
+REQ-0944,The system shall automatically log out all customers after a period of inactivity.,Security,PROMISE-exp
+REQ-0945,The system shall confirm all transactions with the customer’s web browser.,Usability,PROMISE-exp
+REQ-0946,The system shall not leave any cookies on the customer’s computer containing the user’s password.,Security,PROMISE-exp
+REQ-0947,The system shall not leave any cookies on the customer’s computer containing any of the user’s confidential information.,Security,PROMISE-exp
+REQ-0948,The customer’s web browser shall never display a customer’s password.  It shall always be echoed with special characters representing typed characters.,Security,PROMISE-exp
+REQ-0949,The customer’s web browser shall never display a customer’s credit card number after retrieving from the database.  It shall always be shown with just the last 4 digits of the credit card number.,Security,PROMISE-exp
+REQ-0950,The system’s back-end servers shall never display a customer’s password.  The customer’s password may be reset but never shown.,Security,PROMISE-exp
+REQ-0951,The system’s back-end databases shall be encrypted.,Security,PROMISE-exp
+REQ-0952,The system shall allow the user to register for an account from any page in the system.,Functional,PROMISE-exp
+REQ-0953,The system will use a single password per user to login to the E-Store System.,Security,PROMISE-exp
+REQ-0954,The system shall use secure socket layer (SSL) technology to ensure all payments made online and user logins are secure.,Security,PROMISE-exp
+REQ-0955,Any page of the application should not take more than 6 seconds to load on a DSL broadband connection.,Performance,PROMISE-exp
+REQ-0956,The system may be throttled or slowed down on heavy loads to ensure service for everybody. By throttling is meant that certain functionality may be unavailable during heavy server load.,Performance,PROMISE-exp
+REQ-0957,The application should be able to support 100 concurrent users without any performance degradation.,Performance,PROMISE-exp
+REQ-0958,The system should be able to scale up to 500 concurrent users (if there is a need in the future) by installing additional hardware components.,Scalability,PROMISE-exp
+REQ-0959,The MTBF (if any) should not be less than 2 months.,Availability,PROMISE-exp
+REQ-0960,A secure server will be required to ensure confidentiality of customer’s credit card and other details.,Security,PROMISE-exp
+REQ-0961,The user interface of the system should be very user friendly.,Usability,PROMISE-exp
+REQ-0962,It should not take more than 120 seconds for a new user to register for an account.,Usability,PROMISE-exp
+REQ-0963,It should not take more than 90 seconds for a registered user to place an order.,Usability,PROMISE-exp
+REQ-0964,The system should be easy enough to maintain that someone else could do it with a manual and a few hours training.,Maintainability,PROMISE-exp
+REQ-0965,The system should be portable to various operating environments.,Portability,PROMISE-exp
+REQ-0966,Registered User must be able to maintain his/her session information for at least 60 minutes of inactive session before the system prompts him to log out of the system. The registered user must be provided with all the options of the E-store regardless of the time when he/she logs in.,Functional,PROMISE-exp
+REQ-0967,The entire website must be user-friendly and easily navigable. The website must be provided with a site map for quick access to a particular link according to the requirement specification. The user must be able to find what he/she wants from the site without any difficulty. The website must adhere to branding schemes and the layout of the web pages must be uniform throughout,Usability,PROMISE-exp
+REQ-0968,The system shall support up to 10000 simultaneous users against the central database at any given time and up to 5000 simultaneous users against the local servers at any one time. The performance of the website must be optimal incase of huge loads and hence appropriate load balancing must be done to achieve this. There can be any number of mirror servers readily available in case of huge loads without the user getting any delay.,Performance,PROMISE-exp
+REQ-0969,The website must provide highest degree of security to the registered users. All the transactions that are made must be secured. The sensitive information passed to and from the website must be secured. Identity theft and other security related issues must be solved. Unauthorized transmission of sensitive information of the user to third party websites for reference must be avoided. On the basis of user agreement the information must be processed. All the information about the registered user must be securely stored in the central database.,Security,PROMISE-exp

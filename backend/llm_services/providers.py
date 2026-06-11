@@ -9,7 +9,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from dataclasses import asdict, dataclass
-from typing import Any, Protocol, Sequence
+from typing import Protocol, Sequence
 
 from .prompts import build_requirement_expansion_prompt, normalize_domain_terms, normalize_plain_text
 from .vocabulary import extract_domain_vocabulary

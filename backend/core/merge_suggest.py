@@ -10,7 +10,7 @@ It does not modify any database state or run LLM calls.
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 import numpy as np
 from sklearn.metrics import silhouette_score

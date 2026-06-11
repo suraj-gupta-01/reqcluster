@@ -112,7 +112,6 @@ def _record_iteration(
 def run_constrained_reclustering(db: DBSession, session_id: int) -> Dict[str, Any]:
     session, reqs = _load(db, session_id)
     texts = [r.text for r in reqs]
-    req_ids = [r.req_id or f"REQ-{i + 1:03d}" for i, r in enumerate(reqs)]
     db_id_to_index = {r.id: i for i, r in enumerate(reqs)}
     base_labels = np.array(
         [r.cluster_id if r.cluster_id is not None else -1 for r in reqs], dtype=np.int32

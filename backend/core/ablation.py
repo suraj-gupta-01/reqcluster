@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Optional, Sequence
+from typing import Any, Dict, Sequence
 
 import numpy as np
 from sklearn.metrics import silhouette_score

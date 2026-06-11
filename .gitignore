@@ -16,6 +16,8 @@ env/
 embeddings/
 outputs/
 backend/cache/
+**/data/models/
+*.pkl
 .pytest_cache/
 
 # Transient graphify artifacts (graph.html / graph.json / GRAPH_REPORT.md are kept)
@@ -38,3 +40,6 @@ frontend/dist/
 .env.local
 .env.*
 !.env.example
+
+# isolated GPU benchmark venv (not committed)
+.gpuvenv/

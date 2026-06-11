@@ -10,7 +10,7 @@ import tempfile
 import time
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Sequence
 
 from .prompts import PROMPT_VERSION, normalize_domain_terms, normalize_plain_text
 from .providers import (

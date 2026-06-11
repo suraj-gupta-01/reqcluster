@@ -1,8 +1,7 @@
 import pandas as pd
-import numpy as np
 import re
 import io
-from typing import Tuple, List, Dict
+from typing import Tuple, Dict
 
 
 REQUIRED_COLUMNS_VARIANTS = {

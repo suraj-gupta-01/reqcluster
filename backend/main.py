@@ -23,8 +23,8 @@ def load_dotenv():
                             if k and k not in os.environ:
                                 os.environ[k] = v
                 break
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"warning: could not read env file {path}: {e}", file=sys.stderr)
 
 load_dotenv()
 
@@ -72,6 +72,7 @@ app.add_middleware(
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["X-Total-Count"],
 )
 
 app.include_router(router, prefix="/api")
