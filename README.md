@@ -174,6 +174,30 @@ docker compose up --build
 ```
 Open **http://localhost:3000**.
 
+## Fastest
+### Docker (Postgres + Redis)
+```bash
+docker compose up -d postgres redis
+```
+### Backend
+```bash
+uv sync
+cd backend
+uv run uvicorn main:app --reload --port 8000
+```
+First clustering run downloads the SBERT model (~80 MB) once. With no
+`DATABASE_URL` set, the backend uses a local SQLite file (a startup warning makes
+this explicit).
+
+### Frontend
+```bash
+cd frontend
+npm install
+npm run dev
+```
+Open **http://localhost:5173** (API docs at **http://localhost:8000/docs**).
+
+
 ### Try it
 Upload `data/aerospace_requirements.csv`, run clustering, then explore
 **Overview -> Scatter -> Graph -> Dependency Tree -> Review Queue -> Active

@@ -4,6 +4,13 @@ import { Layers, Hash, AlertTriangle, ChevronRight, Loader, Tag, Sparkles, Wrenc
 import { getSession, getClusters, getEnrichmentStatus, getSuggestions } from '../utils/api.js'
 import { getClusterColor } from '../utils/colors.js'
 
+const PROVIDER_LABELS = {
+  mock: 'Mock',
+  local: 'Local LLM',
+  openai_compatible: 'Cloud LLM',
+  'openai-compatible': 'Cloud LLM',
+}
+
 function StatCard({ icon: Icon, label, value, color = 'text-white' }) {
   return (
     <div className="stat-card">
@@ -178,7 +185,7 @@ export default function OverviewPage({ onStatusChange }) {
             </div>
             <p className="text-sm text-gray-500 mt-1">
               {enrichmentStatus
-                ? `${enrichmentStatus.succeeded || 0} of ${enrichmentStatus.total || 0} requirements enriched with ${enrichmentStatus.provider || 'no provider yet'}.`
+                ? `${enrichmentStatus.succeeded || 0} of ${enrichmentStatus.total || 0} requirements enriched with ${PROVIDER_LABELS[enrichmentStatus.provider?.toLowerCase()] || enrichmentStatus.provider || 'no provider yet'}.`
                 : 'No enrichment status is available yet.'}
             </p>
           </div>

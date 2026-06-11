@@ -1,6 +1,13 @@
 import { AlertTriangle, CheckCircle, Clock, Loader, XCircle } from 'lucide-react'
 import { formatTimestamp } from '../utils/api.js'
 
+const PROVIDER_LABELS = {
+  mock: 'Mock',
+  local: 'Local LLM',
+  openai_compatible: 'Cloud LLM',
+  'openai-compatible': 'Cloud LLM',
+}
+
 function statusStyle(status) {
   if (status === 'complete') return { icon: CheckCircle, label: 'Complete', color: 'text-emerald-400', border: 'border-emerald-900/40 bg-emerald-950/10' }
   if (status === 'partial') return { icon: AlertTriangle, label: 'Partial', color: 'text-amber-400', border: 'border-amber-900/40 bg-amber-950/10' }
@@ -48,7 +55,7 @@ export default function EnrichmentStatusCard({ status, loading = false, error = 
             </span>
           </div>
           <div className="text-xs text-gray-500 mt-1">
-            Session {status?.session_id ?? '-'} {status?.provider ? `- ${status.provider}` : ''}
+            Session {status?.session_id ?? '-'} {status?.provider ? `- ${PROVIDER_LABELS[status.provider.toLowerCase()] || status.provider}` : ''}
             {status?.model ? ` / ${status.model}` : ''}
           </div>
         </div>

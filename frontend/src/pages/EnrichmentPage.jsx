@@ -22,7 +22,6 @@ import {
   getErrorMessage,
   getProgress,
   getRequirements,
-  getSession,
   getSessions,
 } from '../utils/api.js'
 import AblationReportPanel from '../components/AblationReportPanel.jsx'
@@ -387,7 +386,7 @@ export default function EnrichmentPage() {
           <p className="text-gray-400 max-w-3xl">
             Run LLM enrichment, inspect domain context, then cluster with base, enriched, or hybrid embeddings.
             Base clustering is the Phase 1 behavior. Hybrid uses the original requirement plus LLM-enriched context.
-            The mock provider is offline and safe for testing.
+            The Mock provider is offline and safe for testing.
           </p>
         </div>
         <div className="flex gap-2">
@@ -432,9 +431,9 @@ export default function EnrichmentPage() {
               value={enrichmentOptions.provider_name}
               onChange={value => updateEnrichmentOption('provider_name', value)}
               options={[
-                ['mock', 'mock'],
-                ['openai_compatible', 'openai_compatible'],
-                ['local', 'local'],
+                ['mock', 'Mock'],
+                ['openai_compatible', 'Cloud LLM'],
+                ['local', 'Local LLM'],
               ]}
             />
             <SelectControl
