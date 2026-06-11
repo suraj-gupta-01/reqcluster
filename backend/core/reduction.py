@@ -38,8 +38,14 @@ def reduce_embeddings(
             f"Need at least 4 requirements to run dimensionality reduction (got {n_samples})."
         )
 
-    # Adjust n_neighbors based on dataset size
-    n_neighbors = min(15, max(2, n_samples - 1))
+    # Scale n_neighbors with dataset size. A fixed 15 is too local for large sets
+    # (UMAP over-fragments -> HDBSCAN marks many boundary points as noise); a wider
+    # neighborhood captures global structure and keeps big runs clean. Small sets
+    # stay at 15 for tight local detail.
+    if n_samples <= 15:
+        n_neighbors = max(2, n_samples - 1)
+    else:
+        n_neighbors = int(min(80, max(15, n_samples // 500)))
 
     # Clamp output dimensions so they always stay below n_samples
     cluster_dim = max(2, min(n_components_cluster, n_samples - 2))
