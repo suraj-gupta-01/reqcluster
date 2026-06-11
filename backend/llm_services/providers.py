@@ -108,8 +108,16 @@ def _parse_string_list(
     warnings: list[str],
 ) -> list[str]:
     value = data.get(field, [])
-    if not isinstance(value, list):
-        raise ProviderResponseError(f"Field '{field}' must be a list of strings.")
+    # Small local models are inconsistent with list fields (e.g. they return
+    # `assumptions` as a string or an object). Coerce instead of rejecting the
+    # whole enrichment - a single bad list field shouldn't fail the requirement.
+    if isinstance(value, str):
+        value = [value] if value.strip() else []
+    elif isinstance(value, dict):
+        value = [str(v) for v in value.values()]
+    elif not isinstance(value, list):
+        warnings.append(f"Field '{field}' was not a list; treated as empty.")
+        value = []
 
     result: list[str] = []
     seen: set[str] = set()

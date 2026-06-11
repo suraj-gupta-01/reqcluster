@@ -39,6 +39,26 @@ silhouette (-1..1) rates geometric separation.
 
 ---
 
+## 1b. Enrichment quality (validation) — local qwen2.5:3b, small set
+
+Enrichment quality is measured on a small set (local LLM is ~6.7 s/requirement, so
+small is the right scale to validate it).
+
+| Metric | Value |
+|---|--:|
+| **Success rate** (valid parsed enrichment) | **88%** (was **50%** before the parser-leniency fix) |
+| Avg model confidence (successes) | 0.94 |
+| Avg domain terms extracted / req | 4.1 |
+| Time | ~6.7 s/req on the GPU |
+
+Small local models often return list fields (e.g. `assumptions`) as a string or
+object; the parser used to reject the whole requirement on that. It now **coerces**
+non-list fields, lifting the success rate from **50% → 88%**. Each requirement is
+also scored by `llm_services/quality.py` (length-ratio, invented-numbers,
+obligation-drift, missing-token checks) — those flags surface as per-row warnings.
+
+---
+
 ## 2. Full-pipeline timing (best case)
 
 Per-stage, measured end-to-end through the live app (GPU + Postgres + Redis),
