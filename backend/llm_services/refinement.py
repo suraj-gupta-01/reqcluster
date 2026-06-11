@@ -109,9 +109,18 @@ class MockClusterRefinementProvider:
         if n < 2:
             coherence = 1.0
         else:
-            sim = cosine_similarity(cluster_emb)
+            # Exact pairwise coherence is O(n^2) in time and memory; cap to a
+            # representative random sample so very large clusters (2000+ members
+            # at 35k) score in milliseconds. The mean pairwise similarity is
+            # well estimated from a few hundred members.
+            emb = cluster_emb
+            if n > 400:
+                idx = np.random.default_rng(42).choice(n, 400, replace=False)
+                emb = cluster_emb[idx]
+            m = int(emb.shape[0])
+            sim = cosine_similarity(emb)
             upper_sum = float(np.triu(sim, k=1).sum())
-            n_pairs = n * (n - 1) / 2
+            n_pairs = m * (m - 1) / 2
             coherence = upper_sum / n_pairs if n_pairs > 0 else 1.0
 
         coherence = round(min(max(coherence, 0.0), 1.0), 6)

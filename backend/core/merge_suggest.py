@@ -122,14 +122,17 @@ def _compute_intra_cluster_coherence(
     labels: np.ndarray,
     cluster_id: int,
 ) -> float:
-    """Average pairwise cosine similarity within a cluster."""
+    """Average pairwise cosine similarity within a cluster (sampled for speed)."""
     mask = labels == cluster_id
     cluster_emb = embeddings[mask]
     n = cluster_emb.shape[0]
     if n < 2:
         return 1.0
+    # O(n^2); cap to a representative sample for large clusters.
+    if n > 400:
+        cluster_emb = cluster_emb[np.random.default_rng(42).choice(n, 400, replace=False)]
+        n = 400
     sim = cosine_similarity(cluster_emb)
-    # Average of upper triangle (exclude diagonal)
     upper_sum = float(np.triu(sim, k=1).sum())
     n_pairs = n * (n - 1) / 2
     return upper_sum / n_pairs if n_pairs > 0 else 1.0
@@ -162,8 +165,14 @@ def evaluate_merge_silhouette(
     if filtered_embeddings.shape[0] < 3:
         return None
 
+    # silhouette_score is O(N^2); on a sample it is O(sample^2). Cap the sample so
+    # this stays fast when evaluated for every merge candidate at scale. The same
+    # seeded sample is used before/after so the delta is a fair comparison.
+    sample_size = min(2000, filtered_embeddings.shape[0])
+
     try:
-        score_before = silhouette_score(filtered_embeddings, filtered_labels)
+        score_before = silhouette_score(
+            filtered_embeddings, filtered_labels, sample_size=sample_size, random_state=42)
     except ValueError:
         return None
 
@@ -176,7 +185,8 @@ def evaluate_merge_silhouette(
         return None
 
     try:
-        score_after = silhouette_score(filtered_embeddings, merged_labels)
+        score_after = silhouette_score(
+            filtered_embeddings, merged_labels, sample_size=sample_size, random_state=42)
     except ValueError:
         return None
 

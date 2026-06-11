@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { Layers, Hash, AlertTriangle, ChevronRight, Loader, Tag, Sparkles, Wrench } from 'lucide-react'
-import { getSession, getClusters, getEnrichmentStatus, getSuggestions } from '../utils/api.js'
+import { Layers, Hash, AlertTriangle, ChevronRight, Loader, Tag, Sparkles, Wrench, Gauge } from 'lucide-react'
+import { getSession, getClusters, getEnrichmentStatus, getSuggestions, getMetrics } from '../utils/api.js'
 import { getClusterColor } from '../utils/colors.js'
 
 function StatCard({ icon: Icon, label, value, color = 'text-white' }) {
@@ -12,6 +12,15 @@ function StatCard({ icon: Icon, label, value, color = 'text-white' }) {
         <span className="text-xs font-medium uppercase tracking-wider">{label}</span>
       </div>
       <div className={`text-3xl font-bold ${color}`}>{value}</div>
+    </div>
+  )
+}
+
+function Metric({ label, value, accent = 'text-white' }) {
+  return (
+    <div>
+      <div className="text-[11px] text-gray-500 uppercase tracking-wider mb-1">{label}</div>
+      <div className={`text-xl font-bold font-mono ${accent}`}>{value}</div>
     </div>
   )
 }
@@ -70,6 +79,7 @@ export default function OverviewPage({ onStatusChange }) {
   const [clusters, setClusters] = useState([])
   const [enrichmentStatus, setEnrichmentStatus] = useState(null)
   const [refinementSuggestions, setRefinementSuggestions] = useState([])
+  const [metrics, setMetrics] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -86,6 +96,9 @@ export default function OverviewPage({ onStatusChange }) {
           .catch(() => { })
         getSuggestions(parseInt(sessionId))
           .then(sugs => { if (!cancelled) setRefinementSuggestions(sugs) })
+          .catch(() => { })
+        getMetrics(parseInt(sessionId))
+          .then(m => { if (!cancelled) setMetrics(m) })
           .catch(() => { })
         if (!cancelled) {
           setSession(sess)
@@ -141,6 +154,35 @@ export default function OverviewPage({ onStatusChange }) {
           color="text-emerald-400"
         />
       </div>
+
+      {/* Validation metrics */}
+      {metrics && (
+        <div className="card p-5 mb-8 animate-fade-up">
+          <div className="flex items-center gap-2 mb-4">
+            <Gauge size={16} className="text-brand-400" />
+            <h2 className="text-sm font-semibold text-white uppercase tracking-wider">Validation metrics</h2>
+            {metrics.has_ground_truth && (
+              <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">
+                ground-truth labelled
+              </span>
+            )}
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            {metrics.has_ground_truth && (
+              <Metric label="Accuracy (purity)" value={`${metrics.accuracy_pct}%`} accent="text-emerald-400" />
+            )}
+            {metrics.has_ground_truth && <Metric label="ARI" value={metrics.ari} />}
+            {metrics.has_ground_truth && <Metric label="V-measure" value={metrics.v_measure} />}
+            <Metric label="Silhouette" value={metrics.silhouette ?? '-'} />
+            <Metric label="Noise" value={`${metrics.noise_pct}%`} accent="text-amber-400" />
+          </div>
+          <p className="text-xs text-gray-500 mt-4 leading-relaxed">
+            {metrics.has_ground_truth
+              ? `Measured against ${metrics.n_true_groups} ground-truth groups (the "module" column). Accuracy = cluster purity; ARI and V-measure range 0-1 (higher is better). Silhouette (-1..1) rates geometric separation.`
+              : 'No ground-truth labels in this upload, so only geometry-based metrics are shown. Add a "module" column with the true grouping to get accuracy.'}
+          </p>
+        </div>
+      )}
 
       {/* Quick links */}
       <div className="flex gap-3 mb-8">
