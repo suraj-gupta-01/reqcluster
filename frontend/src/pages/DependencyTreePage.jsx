@@ -17,7 +17,7 @@ const RELATION_COLORS = {
   semantic: '#22c55e',
 }
 const RELATION_LABEL = {
-  data: 'Data (output -> input)',
+  data: 'Data (producer → consumer)',
   sequential: 'Sequential (precondition)',
   hierarchical: 'Hierarchical',
   reference: 'Explicit reference',
@@ -530,8 +530,8 @@ export default function DependencyTreePage() {
             <h1 className="text-2xl font-bold text-white tracking-tight">Dependency Tree</h1>
           </div>
           <p className="text-gray-400 text-sm max-w-2xl">
-            Heuristic relationships inferred from requirement references, data-flow cues,
-            preconditions, and semantic similarity.
+            Relationships inferred from named artifact data-flow (producer→consumer),
+            explicit requirement cross-references, temporal preconditions, and cluster hierarchy.
           </p>
         </div>
         <button onClick={handleGenerate} disabled={!selected || generating} className="btn-primary text-sm">
@@ -778,17 +778,36 @@ export default function DependencyTreePage() {
                 Dependency justifications
               </div>
               <div className="divide-y divide-white/[0.04] max-h-72 overflow-y-auto overflow-x-hidden">
-                {data.rationale.dependencies.slice(0, 100).map((dep, i) => (
-                  <div key={`${dep.source}-${dep.target}-${dep.relation}-${i}`} className="px-4 py-2.5 flex items-start gap-3 text-sm min-w-0">
-                    <span className="font-mono text-xs text-gray-400 flex items-center gap-1.5 flex-shrink-0">
-                      {dep.source_req_id}<ArrowRight size={12} className="text-gray-600" />{dep.target_req_id}
-                    </span>
-                    <span className="badge text-[10px] flex-shrink-0" style={{ backgroundColor: (RELATION_COLORS[dep.relation] || '#94a3b8') + '22', color: RELATION_COLORS[dep.relation] || '#94a3b8' }}>
-                      {dep.relation}
-                    </span>
-                    <span className="text-xs text-gray-500 whitespace-normal break-words min-w-0">{dep.justification}</span>
-                  </div>
-                ))}
+                {data.rationale.dependencies.slice(0, 100).map((dep, i) => {
+                  const color = RELATION_COLORS[dep.relation] || '#94a3b8'
+                  // Extract quoted artifact name from DATA-edge rationale
+                  const artifactMatch = dep.relation === 'data'
+                    ? String(dep.justification || '').match(/['‘’“”"]([^'‘’“”"]+)['‘’“”"]/)
+                    : null
+                  const artifactName = artifactMatch ? artifactMatch[1] : null
+                  return (
+                    <div key={`${dep.source}-${dep.target}-${dep.relation}-${i}`} className="px-4 py-2.5 flex items-start gap-3 text-sm min-w-0">
+                      <span className="font-mono text-xs text-gray-400 flex items-center gap-1.5 flex-shrink-0">
+                        {dep.source_req_id}<ArrowRight size={12} className="text-gray-600" />{dep.target_req_id}
+                      </span>
+                      <span
+                        className="badge text-[10px] flex-shrink-0 px-1.5 py-0.5 rounded-full font-medium"
+                        style={{ backgroundColor: color + '22', color }}
+                      >
+                        {dep.relation}
+                      </span>
+                      {artifactName && (
+                        <span
+                          className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold flex-shrink-0"
+                          style={{ background: '#2fbcaa22', color: '#2fbcaa', border: '1px solid #2fbcaa44' }}
+                        >
+                          {artifactName}
+                        </span>
+                      )}
+                      <span className="text-xs text-gray-500 whitespace-normal break-words min-w-0">{dep.justification}</span>
+                    </div>
+                  )
+                })}
               </div>
             </div>
           )}

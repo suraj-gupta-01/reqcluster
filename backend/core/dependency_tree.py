@@ -1,9 +1,11 @@
 """Dependency tree inference for engineering requirements (DP5).
 
-Infers hierarchical and sequential relationships between requirements based on
-the inputs, pre-conditions, and outputs implied by each requirement's text,
-combined with semantic similarity. Produces a directed acyclic graph with
-typed, weighted, explainable edges plus per-node tree levels.
+Infers hierarchical and sequential relationships between requirements based on:
+  - **Pass 0** – Producer-consumer artifact matching: requirements that produce
+    a named data item are linked to requirements that consume that same item.
+  - **Pass 1** – Explicit cross-references (REQ-ID mentions in text).
+  - **Pass 2** – Semantic candidate pairs: sequential cues and hierarchical
+    (same-cluster, more-general-to-specific) edges.
 
 Edge direction convention: ``source -> target`` means *source is a prerequisite
 of target* (target depends on / follows / specialises source).
@@ -21,6 +23,7 @@ from typing import Any, Dict, List, Optional
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 
+from .artifact_extractor import build_artifact_index, extract_artifacts
 from .labeling import STOPWORDS
 
 # Relation types
@@ -240,6 +243,25 @@ def build_dependency_tree(
                 f"{req_ids[i]} explicitly references {req_ids[j]}.",
             )
 
+    # 0. Producer-consumer artifact matching (highest confidence DATA edges).
+    #    Extracts named data items produced/consumed by each requirement and
+    #    draws a DATA edge from every producer to every consumer of the same
+    #    artifact.  No embedding similarity gate — the artifact name is the
+    #    explicit match signal.
+    all_artifacts = extract_artifacts(texts, req_ids)
+    producers, consumers = build_artifact_index(all_artifacts)
+    for artifact_name, producer_indices in producers.items():
+        consumer_indices = consumers.get(artifact_name, [])
+        for p in producer_indices:
+            for c in consumer_indices:
+                if p == c:
+                    continue
+                _add_edge(
+                    edges, p, c, DATA, 0.90,
+                    f"{req_ids[p]} produces '{artifact_name}' "
+                    f"consumed by {req_ids[c]}.",
+                )
+
     # 2. Semantic candidate pairs scored by lexical signals.
     if n >= 2:
         sim = cosine_similarity(embeddings)
@@ -261,16 +283,6 @@ def build_dependency_tree(
                 if not shared:
                     continue
                 shared_term = sorted(shared, key=len, reverse=True)[0]
-
-                # 2a. Data dependency: i produces what j consumes => i -> j.
-                if _verb_present(lowers[i], _OUTPUT_VERBS) and _verb_present(
-                    lowers[j], _INPUT_VERBS
-                ):
-                    _add_edge(
-                        edges, i, j, DATA, 0.5 + 0.4 * s,
-                        f"{req_ids[i]} produces and {req_ids[j]} consumes "
-                        f"'{shared_term}'.",
-                    )
 
                 # 2b. Sequential: j is gated by a pre-condition cue => i -> j.
                 cue = _first_cue(lowers[j], _SEQUENTIAL_CUES)
