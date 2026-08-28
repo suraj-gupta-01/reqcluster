@@ -101,6 +101,12 @@ def _normalize(text: str) -> str:
     return re.sub(r"\s+", " ", t).strip()
 
 
+_BOUNDARY_RE = re.compile(
+    r"\b(?:every|each|per|at|in|on|for|from|with|within|by|to|when|whenever|if|during|prior|after|once|until|as|and|or|via)\b",
+    re.IGNORECASE,
+)
+
+
 def _extract_np_after_verb(
     sentence: str, verb_re: re.Pattern[str]
 ) -> List[str]:
@@ -108,7 +114,11 @@ def _extract_np_after_verb(
     results: List[str] = []
     for m in verb_re.finditer(sentence):
         tail = sentence[m.end():].lstrip()
-        np_m = _NP_RE.match(tail)
+        art_m = _ARTICLE_RE.match(tail)
+        offset = art_m.end() if art_m else 0
+        bound_m = _BOUNDARY_RE.search(tail, offset)
+        segment = tail[:bound_m.start()] if bound_m else tail
+        np_m = _NP_RE.match(segment.strip())
         if np_m:
             raw = np_m.group(0).strip()
             norm = _normalize(raw)

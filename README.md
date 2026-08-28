@@ -438,6 +438,12 @@ Target: 500k requirements, ~10s clustering, on GPU hardware.
 
 ```
 reqcluster/
+  eval/                   Hermetic regression guard + benchmark suite
+    cli.py                CLI entrypoint (run, update-baselines, drift, report)
+    datasets.yaml         Dataset registry & tolerance configuration
+    baselines/            Committed golden baselines per dataset
+    runner.py             Hermetic TestClient runner & ephemeral cache setup
+    pipeline.py           HTTP E2E dataset evaluation orchestration
   backend/
     main.py                 FastAPI app + lifespan
     api/routes.py           all REST endpoints
@@ -463,7 +469,27 @@ reqcluster/
 
 ---
 
+## Quality & Evaluation Harness
+
+ReqCluster includes an automated, hermetic regression guard and benchmark suite (`eval/`) that verifies clustering purity, dependency tree precision/recall, enrichment reliability, and refinement suggestion quality against committed golden baselines:
+
+```bash
+# Run fast suite in CI mode (gates against golden baselines)
+uv run python -m eval run --suite fast
+
+# Update committed golden baselines
+uv run python -m eval update-baselines --suite fast
+
+# Inspect append-only metric drift history
+uv run python -m eval drift --n 10
+
+# View latest Markdown benchmark report
+uv run python -m eval report
+```
+
+---
+
 Phase 1 (core pipeline + dashboard), Phase 2 (LLM enrichment), Phase 3 (refinement),
 Phase 4 (human-in-the-loop), and Phase 5 (active learning, MBSE + PDF export,
-scalability) are implemented. Everything runs offline by default; no API keys
+scalability, and evaluation harness) are implemented. Everything runs offline by default; no API keys
 required.

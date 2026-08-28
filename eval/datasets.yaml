@@ -1,0 +1,75 @@
+datasets:
+  aerospace:
+    path: data/aerospace_requirements.csv
+    suite: fast
+    ground_truth: module
+    tolerances:
+      accuracy_pct:
+        floor: 55.0
+        delta: -3.0
+      reference_recall:
+        floor: 0.60
+        delta: -0.15
+      merge_precision:
+        floor: 0.40
+        delta: -0.20
+      parse_success_rate:
+        floor: 0.90
+        delta: -0.05
+
+  uav_fms_2k:
+    path: data/uav_fms_2k_requirements.csv
+    suite: fast
+    ground_truth: module
+    tolerances:
+      accuracy_pct:
+        floor: 95.0
+        delta: -1.5
+      noise_pct:
+        floor: 10.0
+        delta: 2.0
+        lower_is_better: true
+      ari:
+        floor: 0.85
+        delta: -0.05
+      v_measure:
+        floor: 0.90
+        delta: -0.05
+      parse_success_rate:
+        floor: 0.90
+        delta: -0.05
+
+  promise:
+    path: data/promise_requirements.csv
+    suite: fast
+    ground_truth: module
+    tolerances:
+      parse_success_rate:
+        floor: 0.90
+        delta: -0.05
+
+  uav_fms_10k:
+    path: data/uav_fms_10k_requirements.csv
+    suite: stress
+    ground_truth: module
+    tolerances:
+      accuracy_pct:
+        floor: 94.0
+        delta: -2.0
+      noise_pct:
+        floor: 12.0
+        delta: 3.0
+        lower_is_better: true
+
+  uav_fms_35k:
+    path: data/uav_fms_35k_requirements.csv
+    suite: stress
+    ground_truth: module
+    tolerances:
+      accuracy_pct:
+        floor: 90.0
+        delta: -3.0
+      noise_pct:
+        floor: 15.0
+        delta: 4.0
+        lower_is_better: true

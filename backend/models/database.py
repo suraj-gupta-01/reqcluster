@@ -68,35 +68,43 @@ def utcnow() -> datetime:
 _DATABASE_URL: str | None = os.getenv("DATABASE_URL")
 
 if _DATABASE_URL:
-    # ── PostgreSQL (or any other SQLAlchemy-supported RDBMS) ─────────────────
-    # Mask the password in log output.
-    _safe_url = _DATABASE_URL
-    if "@" in _DATABASE_URL:
-        scheme, rest = _DATABASE_URL.split("://", 1)
-        userinfo, hostpart = rest.split("@", 1)
-        _safe_url = f"{scheme}://***@{hostpart}"
+    if _DATABASE_URL.startswith("sqlite"):
+        logger.info("ReqCluster: using SQLite database from DATABASE_URL → %s", _DATABASE_URL)
+        engine = create_engine(
+            _DATABASE_URL,
+            connect_args={"check_same_thread": False, "timeout": 30},
+            poolclass=NullPool,
+        )
+    else:
+        # ── PostgreSQL (or any other SQLAlchemy-supported RDBMS) ─────────────────
+        # Mask the password in log output.
+        _safe_url = _DATABASE_URL
+        if "@" in _DATABASE_URL:
+            scheme, rest = _DATABASE_URL.split("://", 1)
+            userinfo, hostpart = rest.split("@", 1)
+            _safe_url = f"{scheme}://***@{hostpart}"
 
-    logger.info(
-        "ReqCluster: using PostgreSQL database → %s  "
-        "(set DATABASE_URL='' to switch back to SQLite)",
-        _safe_url,
-    )
+        logger.info(
+            "ReqCluster: using PostgreSQL database → %s  "
+            "(set DATABASE_URL='' to switch back to SQLite)",
+            _safe_url,
+        )
 
-    engine = create_engine(
-        _DATABASE_URL,
-        # ------------------------------------------------------------------
-        # QueuePool: maintains a pool of persistent connections so each
-        # request doesn't pay the TCP handshake cost.
-        #   pool_size=20   — base connections held open at all times
-        #   max_overflow=10 — extra connections allowed under peak load
-        #   pool_pre_ping   — discard stale connections silently
-        # ------------------------------------------------------------------
-        poolclass=QueuePool,
-        pool_size=20,
-        max_overflow=10,
-        pool_pre_ping=True,
-        pool_recycle=3600,  # recycle connections every hour to avoid server-side timeouts
-    )
+        engine = create_engine(
+            _DATABASE_URL,
+            # ------------------------------------------------------------------
+            # QueuePool: maintains a pool of persistent connections so each
+            # request doesn't pay the TCP handshake cost.
+            #   pool_size=20   — base connections held open at all times
+            #   max_overflow=10 — extra connections allowed under peak load
+            #   pool_pre_ping   — discard stale connections silently
+            # ------------------------------------------------------------------
+            poolclass=QueuePool,
+            pool_size=20,
+            max_overflow=10,
+            pool_pre_ping=True,
+            pool_recycle=3600,  # recycle connections every hour to avoid server-side timeouts
+        )
 
 else:
     # ── SQLite fallback (local dev only) ─────────────────────────────────────

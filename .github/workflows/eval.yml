@@ -1,0 +1,40 @@
+name: Evaluation Harness
+
+on:
+  push:
+    branches: [main, hikki]
+  pull_request:
+
+jobs:
+  eval-regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Cache HuggingFace models
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: ${{ runner.os }}-hf-all-minilm-v1
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt pytest pytest-cov pyyaml
+
+      - name: Run Harness Self-Tests
+        run: pytest tests/test_eval_harness.py -v
+
+      - name: Run Evaluation Harness (Fast Suite)
+        run: python -m eval run --suite fast --model real --provider mock
+
+      - name: Upload Evaluation Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-results
+          path: eval/results/
