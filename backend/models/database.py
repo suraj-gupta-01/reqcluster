@@ -266,6 +266,40 @@ class DependencyTree(Base):
     # session_id UNIQUE gives a free index; no additional index warranted.
 
 
+class DependencyExplanation(Base):
+    """Cached plain-language justification for one dependency edge.
+
+    An edge only ever needs explaining once per session, so the unique key is
+    (session, source, target): a second click is a cache hit rather than a second
+    LLM call. That is what bounds total call volume to the number of edges a
+    human actually inspects, independent of dataset size.
+    """
+
+    __tablename__ = "dependency_explanations"
+    __table_args__ = (
+        UniqueConstraint(
+            "session_id",
+            "source_index",
+            "target_index",
+            name="uq_dependency_explanation_edge",
+        ),
+        # Hot path: every read filters on the full edge identity, which the
+        # unique constraint above already indexes. A session-only index serves
+        # bulk cleanup and per-session listing.
+        Index("ix_dependency_explanation_session", "session_id"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(Integer, nullable=False)
+    source_index = Column(Integer, nullable=False)
+    target_index = Column(Integer, nullable=False)
+    relation = Column(String(40), nullable=True)
+    explanation_text = Column(Text, nullable=False)
+    provider = Column(String(80), nullable=False, default="mock")
+    prompt_version = Column(String(120), nullable=True)
+    generated_at = Column(DateTime, default=utcnow)
+
+
 class EnrichedRequirement(Base):
     __tablename__ = "enriched_requirements"
     __table_args__ = (

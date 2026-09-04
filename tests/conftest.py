@@ -35,25 +35,42 @@ def _isolate_embedding_cache(monkeypatch):
     monkeypatch.setattr(embedding_cache, "_redis_unavailable", True, raising=False)
 
 
+# torch and sentence_transformers are mocked *independently*.  Mocking them
+# together (one try/except around both imports) meant a missing
+# sentence_transformers would replace a perfectly good real torch with a stub —
+# which then broke any other library that probes torch's real API surface
+# (spaCy/thinc calls torch.cuda.device_count() at import time).
 try:
-    import torch
-    import sentence_transformers
-except (OSError, ImportError) as e:
+    import torch  # noqa: F401
+except (OSError, ImportError):
     import types
-    import numpy as np
 
-    # Mock torch. scipy's array-api-compat probes `torch.Tensor` unconditionally
-    # (via getattr) whenever scipy is imported, so the attribute must exist even
-    # in the mock or collection blows up with AttributeError.
+    # scipy's array-api-compat probes `torch.Tensor` unconditionally (via
+    # getattr) whenever scipy is imported, so the attribute must exist even in
+    # the mock or collection blows up with AttributeError.  thinc additionally
+    # probes torch.cuda.device_count(), so provide a no-GPU stub for it.
     torch_mock = types.ModuleType("torch")
     torch_mock.Tensor = type("Tensor", (), {})
+    cuda_mock = types.ModuleType("torch.cuda")
+    cuda_mock.device_count = lambda: 0
+    cuda_mock.is_available = lambda: False
+    torch_mock.cuda = cuda_mock
     sys.modules["torch"] = torch_mock
+    sys.modules["torch.cuda"] = cuda_mock
 
-    # Mock sentence_transformers
+try:
+    import sentence_transformers  # noqa: F401
+except (OSError, ImportError):
+    import types
+
+    import numpy as np
+
     st_mock = types.ModuleType("sentence_transformers")
+
     class DummySentenceTransformer:
         def __init__(self, *args, **kwargs):
             self.model_name = args[0] if args else "mock-model"
+
         def encode(self, batch, **kwargs):
             # Return dummy 384-dimensional embeddings
             n = len(batch) if isinstance(batch, list) else 1

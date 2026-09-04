@@ -17,8 +17,16 @@ from sqlalchemy.orm import Session as DBSession
 from core.dependency_tree import build_dependency_tree
 from core.embeddings import generate_embeddings
 from core.representatives import extract_representatives
+from llm_services.edge_explanation import generate_edge_explanation
 from llm_services.refinement import get_refinement_provider
-from models.database import Cluster, DependencyTree, Requirement, Session
+from models.database import (
+    Cluster,
+    DependencyExplanation,
+    DependencyTree,
+    Requirement,
+    Session,
+    utcnow,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -161,6 +169,127 @@ def generate_and_persist_dependencies(
         "edges": tree["edges"],
         "stats": tree["stats"],
         "rationale": rationale,
+    }
+
+
+def explain_edge(
+    db: DBSession,
+    session_id: int,
+    source_index: int,
+    target_index: int,
+    provider_name: str = "mock",
+    force_refresh: bool = False,
+) -> Dict[str, Any]:
+    """Return a plain-language justification for one edge, caching the result.
+
+    The structured evidence needed to render an edge is already in the stored
+    tree, so the frontend can show it with no network round-trip; this endpoint
+    exists only for the optional prose version. One row per (session, edge)
+    means a second click costs nothing.
+    """
+    row = db.query(DependencyTree).filter(
+        DependencyTree.session_id == session_id
+    ).first()
+    if row is None:
+        raise DependencyServiceError(
+            404, "Dependency tree not found. Generate it first."
+        )
+
+    edges = row.edges or []
+    nodes = row.nodes or []
+
+    edge = next(
+        (
+            e for e in edges
+            if int(e.get("source", -1)) == source_index
+            and int(e.get("target", -1)) == target_index
+        ),
+        None,
+    )
+    if edge is None:
+        raise DependencyServiceError(
+            404,
+            f"No dependency edge from node {source_index} to node {target_index}.",
+        )
+
+    by_index = {int(n.get("id", -1)): n for n in nodes}
+    source_node = by_index.get(source_index, {})
+    target_node = by_index.get(target_index, {})
+
+    cached = (
+        db.query(DependencyExplanation)
+        .filter(
+            DependencyExplanation.session_id == session_id,
+            DependencyExplanation.source_index == source_index,
+            DependencyExplanation.target_index == target_index,
+        )
+        .first()
+    )
+    if cached is not None and not force_refresh:
+        return {
+            "session_id": session_id,
+            "source": source_index,
+            "target": target_index,
+            "source_req_id": source_node.get("node_id"),
+            "target_req_id": target_node.get("node_id"),
+            "relation": edge.get("relation"),
+            "confidence_tier": edge.get("confidence_tier"),
+            "evidence": edge.get("evidence") or {},
+            "explanation_text": cached.explanation_text,
+            "provider": cached.provider,
+            "cached": True,
+            "warning": None,
+        }
+
+    result = generate_edge_explanation(
+        source_text=source_node.get("requirement_text", ""),
+        target_text=target_node.get("requirement_text", ""),
+        relation=str(edge.get("relation") or ""),
+        evidence=edge.get("evidence") or {},
+        source_id=str(source_node.get("node_id") or ""),
+        target_id=str(target_node.get("node_id") or ""),
+        confidence_tier=str(edge.get("confidence_tier") or ""),
+        rationale=str(edge.get("rationale") or ""),
+        provider_name=provider_name,
+    )
+
+    if cached is None:
+        cached = DependencyExplanation(
+            session_id=session_id,
+            source_index=source_index,
+            target_index=target_index,
+        )
+        db.add(cached)
+    cached.relation = str(edge.get("relation") or "")[:40]
+    cached.explanation_text = result["explanation_text"]
+    cached.provider = result["provider"]
+    cached.prompt_version = result["prompt_version"]
+    cached.generated_at = utcnow()
+
+    try:
+        db.commit()
+    except Exception:
+        db.rollback()
+        # The explanation itself is still valid and useful; only the cache write
+        # failed, so serve it rather than turning a display feature into a 500.
+        logger.exception(
+            "Failed to cache dependency explanation for session %s edge %s->%s.",
+            session_id, source_index, target_index,
+        )
+
+    return {
+        "session_id": session_id,
+        "source": source_index,
+        "target": target_index,
+        "source_req_id": source_node.get("node_id"),
+        "target_req_id": target_node.get("node_id"),
+        "relation": edge.get("relation"),
+        "confidence_tier": edge.get("confidence_tier"),
+        "evidence": edge.get("evidence") or {},
+        "explanation_text": result["explanation_text"],
+        "provider": result["provider"],
+        "cached": False,
+        "warning": result.get("warning"),
     }
 
 

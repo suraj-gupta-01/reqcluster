@@ -27,4 +27,10 @@ dependencies = [
     "matplotlib>=3.7.0",
     # Approximate-kNN similarity graph (O(N log N) instead of O(N^2))
     "hnswlib>=0.8.0",
+    # NLP: spaCy for dependency-parse-based artifact extraction (DP5 hardening).
+    # The en_core_web_sm model (~13 MB) is a separate one-time download:
+    #     python -m spacy download en_core_web_sm
+    # It is not a PyPI package, so it cannot be pinned here. Without it the
+    # extractor falls back to its regex path rather than failing.
+    "spacy>=3.7.0",
 ]

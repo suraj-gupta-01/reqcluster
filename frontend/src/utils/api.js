@@ -187,6 +187,19 @@ export const getDependencies = async (sessionId) => {
   return res.data
 }
 
+// Click-triggered only: the structured evidence is already in the tree payload,
+// so this is called solely for the optional plain-language version. Results are
+// cached per edge server-side, so repeat clicks cost nothing.
+export const explainDependencyEdge = async (sessionId, sourceIndex, targetIndex, options = {}) => {
+  const res = await api.post(`/dependencies/${sessionId}/explain`, {
+    source_index: sourceIndex,
+    target_index: targetIndex,
+    ...(options.providerName ? { provider_name: options.providerName } : {}),
+    ...(options.forceRefresh ? { force_refresh: true } : {}),
+  })
+  return res.data
+}
+
 // Phase 5: Active learning helpers
 
 export const runConstrainedClustering = async (sessionId) => {

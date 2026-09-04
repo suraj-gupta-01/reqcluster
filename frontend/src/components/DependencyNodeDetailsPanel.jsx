@@ -1,5 +1,6 @@
-import { ChevronDown, ChevronUp, GitBranch, ArrowDownToLine, ArrowUpFromLine } from 'lucide-react'
+import { ChevronDown, ChevronUp, GitBranch, ArrowDownToLine, ArrowUpFromLine, Sparkles } from 'lucide-react'
 import { useState } from 'react'
+import { explainDependencyEdge, getErrorMessage } from '../utils/api.js'
 
 const TEXT_LIMIT = 420
 
@@ -54,10 +55,157 @@ function CountPill({ label, value }) {
   )
 }
 
-/** Extract the quoted artifact name from a DATA-edge rationale string. */
-function extractArtifactName(rationale) {
-  const m = String(rationale || '').match(/['"\u2018\u2019\u201c\u201d]([^'"\u2018\u2019\u201c\u201d]+)['"\u2018\u2019\u201c\u201d]/)
+/**
+ * Artifact name for a DATA edge.
+ *
+ * Prefers the structured evidence the engine now emits; the rationale-string
+ * regex is only a fallback for dependency trees persisted before evidence
+ * existed, so old sessions keep rendering instead of going blank.
+ */
+function extractArtifactName(item) {
+  const evidence = item?.evidence || {}
+  const structured = evidence.producer_artifact_name || evidence.artifact
+  if (structured) return structured
+  const m = String(item?.rationale || '').match(/['"\u2018\u2019\u201c\u201d]([^'"\u2018\u2019\u201c\u201d]+)['"\u2018\u2019\u201c\u201d]/)
   return m ? m[1] : null
+}
+
+const TIER_COLORS = {
+  High: '#22c55e',
+  Medium: '#f59e0b',
+  Low: '#94a3b8',
+}
+
+/** Coarse confidence bucket, shown instead of a raw weight. */
+function ConfidenceBadge({ tier }) {
+  if (!tier) return null
+  const color = TIER_COLORS[tier] || '#94a3b8'
+  return (
+    <span
+      className="text-[10px] px-1.5 py-0.5 rounded-full font-medium"
+      style={{ background: `${color}22`, color }}
+      title="Confidence tier derived from the edge weight"
+    >
+      {tier}
+    </span>
+  )
+}
+
+/** Human-readable label for each inference pass. */
+const PASS_LABELS = {
+  pass_0_artifact_match: 'Shared artifact (producer \u2192 consumer)',
+  pass_1_explicit_reference: 'Explicit requirement reference',
+  pass_2_sequential: 'Sequential cue',
+  pass_2_hierarchical: 'Same cluster, broader wording',
+}
+
+const EVIDENCE_FIELD_LABELS = {
+  artifact: 'Artifact',
+  producer_artifact_name: 'Produced as',
+  consumer_artifact_name: 'Consumed as',
+  artifact_similarity: 'Synonym similarity',
+  matched_text: 'Matched text',
+  hierarchical_cue: 'Hierarchical cue',
+  cue: 'Sequential cue',
+  cosine_similarity: 'Similarity',
+  primary_shared_token: 'Shared term',
+  shared_tokens: 'Shared terms',
+  cluster_id: 'Cluster',
+}
+
+const EVIDENCE_FIELD_ORDER = Object.keys(EVIDENCE_FIELD_LABELS)
+
+/**
+ * Structured evidence for one edge, rendered from the payload already in hand \u2014
+ * no network request, so it appears instantly on click.
+ */
+function EvidencePanel({ item }) {
+  const evidence = item?.evidence || {}
+  const passLabel = PASS_LABELS[evidence.pass]
+  const rows = EVIDENCE_FIELD_ORDER
+    .filter(key => evidence[key] !== undefined && evidence[key] !== null && evidence[key] !== '')
+    .map(key => {
+      const raw = evidence[key]
+      const value = Array.isArray(raw)
+        ? raw.join(', ')
+        : typeof raw === 'number'
+          ? String(Math.round(raw * 1000) / 1000)
+          : String(raw)
+      return { key, label: EVIDENCE_FIELD_LABELS[key], value }
+    })
+
+  if (!passLabel && rows.length === 0) return null
+
+  return (
+    <div className="mt-2 rounded-lg border border-white/[0.06] bg-black/25 px-2.5 py-2 space-y-1.5">
+      {passLabel && (
+        <div className="text-[10px] uppercase tracking-[0.12em] text-gray-500">
+          {passLabel}
+        </div>
+      )}
+      {evidence.synonym_match && (
+        <div className="text-[10px] text-amber-300/90">Matched as a synonym</div>
+      )}
+      {rows.map(row => (
+        <div key={row.key} className="flex items-start justify-between gap-2 text-[11px]">
+          <span className="text-gray-500 shrink-0">{row.label}</span>
+          <span className="text-gray-300 text-right break-words">{row.value}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+/**
+ * "Explain in plain language" \u2014 the only place an LLM call can happen in this
+ * view, and only when the user asks for it. The answer is cached per edge
+ * server-side, and works offline via the deterministic mock provider.
+ */
+function ExplainEdgeButton({ sessionId, item }) {
+  const [state, setState] = useState({ status: 'idle', text: '', error: '' })
+
+  const canExplain =
+    sessionId != null &&
+    Number.isFinite(Number(item?.edgeSource)) &&
+    Number.isFinite(Number(item?.edgeTarget))
+
+  if (!canExplain) return null
+
+  const handleClick = async () => {
+    setState({ status: 'loading', text: '', error: '' })
+    try {
+      const data = await explainDependencyEdge(
+        sessionId, Number(item.edgeSource), Number(item.edgeTarget),
+      )
+      setState({ status: 'done', text: data.explanation_text || '', error: '' })
+    } catch (err) {
+      setState({ status: 'error', text: '', error: getErrorMessage(err) })
+    }
+  }
+
+  return (
+    <div className="mt-2">
+      {state.status !== 'done' && (
+        <button
+          type="button"
+          onClick={handleClick}
+          disabled={state.status === 'loading'}
+          className="inline-flex items-center gap-1 text-[11px] font-semibold text-brand-300 hover:text-brand-200 disabled:opacity-50"
+        >
+          <Sparkles size={11} />
+          {state.status === 'loading' ? 'Explaining...' : 'Explain in plain language'}
+        </button>
+      )}
+      {state.status === 'done' && (
+        <p className="text-[11px] text-gray-300 leading-relaxed whitespace-normal break-words">
+          {state.text}
+        </p>
+      )}
+      {state.status === 'error' && (
+        <p className="mt-1 text-[11px] text-red-400">{state.error}</p>
+      )}
+    </div>
+  )
 }
 
 /** Pill tag for a single artifact name. */
@@ -82,13 +230,13 @@ function ProducerConsumerSection({ parents, children }) {
 
   ;(children || []).forEach(item => {
     if (item.relation === 'data') {
-      const art = extractArtifactName(item.rationale)
+      const art = extractArtifactName(item)
       if (art) produced.push({ art, target: item.node_id })
     }
   })
   ;(parents || []).forEach(item => {
     if (item.relation === 'data') {
-      const art = extractArtifactName(item.rationale)
+      const art = extractArtifactName(item)
       if (art) consumed.push({ art, source: item.node_id })
     }
   })
@@ -132,7 +280,7 @@ function ProducerConsumerSection({ parents, children }) {
   )
 }
 
-function RelatedList({ title, items }) {
+function RelatedList({ title, items, sessionId }) {
   if (!items?.length) return null
   return (
     <div>
@@ -140,16 +288,19 @@ function RelatedList({ title, items }) {
       <div className="space-y-1.5">
         {items.slice(0, 5).map(item => {
           const color = RELATION_COLORS[item.relation] || '#94a3b8'
-          const art = item.relation === 'data' ? extractArtifactName(item.rationale) : null
+          const art = item.relation === 'data' ? extractArtifactName(item) : null
           return (
             <div key={`${title}-${item.node_id}-${item.relation}`} className="rounded-lg bg-black/20 border border-white/[0.05] px-2.5 py-2">
               <div className="flex items-center justify-between gap-2">
                 <span className="font-mono text-xs text-brand-300">{item.node_id}</span>
-                <span
-                  className="text-[10px] px-1.5 py-0.5 rounded-full font-medium"
-                  style={{ background: color + '22', color }}
-                >
-                  {item.relation}
+                <span className="flex items-center gap-1.5">
+                  <ConfidenceBadge tier={item.confidenceTier} />
+                  <span
+                    className="text-[10px] px-1.5 py-0.5 rounded-full font-medium"
+                    style={{ background: color + '22', color }}
+                  >
+                    {item.relation}
+                  </span>
                 </span>
               </div>
               {art && (
@@ -160,6 +311,8 @@ function RelatedList({ title, items }) {
               <div className="mt-1 text-xs text-gray-400 leading-relaxed whitespace-normal break-words">
                 {truncateText(item.requirement_text, 120)}
               </div>
+              <EvidencePanel item={item} />
+              <ExplainEdgeButton sessionId={sessionId} item={item} />
             </div>
           )
         })}
@@ -168,7 +321,7 @@ function RelatedList({ title, items }) {
   )
 }
 
-export default function DependencyNodeDetailsPanel({ node }) {
+export default function DependencyNodeDetailsPanel({ node, sessionId = null }) {
   if (!node) {
     return (
       <div className="h-full min-h-48 flex flex-col items-center justify-center text-center text-gray-500 px-6">
@@ -212,8 +365,8 @@ export default function DependencyNodeDetailsPanel({ node }) {
 
       <ProducerConsumerSection parents={node.parents} children={node.children} />
 
-      <RelatedList title="Parent preview" items={node.parents} />
-      <RelatedList title="Child preview" items={node.children} />
+      <RelatedList title="Parent preview" items={node.parents} sessionId={sessionId} />
+      <RelatedList title="Child preview" items={node.children} sessionId={sessionId} />
     </div>
   )
 }

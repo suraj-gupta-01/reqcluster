@@ -106,18 +106,19 @@ function buildEdgeIndexes(nodes, edges, groupMap, dependencyRationale) {
     const target = byId.get(edge.target)
     if (!source || !target) return
     const dep = depsByKey.get(`${edge.source}-${edge.target}-${edge.relation}`) || {}
-    const out = {
-      ...target,
+    // Carry the edge's own identity and structured evidence through, so the
+    // details panel can explain an edge without re-parsing prose.
+    const shared = {
       relation: edge.relation,
       weight: edge.weight,
       rationale: dep.justification || edge.rationale || '',
+      evidence: edge.evidence || {},
+      confidenceTier: edge.confidence_tier || '',
+      edgeSource: edge.source,
+      edgeTarget: edge.target,
     }
-    const inc = {
-      ...source,
-      relation: edge.relation,
-      weight: edge.weight,
-      rationale: dep.justification || edge.rationale || '',
-    }
+    const out = { ...target, ...shared }
+    const inc = { ...source, ...shared }
     ;(outgoing[edge.source] ||= []).push(out)
     ;(incoming[edge.target] ||= []).push(inc)
     relationCounts[edge.source] ||= {}
@@ -753,7 +754,7 @@ export default function DependencyTreePage() {
             <div className="space-y-4 min-w-0">
               <div className="card p-4 overflow-hidden">
                 <h2 className="text-sm font-semibold text-gray-300 mb-3">Node details</h2>
-                <DependencyNodeDetailsPanel node={inspectedNode} />
+                <DependencyNodeDetailsPanel node={inspectedNode} sessionId={selected} />
               </div>
 
               <div className="card p-4 overflow-hidden">

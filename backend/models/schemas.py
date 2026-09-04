@@ -176,6 +176,33 @@ class DependencyResponse(BaseModel):
     rationale: Dict[str, Any]
 
 
+class DependencyExplainRequest(BaseModel):
+    """Click-triggered request for one edge's plain-language justification."""
+
+    source_index: int = Field(..., ge=0)
+    target_index: int = Field(..., ge=0)
+    provider_name: str = Field(default_factory=get_default_provider)
+    force_refresh: bool = Field(
+        default=False,
+        description="Bypass the per-edge cache and regenerate the explanation.",
+    )
+
+
+class DependencyExplainResponse(BaseModel):
+    session_id: int
+    source: int
+    target: int
+    source_req_id: Optional[str] = None
+    target_req_id: Optional[str] = None
+    relation: Optional[str] = None
+    confidence_tier: Optional[str] = None
+    evidence: Dict[str, Any] = Field(default_factory=dict)
+    explanation_text: str
+    provider: str
+    cached: bool
+    warning: Optional[str] = None
+
+
 # --- Phase 5: Active learning schemas ---
 
 

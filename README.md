@@ -162,6 +162,18 @@ First clustering run downloads the SBERT model (~80 MB) once. With no
 `DATABASE_URL` set, the backend uses a local SQLite file (a startup warning makes
 this explicit).
 
+Optional, for the higher-accuracy dependency engine:
+
+```bash
+uv run python -m spacy download en_core_web_sm   # ~13 MB, one time
+```
+
+This adds a second one-time download on top of SBERT (~80 MB -> ~93 MB total).
+Without it the artifact extractor falls back to its regex path automatically and
+nothing breaks; passive-voice and coordinated artifacts are simply missed. Set
+`REQCLUSTER_DISABLE_SPACY=1` to force the fallback even when the model is
+installed.
+
 ### Frontend
 ```bash
 cd frontend
@@ -190,6 +202,18 @@ uv run uvicorn main:app --reload --port 8000
 First clustering run downloads the SBERT model (~80 MB) once. With no
 `DATABASE_URL` set, the backend uses a local SQLite file (a startup warning makes
 this explicit).
+
+Optional, for the higher-accuracy dependency engine:
+
+```bash
+uv run python -m spacy download en_core_web_sm   # ~13 MB, one time
+```
+
+This adds a second one-time download on top of SBERT (~80 MB -> ~93 MB total).
+Without it the artifact extractor falls back to its regex path automatically and
+nothing breaks; passive-voice and coordinated artifacts are simply missed. Set
+`REQCLUSTER_DISABLE_SPACY=1` to force the fallback even when the model is
+installed.
 
 ### Frontend
 ```bash
@@ -240,6 +264,8 @@ cd frontend && npm run build
 | `REQCLUSTER_LOCAL_LLM_URL` / `_MODEL` | Local LLM endpoint + model (e.g. Ollama, `qwen2.5`) | unset |
 | `REQCLUSTER_LLM_BASE_URL` / `_API_KEY` / `_MODEL` | OpenAI-compatible gateway | unset |
 | `JAMA_BASE_URL` / `JAMA_API_TOKEN` / `JAMA_PROJECT_ID` | Jama export target | unset |
+| `REQCLUSTER_DISABLE_SPACY` | `1` forces the regex artifact extractor even if spaCy is installed | unset |
+| `REQCLUSTER_SPACY_MODEL` | spaCy model for artifact extraction | `en_core_web_sm` |
 
 With nothing configured, everything runs offline via the deterministic mock provider.
 

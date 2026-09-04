@@ -15,6 +15,7 @@ from models.schemas import (
     AuditLogEntry,
     FeedbackSubmitRequest, FeedbackCorrectionOut, FeedbackReviewRequest,
     DependencyGenerateRequest, DependencyResponse,
+    DependencyExplainRequest, DependencyExplainResponse,
     ConstrainedClusterRequest, ConstrainedClusterResponse,
     UncertaintyQueueResponse, QualityHistoryResponse,
 )
@@ -44,6 +45,7 @@ from services.feedback_service import (
 from core.feedback_bridge import detect_constraints_conflicts
 from services.dependency_service import (
     DependencyServiceError,
+    explain_edge,
     generate_and_persist_dependencies,
     get_dependencies,
 )
@@ -779,6 +781,39 @@ def get_dependencies_endpoint(
         return get_dependencies(db, session_id)
     except DependencyServiceError as exc:
         raise HTTPException(exc.status_code, exc.message)
+
+
+@router.post(
+    "/dependencies/{session_id}/explain",
+    response_model=DependencyExplainResponse,
+)
+async def explain_dependency_edge_endpoint(
+    session_id: int = Path(..., ge=1),
+    request: DependencyExplainRequest = ...,
+    db: DBSession = Depends(get_db),
+):
+    """Explain one dependency edge in plain language.
+
+    Click-triggered, never called across the pipeline. The structured evidence
+    is already in the tree payload, so the UI can render an edge instantly; this
+    is only for the optional prose version. Results are cached per (session,
+    edge), so a second click does not cost a second model call.
+    """
+    try:
+        return await run_in_threadpool(
+            explain_edge,
+            db,
+            session_id,
+            request.source_index,
+            request.target_index,
+            request.provider_name,
+            request.force_refresh,
+        )
+    except DependencyServiceError as exc:
+        raise HTTPException(exc.status_code, exc.message)
+    except Exception:
+        logger.exception("Dependency edge explanation error")
+        raise HTTPException(500, "Failed to explain dependency edge.")
 
 
 # --- Phase 5: Active learning endpoints ---
