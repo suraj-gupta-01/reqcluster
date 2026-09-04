@@ -233,6 +233,23 @@ Learning -> Export** (download the **PDF report**).
 
 ## How to test
 
+Walk through the dependency-engine hardening end to end (offline, ~20 s, every
+number computed live):
+
+```bash
+python tools/demo_dependency_hardening.py            # all five sections
+python tools/demo_dependency_hardening.py --section 3   # just the scores
+```
+
+Score the engine against the hand-labeled gold edge sets:
+
+```bash
+python tools/eval_dependency_tree.py data/aerospace_requirements.csv --compare
+python tools/eval_dependency_tree.py data/dependency_adversarial_set.csv --compare
+```
+
+Reports land in `eval-results/`.
+
 ```bash
 # full backend suite (offline, deterministic - no model download, no network)
 uv run pytest -q
