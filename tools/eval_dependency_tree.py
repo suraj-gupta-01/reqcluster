@@ -42,8 +42,16 @@ for _path in (str(ROOT), str(ROOT / "backend")):
     if _path not in sys.path:
         sys.path.insert(0, _path)
 
-from core.artifact_extractor import reset_nlp_cache, spacy_available  # noqa: E402
-from core.dependency_eval import score_dependency_tree, summarize_errors  # noqa: E402
+from core.artifact_extractor import (  # noqa: E402
+    DEFAULT_NEAR_MATCH_THRESHOLD,
+    reset_nlp_cache,
+    spacy_available,
+)
+from core.dependency_eval import (  # noqa: E402
+    partition_gold_by_objectivity,
+    score_dependency_tree,
+    summarize_errors,
+)
 from core.dependency_tree import build_dependency_tree  # noqa: E402
 from core.embeddings import generate_embeddings  # noqa: E402
 
@@ -141,6 +149,7 @@ def run_variant(
     embeddings: np.ndarray,
     labels: np.ndarray,
     gold_edges: Sequence[Dict[str, Any]],
+    objective_gold: Sequence[Dict[str, Any]],
     *,
     backend: str,
     near_match: bool,
@@ -176,6 +185,13 @@ def run_variant(
     }
     metrics = score_dependency_tree(tree["edges"], list(gold_edges), id_to_index)
     errors = summarize_errors(tree["edges"], list(gold_edges), id_to_index)
+    # Scored separately because this subset is reproducible from the requirement
+    # texts alone and so does not depend on trusting the labeller.
+    objective_metrics = (
+        score_dependency_tree(tree["edges"], list(objective_gold), id_to_index)
+        if objective_gold
+        else None
+    )
 
     return {
         "backend": backend,
@@ -184,6 +200,7 @@ def run_variant(
         "n_edges": len(tree["edges"]),
         "stats": tree["stats"],
         "metrics": metrics,
+        "objective_metrics": objective_metrics,
         "errors": errors,
     }
 
@@ -216,11 +233,15 @@ def build_markdown_report(
     n_requirements: int,
     n_gold: int,
 ) -> str:
+    objective_count = sum(
+        1 for v in variants if v.get("objective_metrics")
+    ) and (variants[0]["objective_metrics"]["detection"]["support"])
     lines: List[str] = [
         "# Dependency Engine Evaluation",
         "",
         f"- **Dataset:** `{dataset}` ({n_requirements} requirements)",
-        f"- **Gold edges:** `{gold_path}` ({n_gold} labeled)" if gold_path
+        (f"- **Gold edges:** `{gold_path}` ({n_gold} labeled, "
+         f"{objective_count} objectively verifiable)") if gold_path
         else "- **Gold edges:** none (unscored run)",
         f"- **Cluster labels:** {label_source}",
         f"- **Generated:** {datetime.now(timezone.utc).isoformat(timespec='seconds')}",
@@ -251,6 +272,26 @@ def build_markdown_report(
             _metric_row("typed (correct label)", metrics["typed"]),
             _metric_row("undirected (ignore arrow)", metrics["undirected"]),
         ]
+        objective = variant.get("objective_metrics")
+        if objective:
+            det = objective["detection"]
+            typ = objective["typed"]
+            lines += [
+                "",
+                "**Objectively verifiable subset** — gold edges where the target's "
+                "text literally cites the source ID. These labels are reproducible "
+                "from the text alone and need no trust in the annotator.",
+                "",
+                "Recall only: precision is not meaningful against a subset, since "
+                "edges correctly found outside it would count as false positives.",
+                "",
+                "| Axis | Recall | Found | Missed | Support |",
+                "|---|---|---|---|---|",
+                f"| detection | {det['recall']:.3f} | {det['true_positives']} | "
+                f"{det['false_negatives']} | {det['support']} |",
+                f"| typed | {typ['recall']:.3f} | {typ['true_positives']} | "
+                f"{typ['false_negatives']} | {typ['support']} |",
+            ]
         if metrics["per_relation"]:
             lines += ["", "### By relation type", "",
                       "| Relation | P | R | F1 | TP | FP | FN | Support |",
@@ -321,8 +362,10 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         help="Enable embedding near-match on artifact names.",
     )
     parser.add_argument(
-        "--near-match-threshold", type=float, default=0.80,
-        help="Cosine threshold for artifact near-match (default: 0.80).",
+        "--near-match-threshold", type=float,
+        default=DEFAULT_NEAR_MATCH_THRESHOLD,
+        help="Cosine threshold for artifact near-match "
+             f"(default: {DEFAULT_NEAR_MATCH_THRESHOLD}, the shipped value).",
     )
     parser.add_argument(
         "--compare", action="store_true",
@@ -356,7 +399,15 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             gold_path,
         )
 
-    logger.info("Loaded %d requirements from %s", len(texts), args.csv_path)
+    objective_gold, judgment_gold = partition_gold_by_objectivity(
+        gold_edges, texts, req_ids
+    )
+    logger.info(
+        "Loaded %d requirements from %s (%d gold edges: %d objectively cited, "
+        "%d judgment-based)",
+        len(texts), args.csv_path, len(gold_edges),
+        len(objective_gold), len(judgment_gold),
+    )
     embeddings = generate_embeddings(texts)
     labels = compute_labels(texts, req_ids, modules, args.labels)
 
@@ -377,7 +428,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         logger.info("Running variant: backend=%s near_match=%s", backend, near_match)
         variants.append(
             run_variant(
-                texts, req_ids, embeddings, labels, gold_edges,
+                texts, req_ids, embeddings, labels, gold_edges, objective_gold,
                 backend=backend,
                 near_match=near_match,
                 near_match_threshold=args.near_match_threshold,

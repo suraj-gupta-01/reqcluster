@@ -1,7 +1,7 @@
 {
   "dataset": "data\\aerospace_requirements.csv",
   "gold_edges_path": "data\\aerospace_requirements_gold_edges.csv",
-  "generated_at": "2026-09-04T06:42:57.216328+00:00",
+  "generated_at": "2026-09-04T07:13:11.623172+00:00",
   "n_requirements": 64,
   "n_gold_edges": 42,
   "label_source": "module",
@@ -11,34 +11,34 @@
       "backend": "regex",
       "near_match": false,
       "near_match_threshold": null,
-      "n_edges": 31,
+      "n_edges": 20,
       "stats": {
         "n_nodes": 64,
-        "n_edges": 31,
-        "max_depth": 3,
+        "n_edges": 20,
+        "max_depth": 2,
         "relation_counts": {
-          "reference": 8,
-          "data": 2,
-          "sequential": 20,
+          "sequential": 10,
+          "data": 3,
+          "reference": 6,
           "hierarchical": 1
         },
         "confidence_tier_counts": {
           "High": 10,
-          "Medium": 20,
+          "Medium": 9,
           "Low": 1
         },
-        "root_count": 17,
+        "root_count": 13,
         "artifact_near_match_enabled": false
       },
       "metrics": {
         "per_relation": {
           "data": {
-            "precision": 0.5,
-            "recall": 0.0417,
-            "f1": 0.0769,
-            "true_positives": 1,
+            "precision": 0.6667,
+            "recall": 0.0833,
+            "f1": 0.1481,
+            "true_positives": 2,
             "false_positives": 1,
-            "false_negatives": 23,
+            "false_negatives": 22,
             "support": 24
           },
           "hierarchical": {
@@ -51,57 +51,132 @@
             "support": 1
           },
           "reference": {
-            "precision": 0.25,
+            "precision": 0.3333,
             "recall": 1.0,
-            "f1": 0.4,
+            "f1": 0.5,
             "true_positives": 2,
-            "false_positives": 6,
+            "false_positives": 4,
             "false_negatives": 0,
             "support": 2
           },
           "sequential": {
-            "precision": 0.05,
+            "precision": 0.1,
             "recall": 0.0667,
-            "f1": 0.0571,
+            "f1": 0.08,
             "true_positives": 1,
-            "false_positives": 19,
+            "false_positives": 9,
             "false_negatives": 14,
             "support": 15
           }
         },
         "detection": {
-          "precision": 0.3871,
+          "precision": 0.6,
           "recall": 0.2857,
-          "f1": 0.3288,
+          "f1": 0.3871,
           "true_positives": 12,
-          "false_positives": 19,
+          "false_positives": 8,
           "false_negatives": 30,
           "support": 42
         },
         "typed": {
-          "precision": 0.129,
-          "recall": 0.0952,
-          "f1": 0.1096,
-          "true_positives": 4,
-          "false_positives": 27,
-          "false_negatives": 38,
+          "precision": 0.25,
+          "recall": 0.119,
+          "f1": 0.1613,
+          "true_positives": 5,
+          "false_positives": 15,
+          "false_negatives": 37,
           "support": 42
         },
         "undirected": {
-          "precision": 0.4839,
-          "recall": 0.3571,
-          "f1": 0.411,
-          "true_positives": 15,
-          "false_positives": 16,
-          "false_negatives": 27,
+          "precision": 0.7,
+          "recall": 0.3333,
+          "f1": 0.4516,
+          "true_positives": 14,
+          "false_positives": 6,
+          "false_negatives": 28,
           "support": 42
         },
         "counts": {
-          "n_predicted_edges": 31,
-          "n_predicted_scored": 31,
+          "n_predicted_edges": 20,
+          "n_predicted_scored": 20,
           "n_predicted_unmappable": 0,
           "n_gold_edges": 42,
           "n_gold_scored": 42,
+          "n_gold_dropped": 0
+        }
+      },
+      "objective_metrics": {
+        "per_relation": {
+          "data": {
+            "precision": 0.3333,
+            "recall": 0.1667,
+            "f1": 0.2222,
+            "true_positives": 1,
+            "false_positives": 2,
+            "false_negatives": 5,
+            "support": 6
+          },
+          "hierarchical": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "true_positives": 0,
+            "false_positives": 1,
+            "false_negatives": 0,
+            "support": 0
+          },
+          "reference": {
+            "precision": 0.3333,
+            "recall": 1.0,
+            "f1": 0.5,
+            "true_positives": 2,
+            "false_positives": 4,
+            "false_negatives": 0,
+            "support": 2
+          },
+          "sequential": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "true_positives": 0,
+            "false_positives": 10,
+            "false_negatives": 0,
+            "support": 0
+          }
+        },
+        "detection": {
+          "precision": 0.4,
+          "recall": 1.0,
+          "f1": 0.5714,
+          "true_positives": 8,
+          "false_positives": 12,
+          "false_negatives": 0,
+          "support": 8
+        },
+        "typed": {
+          "precision": 0.15,
+          "recall": 0.375,
+          "f1": 0.2143,
+          "true_positives": 3,
+          "false_positives": 17,
+          "false_negatives": 5,
+          "support": 8
+        },
+        "undirected": {
+          "precision": 0.4,
+          "recall": 1.0,
+          "f1": 0.5714,
+          "true_positives": 8,
+          "false_positives": 12,
+          "false_negatives": 0,
+          "support": 8
+        },
+        "counts": {
+          "n_predicted_edges": 20,
+          "n_predicted_scored": 20,
+          "n_predicted_unmappable": 0,
+          "n_gold_edges": 8,
+          "n_gold_scored": 8,
           "n_gold_dropped": 0
         }
       },
@@ -249,25 +324,11 @@
             "rationale": "REQ-006 occurs 'when' a precondition shared with REQ-004 ('temperature')."
           },
           {
-            "source_id": "REQ-006",
-            "target_id": "REQ-014",
-            "predicted_relation": "sequential",
-            "weight": 0.6446,
-            "rationale": "REQ-014 occurs 'when' a precondition shared with REQ-006 ('log')."
-          },
-          {
             "source_id": "REQ-008",
             "target_id": "REQ-006",
             "predicted_relation": "sequential",
             "weight": 0.6493,
             "rationale": "REQ-006 occurs 'when' a precondition shared with REQ-008 ('temperature')."
-          },
-          {
-            "source_id": "REQ-008",
-            "target_id": "REQ-021",
-            "predicted_relation": "sequential",
-            "weight": 0.6518,
-            "rationale": "REQ-021 occurs 'after' a precondition shared with REQ-008 ('frame')."
           },
           {
             "source_id": "REQ-024",
@@ -284,60 +345,11 @@
             "rationale": "REQ-054 occurs 'upon' a precondition shared with REQ-035 ('detecting')."
           },
           {
-            "source_id": "REQ-038",
-            "target_id": "REQ-006",
-            "predicted_relation": "sequential",
-            "weight": 0.6384,
-            "rationale": "REQ-006 occurs 'when' a precondition shared with REQ-038 ('fault')."
-          },
-          {
-            "source_id": "REQ-038",
-            "target_id": "REQ-035",
-            "predicted_relation": "sequential",
-            "weight": 0.6358,
-            "rationale": "REQ-035 occurs 'after' a precondition shared with REQ-038 ('software')."
-          },
-          {
             "source_id": "REQ-043",
             "target_id": "REQ-059",
             "predicted_relation": "data",
             "weight": 0.9,
             "rationale": "REQ-043 produces 'maneuver plan' consumed by REQ-059."
-          },
-          {
-            "source_id": "REQ-051",
-            "target_id": "REQ-061",
-            "predicted_relation": "sequential",
-            "weight": 0.6524,
-            "rationale": "REQ-061 occurs 'when' a precondition shared with REQ-051 ('inhibit')."
-          },
-          {
-            "source_id": "REQ-055",
-            "target_id": "REQ-006",
-            "predicted_relation": "sequential",
-            "weight": 0.6548,
-            "rationale": "REQ-006 occurs 'when' a precondition shared with REQ-055 ('fault')."
-          },
-          {
-            "source_id": "REQ-055",
-            "target_id": "REQ-050",
-            "predicted_relation": "sequential",
-            "weight": 0.6525,
-            "rationale": "REQ-050 occurs 'when' a precondition shared with REQ-055 ('manager')."
-          },
-          {
-            "source_id": "REQ-056",
-            "target_id": "REQ-035",
-            "predicted_relation": "sequential",
-            "weight": 0.6617,
-            "rationale": "REQ-035 occurs 'after' a precondition shared with REQ-056 ('mode')."
-          },
-          {
-            "source_id": "REQ-056",
-            "target_id": "REQ-054",
-            "predicted_relation": "sequential",
-            "weight": 0.6788,
-            "rationale": "REQ-054 occurs 'upon' a precondition shared with REQ-056 ('mode')."
           },
           {
             "source_id": "REQ-057",
@@ -352,20 +364,6 @@
             "predicted_relation": "sequential",
             "weight": 0.6728,
             "rationale": "REQ-061 occurs 'when' a precondition shared with REQ-058 ('pressure')."
-          },
-          {
-            "source_id": "REQ-059",
-            "target_id": "REQ-048",
-            "predicted_relation": "sequential",
-            "weight": 0.6444,
-            "rationale": "REQ-048 occurs 'after' a precondition shared with REQ-059 ('maneuver')."
-          },
-          {
-            "source_id": "REQ-059",
-            "target_id": "REQ-063",
-            "predicted_relation": "sequential",
-            "weight": 0.7046,
-            "rationale": "REQ-063 occurs 'after' a precondition shared with REQ-059 ('propulsion')."
           }
         ],
         "mislabeled": [
@@ -373,15 +371,8 @@
             "source_id": "REQ-001",
             "target_id": "REQ-002",
             "gold_relation": "data",
-            "predicted_relation": "reference",
-            "rationale": "REQ-002 explicitly references REQ-001."
-          },
-          {
-            "source_id": "REQ-009",
-            "target_id": "REQ-011",
-            "gold_relation": "data",
-            "predicted_relation": "reference",
-            "rationale": "REQ-011 explicitly references REQ-009."
+            "predicted_relation": "sequential",
+            "rationale": "REQ-002 occurs 'once' a precondition shared with REQ-001 ('temperature'). The dependency is also stated explicitly in the requirement text."
           },
           {
             "source_id": "REQ-009",
@@ -428,8 +419,8 @@
         ],
         "totals": {
           "missed": 30,
-          "spurious": 19,
-          "mislabeled": 8
+          "spurious": 8,
+          "mislabeled": 7
         }
       }
     },
@@ -437,34 +428,34 @@
       "backend": "spacy",
       "near_match": false,
       "near_match_threshold": null,
-      "n_edges": 31,
+      "n_edges": 20,
       "stats": {
         "n_nodes": 64,
-        "n_edges": 31,
-        "max_depth": 3,
+        "n_edges": 20,
+        "max_depth": 2,
         "relation_counts": {
-          "reference": 8,
-          "data": 2,
-          "sequential": 20,
+          "sequential": 10,
+          "data": 3,
+          "reference": 6,
           "hierarchical": 1
         },
         "confidence_tier_counts": {
           "High": 10,
-          "Medium": 20,
+          "Medium": 9,
           "Low": 1
         },
-        "root_count": 17,
+        "root_count": 13,
         "artifact_near_match_enabled": false
       },
       "metrics": {
         "per_relation": {
           "data": {
-            "precision": 0.5,
-            "recall": 0.0417,
-            "f1": 0.0769,
-            "true_positives": 1,
+            "precision": 0.6667,
+            "recall": 0.0833,
+            "f1": 0.1481,
+            "true_positives": 2,
             "false_positives": 1,
-            "false_negatives": 23,
+            "false_negatives": 22,
             "support": 24
           },
           "hierarchical": {
@@ -477,57 +468,132 @@
             "support": 1
           },
           "reference": {
-            "precision": 0.25,
+            "precision": 0.3333,
             "recall": 1.0,
-            "f1": 0.4,
+            "f1": 0.5,
             "true_positives": 2,
-            "false_positives": 6,
+            "false_positives": 4,
             "false_negatives": 0,
             "support": 2
           },
           "sequential": {
-            "precision": 0.05,
+            "precision": 0.1,
             "recall": 0.0667,
-            "f1": 0.0571,
+            "f1": 0.08,
             "true_positives": 1,
-            "false_positives": 19,
+            "false_positives": 9,
             "false_negatives": 14,
             "support": 15
           }
         },
         "detection": {
-          "precision": 0.3871,
+          "precision": 0.6,
           "recall": 0.2857,
-          "f1": 0.3288,
+          "f1": 0.3871,
           "true_positives": 12,
-          "false_positives": 19,
+          "false_positives": 8,
           "false_negatives": 30,
           "support": 42
         },
         "typed": {
-          "precision": 0.129,
-          "recall": 0.0952,
-          "f1": 0.1096,
-          "true_positives": 4,
-          "false_positives": 27,
-          "false_negatives": 38,
+          "precision": 0.25,
+          "recall": 0.119,
+          "f1": 0.1613,
+          "true_positives": 5,
+          "false_positives": 15,
+          "false_negatives": 37,
           "support": 42
         },
         "undirected": {
-          "precision": 0.4839,
-          "recall": 0.3571,
-          "f1": 0.411,
-          "true_positives": 15,
-          "false_positives": 16,
-          "false_negatives": 27,
+          "precision": 0.7,
+          "recall": 0.3333,
+          "f1": 0.4516,
+          "true_positives": 14,
+          "false_positives": 6,
+          "false_negatives": 28,
           "support": 42
         },
         "counts": {
-          "n_predicted_edges": 31,
-          "n_predicted_scored": 31,
+          "n_predicted_edges": 20,
+          "n_predicted_scored": 20,
           "n_predicted_unmappable": 0,
           "n_gold_edges": 42,
           "n_gold_scored": 42,
+          "n_gold_dropped": 0
+        }
+      },
+      "objective_metrics": {
+        "per_relation": {
+          "data": {
+            "precision": 0.3333,
+            "recall": 0.1667,
+            "f1": 0.2222,
+            "true_positives": 1,
+            "false_positives": 2,
+            "false_negatives": 5,
+            "support": 6
+          },
+          "hierarchical": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "true_positives": 0,
+            "false_positives": 1,
+            "false_negatives": 0,
+            "support": 0
+          },
+          "reference": {
+            "precision": 0.3333,
+            "recall": 1.0,
+            "f1": 0.5,
+            "true_positives": 2,
+            "false_positives": 4,
+            "false_negatives": 0,
+            "support": 2
+          },
+          "sequential": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "true_positives": 0,
+            "false_positives": 10,
+            "false_negatives": 0,
+            "support": 0
+          }
+        },
+        "detection": {
+          "precision": 0.4,
+          "recall": 1.0,
+          "f1": 0.5714,
+          "true_positives": 8,
+          "false_positives": 12,
+          "false_negatives": 0,
+          "support": 8
+        },
+        "typed": {
+          "precision": 0.15,
+          "recall": 0.375,
+          "f1": 0.2143,
+          "true_positives": 3,
+          "false_positives": 17,
+          "false_negatives": 5,
+          "support": 8
+        },
+        "undirected": {
+          "precision": 0.4,
+          "recall": 1.0,
+          "f1": 0.5714,
+          "true_positives": 8,
+          "false_positives": 12,
+          "false_negatives": 0,
+          "support": 8
+        },
+        "counts": {
+          "n_predicted_edges": 20,
+          "n_predicted_scored": 20,
+          "n_predicted_unmappable": 0,
+          "n_gold_edges": 8,
+          "n_gold_scored": 8,
           "n_gold_dropped": 0
         }
       },
@@ -675,25 +741,11 @@
             "rationale": "REQ-006 occurs 'when' a precondition shared with REQ-004 ('temperature')."
           },
           {
-            "source_id": "REQ-006",
-            "target_id": "REQ-014",
-            "predicted_relation": "sequential",
-            "weight": 0.6446,
-            "rationale": "REQ-014 occurs 'when' a precondition shared with REQ-006 ('log')."
-          },
-          {
             "source_id": "REQ-008",
             "target_id": "REQ-006",
             "predicted_relation": "sequential",
             "weight": 0.6493,
             "rationale": "REQ-006 occurs 'when' a precondition shared with REQ-008 ('temperature')."
-          },
-          {
-            "source_id": "REQ-008",
-            "target_id": "REQ-021",
-            "predicted_relation": "sequential",
-            "weight": 0.6518,
-            "rationale": "REQ-021 occurs 'after' a precondition shared with REQ-008 ('frame')."
           },
           {
             "source_id": "REQ-024",
@@ -710,60 +762,11 @@
             "rationale": "REQ-054 occurs 'upon' a precondition shared with REQ-035 ('detecting')."
           },
           {
-            "source_id": "REQ-038",
-            "target_id": "REQ-006",
-            "predicted_relation": "sequential",
-            "weight": 0.6384,
-            "rationale": "REQ-006 occurs 'when' a precondition shared with REQ-038 ('fault')."
-          },
-          {
-            "source_id": "REQ-038",
-            "target_id": "REQ-035",
-            "predicted_relation": "sequential",
-            "weight": 0.6358,
-            "rationale": "REQ-035 occurs 'after' a precondition shared with REQ-038 ('software')."
-          },
-          {
             "source_id": "REQ-043",
             "target_id": "REQ-059",
             "predicted_relation": "data",
             "weight": 0.9,
             "rationale": "REQ-043 produces 'maneuver plan' consumed by REQ-059."
-          },
-          {
-            "source_id": "REQ-051",
-            "target_id": "REQ-061",
-            "predicted_relation": "sequential",
-            "weight": 0.6524,
-            "rationale": "REQ-061 occurs 'when' a precondition shared with REQ-051 ('inhibit')."
-          },
-          {
-            "source_id": "REQ-055",
-            "target_id": "REQ-006",
-            "predicted_relation": "sequential",
-            "weight": 0.6548,
-            "rationale": "REQ-006 occurs 'when' a precondition shared with REQ-055 ('fault')."
-          },
-          {
-            "source_id": "REQ-055",
-            "target_id": "REQ-050",
-            "predicted_relation": "sequential",
-            "weight": 0.6525,
-            "rationale": "REQ-050 occurs 'when' a precondition shared with REQ-055 ('manager')."
-          },
-          {
-            "source_id": "REQ-056",
-            "target_id": "REQ-035",
-            "predicted_relation": "sequential",
-            "weight": 0.6617,
-            "rationale": "REQ-035 occurs 'after' a precondition shared with REQ-056 ('mode')."
-          },
-          {
-            "source_id": "REQ-056",
-            "target_id": "REQ-054",
-            "predicted_relation": "sequential",
-            "weight": 0.6788,
-            "rationale": "REQ-054 occurs 'upon' a precondition shared with REQ-056 ('mode')."
           },
           {
             "source_id": "REQ-057",
@@ -778,20 +781,6 @@
             "predicted_relation": "sequential",
             "weight": 0.6728,
             "rationale": "REQ-061 occurs 'when' a precondition shared with REQ-058 ('pressure')."
-          },
-          {
-            "source_id": "REQ-059",
-            "target_id": "REQ-048",
-            "predicted_relation": "sequential",
-            "weight": 0.6444,
-            "rationale": "REQ-048 occurs 'after' a precondition shared with REQ-059 ('maneuver')."
-          },
-          {
-            "source_id": "REQ-059",
-            "target_id": "REQ-063",
-            "predicted_relation": "sequential",
-            "weight": 0.7046,
-            "rationale": "REQ-063 occurs 'after' a precondition shared with REQ-059 ('propulsion')."
           }
         ],
         "mislabeled": [
@@ -799,15 +788,8 @@
             "source_id": "REQ-001",
             "target_id": "REQ-002",
             "gold_relation": "data",
-            "predicted_relation": "reference",
-            "rationale": "REQ-002 explicitly references REQ-001."
-          },
-          {
-            "source_id": "REQ-009",
-            "target_id": "REQ-011",
-            "gold_relation": "data",
-            "predicted_relation": "reference",
-            "rationale": "REQ-011 explicitly references REQ-009."
+            "predicted_relation": "sequential",
+            "rationale": "REQ-002 occurs 'once' a precondition shared with REQ-001 ('temperature'). The dependency is also stated explicitly in the requirement text."
           },
           {
             "source_id": "REQ-009",
@@ -854,8 +836,8 @@
         ],
         "totals": {
           "missed": 30,
-          "spurious": 19,
-          "mislabeled": 8
+          "spurious": 8,
+          "mislabeled": 7
         }
       }
     },
@@ -863,23 +845,23 @@
       "backend": "spacy",
       "near_match": true,
       "near_match_threshold": 0.75,
-      "n_edges": 31,
+      "n_edges": 20,
       "stats": {
         "n_nodes": 64,
-        "n_edges": 31,
-        "max_depth": 3,
+        "n_edges": 20,
+        "max_depth": 2,
         "relation_counts": {
-          "reference": 8,
-          "data": 2,
-          "sequential": 20,
+          "sequential": 10,
+          "data": 4,
+          "reference": 5,
           "hierarchical": 1
         },
         "confidence_tier_counts": {
           "High": 10,
-          "Medium": 20,
+          "Medium": 9,
           "Low": 1
         },
-        "root_count": 17,
+        "root_count": 13,
         "artifact_near_match_enabled": true,
         "artifact_near_match": {
           "n_merges": 1,
@@ -896,12 +878,12 @@
       "metrics": {
         "per_relation": {
           "data": {
-            "precision": 0.5,
-            "recall": 0.0417,
-            "f1": 0.0769,
-            "true_positives": 1,
+            "precision": 0.75,
+            "recall": 0.125,
+            "f1": 0.2143,
+            "true_positives": 3,
             "false_positives": 1,
-            "false_negatives": 23,
+            "false_negatives": 21,
             "support": 24
           },
           "hierarchical": {
@@ -914,57 +896,132 @@
             "support": 1
           },
           "reference": {
-            "precision": 0.25,
+            "precision": 0.4,
             "recall": 1.0,
-            "f1": 0.4,
+            "f1": 0.5714,
             "true_positives": 2,
-            "false_positives": 6,
+            "false_positives": 3,
             "false_negatives": 0,
             "support": 2
           },
           "sequential": {
-            "precision": 0.05,
+            "precision": 0.1,
             "recall": 0.0667,
-            "f1": 0.0571,
+            "f1": 0.08,
             "true_positives": 1,
-            "false_positives": 19,
+            "false_positives": 9,
             "false_negatives": 14,
             "support": 15
           }
         },
         "detection": {
-          "precision": 0.3871,
+          "precision": 0.6,
           "recall": 0.2857,
-          "f1": 0.3288,
+          "f1": 0.3871,
           "true_positives": 12,
-          "false_positives": 19,
+          "false_positives": 8,
           "false_negatives": 30,
           "support": 42
         },
         "typed": {
-          "precision": 0.129,
-          "recall": 0.0952,
-          "f1": 0.1096,
-          "true_positives": 4,
-          "false_positives": 27,
-          "false_negatives": 38,
+          "precision": 0.3,
+          "recall": 0.1429,
+          "f1": 0.1935,
+          "true_positives": 6,
+          "false_positives": 14,
+          "false_negatives": 36,
           "support": 42
         },
         "undirected": {
-          "precision": 0.4839,
-          "recall": 0.3571,
-          "f1": 0.411,
-          "true_positives": 15,
-          "false_positives": 16,
-          "false_negatives": 27,
+          "precision": 0.7,
+          "recall": 0.3333,
+          "f1": 0.4516,
+          "true_positives": 14,
+          "false_positives": 6,
+          "false_negatives": 28,
           "support": 42
         },
         "counts": {
-          "n_predicted_edges": 31,
-          "n_predicted_scored": 31,
+          "n_predicted_edges": 20,
+          "n_predicted_scored": 20,
           "n_predicted_unmappable": 0,
           "n_gold_edges": 42,
           "n_gold_scored": 42,
+          "n_gold_dropped": 0
+        }
+      },
+      "objective_metrics": {
+        "per_relation": {
+          "data": {
+            "precision": 0.5,
+            "recall": 0.3333,
+            "f1": 0.4,
+            "true_positives": 2,
+            "false_positives": 2,
+            "false_negatives": 4,
+            "support": 6
+          },
+          "hierarchical": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "true_positives": 0,
+            "false_positives": 1,
+            "false_negatives": 0,
+            "support": 0
+          },
+          "reference": {
+            "precision": 0.4,
+            "recall": 1.0,
+            "f1": 0.5714,
+            "true_positives": 2,
+            "false_positives": 3,
+            "false_negatives": 0,
+            "support": 2
+          },
+          "sequential": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "true_positives": 0,
+            "false_positives": 10,
+            "false_negatives": 0,
+            "support": 0
+          }
+        },
+        "detection": {
+          "precision": 0.4,
+          "recall": 1.0,
+          "f1": 0.5714,
+          "true_positives": 8,
+          "false_positives": 12,
+          "false_negatives": 0,
+          "support": 8
+        },
+        "typed": {
+          "precision": 0.2,
+          "recall": 0.5,
+          "f1": 0.2857,
+          "true_positives": 4,
+          "false_positives": 16,
+          "false_negatives": 4,
+          "support": 8
+        },
+        "undirected": {
+          "precision": 0.4,
+          "recall": 1.0,
+          "f1": 0.5714,
+          "true_positives": 8,
+          "false_positives": 12,
+          "false_negatives": 0,
+          "support": 8
+        },
+        "counts": {
+          "n_predicted_edges": 20,
+          "n_predicted_scored": 20,
+          "n_predicted_unmappable": 0,
+          "n_gold_edges": 8,
+          "n_gold_scored": 8,
           "n_gold_dropped": 0
         }
       },
@@ -1112,25 +1169,11 @@
             "rationale": "REQ-006 occurs 'when' a precondition shared with REQ-004 ('temperature')."
           },
           {
-            "source_id": "REQ-006",
-            "target_id": "REQ-014",
-            "predicted_relation": "sequential",
-            "weight": 0.6446,
-            "rationale": "REQ-014 occurs 'when' a precondition shared with REQ-006 ('log')."
-          },
-          {
             "source_id": "REQ-008",
             "target_id": "REQ-006",
             "predicted_relation": "sequential",
             "weight": 0.6493,
             "rationale": "REQ-006 occurs 'when' a precondition shared with REQ-008 ('temperature')."
-          },
-          {
-            "source_id": "REQ-008",
-            "target_id": "REQ-021",
-            "predicted_relation": "sequential",
-            "weight": 0.6518,
-            "rationale": "REQ-021 occurs 'after' a precondition shared with REQ-008 ('frame')."
           },
           {
             "source_id": "REQ-024",
@@ -1147,60 +1190,11 @@
             "rationale": "REQ-054 occurs 'upon' a precondition shared with REQ-035 ('detecting')."
           },
           {
-            "source_id": "REQ-038",
-            "target_id": "REQ-006",
-            "predicted_relation": "sequential",
-            "weight": 0.6384,
-            "rationale": "REQ-006 occurs 'when' a precondition shared with REQ-038 ('fault')."
-          },
-          {
-            "source_id": "REQ-038",
-            "target_id": "REQ-035",
-            "predicted_relation": "sequential",
-            "weight": 0.6358,
-            "rationale": "REQ-035 occurs 'after' a precondition shared with REQ-038 ('software')."
-          },
-          {
             "source_id": "REQ-043",
             "target_id": "REQ-059",
             "predicted_relation": "data",
             "weight": 0.9,
             "rationale": "REQ-043 produces 'maneuver plan' consumed by REQ-059."
-          },
-          {
-            "source_id": "REQ-051",
-            "target_id": "REQ-061",
-            "predicted_relation": "sequential",
-            "weight": 0.6524,
-            "rationale": "REQ-061 occurs 'when' a precondition shared with REQ-051 ('inhibit')."
-          },
-          {
-            "source_id": "REQ-055",
-            "target_id": "REQ-006",
-            "predicted_relation": "sequential",
-            "weight": 0.6548,
-            "rationale": "REQ-006 occurs 'when' a precondition shared with REQ-055 ('fault')."
-          },
-          {
-            "source_id": "REQ-055",
-            "target_id": "REQ-050",
-            "predicted_relation": "sequential",
-            "weight": 0.6525,
-            "rationale": "REQ-050 occurs 'when' a precondition shared with REQ-055 ('manager')."
-          },
-          {
-            "source_id": "REQ-056",
-            "target_id": "REQ-035",
-            "predicted_relation": "sequential",
-            "weight": 0.6617,
-            "rationale": "REQ-035 occurs 'after' a precondition shared with REQ-056 ('mode')."
-          },
-          {
-            "source_id": "REQ-056",
-            "target_id": "REQ-054",
-            "predicted_relation": "sequential",
-            "weight": 0.6788,
-            "rationale": "REQ-054 occurs 'upon' a precondition shared with REQ-056 ('mode')."
           },
           {
             "source_id": "REQ-057",
@@ -1215,20 +1209,6 @@
             "predicted_relation": "sequential",
             "weight": 0.6728,
             "rationale": "REQ-061 occurs 'when' a precondition shared with REQ-058 ('pressure')."
-          },
-          {
-            "source_id": "REQ-059",
-            "target_id": "REQ-048",
-            "predicted_relation": "sequential",
-            "weight": 0.6444,
-            "rationale": "REQ-048 occurs 'after' a precondition shared with REQ-059 ('maneuver')."
-          },
-          {
-            "source_id": "REQ-059",
-            "target_id": "REQ-063",
-            "predicted_relation": "sequential",
-            "weight": 0.7046,
-            "rationale": "REQ-063 occurs 'after' a precondition shared with REQ-059 ('propulsion')."
           }
         ],
         "mislabeled": [
@@ -1236,15 +1216,8 @@
             "source_id": "REQ-001",
             "target_id": "REQ-002",
             "gold_relation": "data",
-            "predicted_relation": "reference",
-            "rationale": "REQ-002 explicitly references REQ-001."
-          },
-          {
-            "source_id": "REQ-009",
-            "target_id": "REQ-011",
-            "gold_relation": "data",
-            "predicted_relation": "reference",
-            "rationale": "REQ-011 explicitly references REQ-009."
+            "predicted_relation": "sequential",
+            "rationale": "REQ-002 occurs 'once' a precondition shared with REQ-001 ('temperature'). The dependency is also stated explicitly in the requirement text."
           },
           {
             "source_id": "REQ-009",
@@ -1252,13 +1225,6 @@
             "gold_relation": "data",
             "predicted_relation": "sequential",
             "rationale": "REQ-014 occurs 'when' a precondition shared with REQ-009 ('bus')."
-          },
-          {
-            "source_id": "REQ-017",
-            "target_id": "REQ-019",
-            "gold_relation": "data",
-            "predicted_relation": "reference",
-            "rationale": "REQ-019 explicitly references REQ-017."
           },
           {
             "source_id": "REQ-025",
@@ -1291,8 +1257,8 @@
         ],
         "totals": {
           "missed": 30,
-          "spurious": 19,
-          "mislabeled": 8
+          "spurious": 8,
+          "mislabeled": 6
         }
       }
     }

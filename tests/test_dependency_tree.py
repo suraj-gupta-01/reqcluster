@@ -4,7 +4,6 @@ import os
 import sys
 
 import numpy as np
-import pytest
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "backend")))
@@ -107,3 +106,151 @@ def test_max_edges_cap():
     emb = emb / np.linalg.norm(emb, axis=1, keepdims=True)
     tree = build_dependency_tree(emb, texts, req_ids, labels, sim_threshold=0.1, max_edges=5)
     assert len(tree["edges"]) <= 5
+
+
+def _similar_embeddings(count):
+    """Near-identical unit vectors, so every pair clears the similarity gate.
+
+    ``_embeddings_for`` returns random directions whose cosine can be slightly
+    negative; a pair is then never examined and a Pass 2 assertion would pass
+    vacuously.
+    """
+    base = np.ones((count, 384), dtype=np.float32)
+    for i in range(count):
+        base[i, i % 384] += 0.05 * (i + 1)
+    return base / np.linalg.norm(base, axis=1, keepdims=True)
+
+
+# ---------------------------------------------------------------------------
+# Sequential trigger-clause gating
+# ---------------------------------------------------------------------------
+
+def test_sequential_needs_shared_term_inside_the_trigger_clause():
+    """A cue alone is not evidence of a link to the *other* requirement.
+
+    Requirements written in EARS style ("WHEN <trigger>, the software shall
+    <action>") almost all carry a cue, so firing on cue presence plus any shared
+    word anywhere makes nearly every similar pair sequential.
+    """
+    texts = [
+        "The software shall calibrate the vibration sensor during manufacture.",
+        "WHEN the operator presses the start button, the software shall log the "
+        "vibration sensor reading.",
+    ]
+    req_ids = ["REQ-001", "REQ-002"]
+    labels = np.array([0, 0], dtype=np.int32)
+
+    tree = build_dependency_tree(
+        _similar_embeddings(len(texts)), texts, req_ids, labels, sim_threshold=0.0
+    )
+
+    # "vibration sensor" is shared, but only in the action clause — the trigger
+    # is about the operator's button, which REQ-001 says nothing about.
+    #
+    # This is not vacuous: the sibling test below uses the same embeddings and
+    # threshold, so the pair is definitely examined; only the trigger differs.
+    assert not [e for e in tree["edges"] if e["relation"] == SEQUENTIAL], tree["edges"]
+
+
+def test_sequential_fires_when_the_trigger_clause_shares_a_term():
+    texts = [
+        "The software shall complete the power-on selftest during initialization.",
+        "WHEN the power-on selftest completes, the software shall enable the "
+        "application layer.",
+    ]
+    req_ids = ["REQ-001", "REQ-002"]
+    labels = np.array([0, 0], dtype=np.int32)
+
+    tree = build_dependency_tree(
+        _similar_embeddings(len(texts)), texts, req_ids, labels, sim_threshold=0.0
+    )
+
+    seq = [e for e in tree["edges"] if e["relation"] == SEQUENTIAL]
+    assert seq, tree["edges"]
+    edge = seq[0]
+    assert edge["source"] == 0 and edge["target"] == 1
+    assert "selftest" in edge["evidence"]["trigger_shared_tokens"]
+    assert edge["evidence"]["cue_clause"].startswith("when the power-on selftest")
+
+
+def test_cue_clause_stops_at_the_first_clause_boundary():
+    from core.dependency_tree import _cue_clause
+
+    clause = _cue_clause(
+        "when the power-on test completes, the software shall enable outputs", "when"
+    )
+    assert clause == "when the power-on test completes"
+
+
+def test_cue_clause_is_bounded_without_punctuation():
+    from core.dependency_tree import _CUE_CLAUSE_MAX_WORDS, _cue_clause
+
+    clause = _cue_clause("once " + " ".join(f"word{i}" for i in range(40)), "once")
+    assert len(clause.split()) == _CUE_CLAUSE_MAX_WORDS
+
+
+# ---------------------------------------------------------------------------
+# Cross-pass corroboration
+# ---------------------------------------------------------------------------
+
+def test_artifact_flow_supersedes_a_bare_reference_label():
+    """`reference` says only "an identifier was mentioned".
+
+    When another pass finds a concrete relation for the same pair, that relation
+    is the informative one; the citation is retained as corroborating evidence
+    and keeps its high weight.
+    """
+    texts = [
+        "The power unit shall provide the regulated voltage bus.",
+        "The avionics shall require the regulated voltage bus defined in REQ-001.",
+    ]
+    req_ids = ["REQ-001", "REQ-002"]
+    labels = np.array([0, 0], dtype=np.int32)
+
+    tree = build_dependency_tree(
+        _embeddings_for(texts), texts, req_ids, labels, sim_threshold=0.0
+    )
+
+    edge = next(e for e in tree["edges"] if e["source"] == 0 and e["target"] == 1)
+    assert edge["relation"] == DATA
+    assert edge["weight"] >= 0.95  # keeps the explicit citation's confidence
+    assert "pass_1_explicit_reference" in edge["evidence"]["corroborating_passes"]
+    assert edge["evidence"]["corroboration"]["pass_1_explicit_reference"]["relation"] == REFERENCE
+    assert "explicitly" in edge["rationale"]
+
+
+def test_reference_survives_when_no_other_pass_fires():
+    texts = [
+        "The system shall expose a thermal limit value.",
+        "The cooling controller shall act as defined in REQ-001.",
+    ]
+    req_ids = ["REQ-001", "REQ-002"]
+    labels = np.array([0, 0], dtype=np.int32)
+
+    tree = build_dependency_tree(
+        _embeddings_for(texts), texts, req_ids, labels, sim_threshold=0.0
+    )
+    edge = next(e for e in tree["edges"] if e["source"] == 0 and e["target"] == 1)
+    assert edge["relation"] in (REFERENCE, HIERARCHICAL)
+    assert "corroborating_passes" not in edge["evidence"]
+
+
+def test_corroboration_is_order_independent():
+    """Pass 0 and Pass 1 must settle the same way regardless of which ran first."""
+    from core.dependency_tree import DATA as _DATA, REFERENCE as _REF, _add_edge
+
+    art = {"pass": "pass_0_artifact_match", "artifact": "bus"}
+    ref = {"pass": "pass_1_explicit_reference", "matched_text": "REQ-001"}
+
+    forward = {}
+    _add_edge(forward, 0, 1, _REF, 0.95, "cited", dict(ref))
+    _add_edge(forward, 0, 1, _DATA, 0.90, "artifact", dict(art))
+
+    backward = {}
+    _add_edge(backward, 0, 1, _DATA, 0.90, "artifact", dict(art))
+    _add_edge(backward, 0, 1, _REF, 0.95, "cited", dict(ref))
+
+    a, b = forward[(0, 1)], backward[(0, 1)]
+    assert a.relation == b.relation == _DATA
+    assert a.weight == b.weight == 0.95
+    assert a.evidence["corroborating_passes"] == b.evidence["corroborating_passes"]

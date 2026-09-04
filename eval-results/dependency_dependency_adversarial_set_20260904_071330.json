@@ -1,7 +1,7 @@
 {
   "dataset": "data\\dependency_adversarial_set.csv",
   "gold_edges_path": "data\\dependency_adversarial_set_gold_edges.csv",
-  "generated_at": "2026-09-04T06:43:16.503180+00:00",
+  "generated_at": "2026-09-04T07:13:30.466759+00:00",
   "n_requirements": 38,
   "n_gold_edges": 22,
   "label_source": "module",
@@ -11,22 +11,20 @@
       "backend": "regex",
       "near_match": false,
       "near_match_threshold": null,
-      "n_edges": 5,
+      "n_edges": 4,
       "stats": {
         "n_nodes": 38,
-        "n_edges": 5,
+        "n_edges": 4,
         "max_depth": 1,
         "relation_counts": {
           "data": 3,
-          "sequential": 1,
           "hierarchical": 1
         },
         "confidence_tier_counts": {
           "High": 3,
-          "Medium": 1,
           "Low": 1
         },
-        "root_count": 5,
+        "root_count": 4,
         "artifact_near_match_enabled": false
       },
       "metrics": {
@@ -48,53 +46,45 @@
             "false_positives": 1,
             "false_negatives": 0,
             "support": 0
-          },
-          "sequential": {
-            "precision": 0.0,
-            "recall": 0.0,
-            "f1": 0.0,
-            "true_positives": 0,
-            "false_positives": 1,
-            "false_negatives": 0,
-            "support": 0
           }
         },
         "detection": {
-          "precision": 0.8,
+          "precision": 1.0,
           "recall": 0.1818,
-          "f1": 0.2963,
+          "f1": 0.3077,
           "true_positives": 4,
-          "false_positives": 1,
+          "false_positives": 0,
           "false_negatives": 18,
           "support": 22
         },
         "typed": {
-          "precision": 0.6,
+          "precision": 0.75,
           "recall": 0.1364,
-          "f1": 0.2222,
+          "f1": 0.2308,
           "true_positives": 3,
-          "false_positives": 2,
+          "false_positives": 1,
           "false_negatives": 19,
           "support": 22
         },
         "undirected": {
           "precision": 1.0,
-          "recall": 0.2273,
-          "f1": 0.3704,
-          "true_positives": 5,
+          "recall": 0.1818,
+          "f1": 0.3077,
+          "true_positives": 4,
           "false_positives": 0,
-          "false_negatives": 17,
+          "false_negatives": 18,
           "support": 22
         },
         "counts": {
-          "n_predicted_edges": 5,
-          "n_predicted_scored": 5,
+          "n_predicted_edges": 4,
+          "n_predicted_scored": 4,
           "n_predicted_unmappable": 0,
           "n_gold_edges": 22,
           "n_gold_scored": 22,
           "n_gold_dropped": 0
         }
       },
+      "objective_metrics": null,
       "errors": {
         "missed": [
           {
@@ -188,15 +178,7 @@
             "gold_relation": "data"
           }
         ],
-        "spurious": [
-          {
-            "source_id": "ADV-024",
-            "target_id": "ADV-023",
-            "predicted_relation": "sequential",
-            "weight": 0.6564,
-            "rationale": "ADV-023 occurs 'once' a precondition shared with ADV-024 ('aircraft')."
-          }
-        ],
+        "spurious": [],
         "mislabeled": [
           {
             "source_id": "ADV-003",
@@ -208,7 +190,7 @@
         ],
         "totals": {
           "missed": 18,
-          "spurious": 1,
+          "spurious": 0,
           "mislabeled": 1
         }
       }
@@ -217,20 +199,18 @@
       "backend": "spacy",
       "near_match": false,
       "near_match_threshold": null,
-      "n_edges": 17,
+      "n_edges": 16,
       "stats": {
         "n_nodes": 38,
-        "n_edges": 17,
+        "n_edges": 16,
         "max_depth": 1,
         "relation_counts": {
-          "data": 16,
-          "sequential": 1
+          "data": 16
         },
         "confidence_tier_counts": {
-          "High": 16,
-          "Medium": 1
+          "High": 16
         },
-        "root_count": 11,
+        "root_count": 10,
         "artifact_near_match_enabled": false
       },
       "metrics": {
@@ -243,53 +223,45 @@
             "false_positives": 0,
             "false_negatives": 6,
             "support": 22
-          },
-          "sequential": {
-            "precision": 0.0,
-            "recall": 0.0,
-            "f1": 0.0,
-            "true_positives": 0,
-            "false_positives": 1,
-            "false_negatives": 0,
-            "support": 0
           }
         },
         "detection": {
-          "precision": 0.9412,
+          "precision": 1.0,
           "recall": 0.7273,
-          "f1": 0.8205,
+          "f1": 0.8421,
           "true_positives": 16,
-          "false_positives": 1,
+          "false_positives": 0,
           "false_negatives": 6,
           "support": 22
         },
         "typed": {
-          "precision": 0.9412,
+          "precision": 1.0,
           "recall": 0.7273,
-          "f1": 0.8205,
+          "f1": 0.8421,
           "true_positives": 16,
-          "false_positives": 1,
+          "false_positives": 0,
           "false_negatives": 6,
           "support": 22
         },
         "undirected": {
           "precision": 1.0,
-          "recall": 0.7727,
-          "f1": 0.8718,
-          "true_positives": 17,
+          "recall": 0.7273,
+          "f1": 0.8421,
+          "true_positives": 16,
           "false_positives": 0,
-          "false_negatives": 5,
+          "false_negatives": 6,
           "support": 22
         },
         "counts": {
-          "n_predicted_edges": 17,
-          "n_predicted_scored": 17,
+          "n_predicted_edges": 16,
+          "n_predicted_scored": 16,
           "n_predicted_unmappable": 0,
           "n_gold_edges": 22,
           "n_gold_scored": 22,
           "n_gold_dropped": 0
         }
       },
+      "objective_metrics": null,
       "errors": {
         "missed": [
           {
@@ -323,19 +295,11 @@
             "gold_relation": "data"
           }
         ],
-        "spurious": [
-          {
-            "source_id": "ADV-024",
-            "target_id": "ADV-023",
-            "predicted_relation": "sequential",
-            "weight": 0.6564,
-            "rationale": "ADV-023 occurs 'once' a precondition shared with ADV-024 ('aircraft')."
-          }
-        ],
+        "spurious": [],
         "mislabeled": [],
         "totals": {
           "missed": 6,
-          "spurious": 1,
+          "spurious": 0,
           "mislabeled": 0
         }
       }
@@ -344,20 +308,18 @@
       "backend": "spacy",
       "near_match": true,
       "near_match_threshold": 0.75,
-      "n_edges": 24,
+      "n_edges": 23,
       "stats": {
         "n_nodes": 38,
-        "n_edges": 24,
+        "n_edges": 23,
         "max_depth": 1,
         "relation_counts": {
-          "data": 23,
-          "sequential": 1
+          "data": 23
         },
         "confidence_tier_counts": {
-          "High": 23,
-          "Medium": 1
+          "High": 23
         },
-        "root_count": 16,
+        "root_count": 15,
         "artifact_near_match_enabled": true,
         "artifact_near_match": {
           "n_merges": 6,
@@ -406,53 +368,45 @@
             "false_positives": 2,
             "false_negatives": 1,
             "support": 22
-          },
-          "sequential": {
-            "precision": 0.0,
-            "recall": 0.0,
-            "f1": 0.0,
-            "true_positives": 0,
-            "false_positives": 1,
-            "false_negatives": 0,
-            "support": 0
           }
         },
         "detection": {
-          "precision": 0.875,
+          "precision": 0.913,
           "recall": 0.9545,
-          "f1": 0.913,
+          "f1": 0.9333,
           "true_positives": 21,
-          "false_positives": 3,
+          "false_positives": 2,
           "false_negatives": 1,
           "support": 22
         },
         "typed": {
-          "precision": 0.875,
+          "precision": 0.913,
           "recall": 0.9545,
-          "f1": 0.913,
+          "f1": 0.9333,
           "true_positives": 21,
-          "false_positives": 3,
+          "false_positives": 2,
           "false_negatives": 1,
           "support": 22
         },
         "undirected": {
-          "precision": 0.9167,
-          "recall": 1.0,
-          "f1": 0.9565,
-          "true_positives": 22,
+          "precision": 0.913,
+          "recall": 0.9545,
+          "f1": 0.9333,
+          "true_positives": 21,
           "false_positives": 2,
-          "false_negatives": 0,
+          "false_negatives": 1,
           "support": 22
         },
         "counts": {
-          "n_predicted_edges": 24,
-          "n_predicted_scored": 24,
+          "n_predicted_edges": 23,
+          "n_predicted_scored": 23,
           "n_predicted_unmappable": 0,
           "n_gold_edges": 22,
           "n_gold_scored": 22,
           "n_gold_dropped": 0
         }
       },
+      "objective_metrics": null,
       "errors": {
         "missed": [
           {
@@ -475,19 +429,12 @@
             "predicted_relation": "data",
             "weight": 0.9,
             "rationale": "ADV-011 produces 'altitude data', matched to 'altitude report' consumed by ADV-002 (synonym match, similarity 0.80)."
-          },
-          {
-            "source_id": "ADV-024",
-            "target_id": "ADV-023",
-            "predicted_relation": "sequential",
-            "weight": 0.6564,
-            "rationale": "ADV-023 occurs 'once' a precondition shared with ADV-024 ('aircraft')."
           }
         ],
         "mislabeled": [],
         "totals": {
           "missed": 1,
-          "spurious": 3,
+          "spurious": 2,
           "mislabeled": 0
         }
       }

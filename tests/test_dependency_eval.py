@@ -213,3 +213,66 @@ def test_summarize_errors_respects_limit():
 
     assert len(errors["missed"]) == 2
     assert errors["totals"]["missed"] == 3
+
+
+# ---------------------------------------------------------------------------
+# Objective vs judgment-based gold edges
+# ---------------------------------------------------------------------------
+
+def test_partition_gold_by_objectivity_splits_on_literal_citation():
+    from core.dependency_eval import partition_gold_by_objectivity
+
+    texts = [
+        "The power unit shall provide a regulated bus.",
+        "The avionics shall require the regulated bus defined in REQ-001.",
+        "The logger shall record faults.",
+    ]
+    req_ids = ["REQ-001", "REQ-002", "REQ-003"]
+    gold = [
+        _gold("REQ-001", "REQ-002", "data"),   # REQ-002's text cites REQ-001
+        _gold("REQ-001", "REQ-003", "data"),   # inferred by a human, not cited
+    ]
+
+    objective, judgment = partition_gold_by_objectivity(gold, texts, req_ids)
+
+    assert [e["target_id"] for e in objective] == ["REQ-002"]
+    assert [e["target_id"] for e in judgment] == ["REQ-003"]
+
+
+def test_partition_ignores_self_citations_and_unknown_ids():
+    from core.dependency_eval import partition_gold_by_objectivity
+
+    texts = [
+        "REQ-001 shall reference itself and also REQ-999.",
+        "The second requirement stands alone.",
+    ]
+    req_ids = ["REQ-001", "REQ-002"]
+    gold = [_gold("REQ-001", "REQ-002", "data")]
+
+    objective, judgment = partition_gold_by_objectivity(gold, texts, req_ids)
+
+    assert objective == []
+    assert len(judgment) == 1
+
+
+def test_partition_matches_ids_across_separator_styles():
+    from core.dependency_eval import partition_gold_by_objectivity
+
+    texts = ["Base requirement.", "Derived from REQ_001 upstream."]
+    gold = [_gold("REQ-001", "REQ-002", "data")]
+
+    objective, _ = partition_gold_by_objectivity(gold, texts, ["REQ-001", "REQ-002"])
+
+    assert len(objective) == 1
+
+
+def test_partition_tolerates_more_texts_than_ids():
+    from core.dependency_eval import partition_gold_by_objectivity
+
+    objective, judgment = partition_gold_by_objectivity(
+        [_gold("REQ-001", "REQ-002", "data")],
+        ["a", "cites REQ-001", "extra text with no id"],
+        ["REQ-001", "REQ-002"],
+    )
+    assert len(objective) == 1
+    assert judgment == []

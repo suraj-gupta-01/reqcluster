@@ -76,7 +76,21 @@ _HIERARCHICAL_CUES = (
 # so an edge derived from them must not be drawn in the forward direction.
 _REVERSED_SEQUENTIAL_CUES = frozenset({"before", "prior to"})
 
+# Appended to an edge's rationale when a second pass independently supported it.
+_CORROBORATION_NOTES = {
+    PASS_REFERENCE: "The dependency is also stated explicitly in the requirement text.",
+    PASS_ARTIFACT: "The two requirements also share a named artifact.",
+    PASS_SEQUENTIAL: "A sequential cue also links the two requirements.",
+    PASS_HIERARCHICAL: "The two requirements also sit in the same cluster.",
+}
+
 _WORD_RE = re.compile(r"[a-zA-Z][a-zA-Z0-9\-]{2,}")
+
+# A sequential cue introduces a trigger clause that ends at the first clause
+# boundary. Requirements written in EARS style ("WHEN <trigger>, the software
+# shall <action>") put that boundary at the comma.
+_CLAUSE_END_RE = re.compile(r"[,;:]")
+_CUE_CLAUSE_MAX_WORDS = 12
 
 # A single generic artifact name shared by many requirements would otherwise
 # expand into |producers| x |consumers| edges. Cap the fan-out per artifact so a
@@ -162,6 +176,49 @@ def _first_cue(text_lower: str, cues: tuple[str, ...]) -> Optional[str]:
     return None
 
 
+def _cue_clause(text_lower: str, cue: str) -> str:
+    """The trigger clause introduced by *cue*, bounded to one clause.
+
+    "WHEN the power-on test completes, the software shall ..." yields
+    "when the power-on test completes" — the part that actually states a
+    precondition, not the action that follows it.
+    """
+    position = text_lower.find(cue)
+    if position < 0:
+        return ""
+    tail = text_lower[position:]
+    boundary = _CLAUSE_END_RE.search(tail)
+    if boundary:
+        tail = tail[: boundary.start()]
+    return " ".join(tail.split()[:_CUE_CLAUSE_MAX_WORDS])
+
+
+def _merge_evidence(
+    keeper: DependencyEdge, other_relation: str, other_evidence: Dict[str, Any]
+) -> None:
+    """Record that another pass independently supported the same edge.
+
+    Corroboration is information, not noise: an edge found by two passes is
+    better attested than one found by a single pass, and the losing pass's
+    features are exactly what the explanation layer wants to cite.
+    """
+    other_pass = other_evidence.get("pass")
+    if not other_pass or other_pass == keeper.evidence.get("pass"):
+        return
+    corroborating = keeper.evidence.setdefault("corroborating_passes", [])
+    if other_pass in corroborating:
+        return
+    corroborating.append(other_pass)
+    keeper.evidence.setdefault("corroboration", {})[other_pass] = {
+        "relation": other_relation,
+        **{k: v for k, v in other_evidence.items() if k != "pass"},
+    }
+
+    note = _CORROBORATION_NOTES.get(other_pass)
+    if note and note not in keeper.rationale:
+        keeper.rationale = f"{keeper.rationale.rstrip()} {note}".strip()
+
+
 def _add_edge(
     edges: Dict[tuple[int, int], DependencyEdge],
     source: int,
@@ -174,11 +231,36 @@ def _add_edge(
     if source == target:
         return
     key = (source, target)
+    evidence = evidence or {}
     existing = edges.get(key)
-    if existing is None or weight > existing.weight:
-        edges[key] = DependencyEdge(
-            source, target, relation, weight, rationale, evidence or {}
+
+    if existing is None:
+        edges[key] = DependencyEdge(source, target, relation, weight, rationale, evidence)
+        return
+
+    # Two passes agreeing on a pair is the common case for a genuinely explicit
+    # dependency, and the previous max-weight-wins rule silently discarded the
+    # loser. `reference` is the least informative label the engine produces — it
+    # says only "an identifier was mentioned" — so a concrete relation found by
+    # another pass supersedes it while keeping the citation's high weight and
+    # its evidence. All other collisions still resolve on weight.
+    incumbent_is_weak = existing.relation == REFERENCE and relation != REFERENCE
+    challenger_is_weak = relation == REFERENCE and existing.relation != REFERENCE
+
+    if incumbent_is_weak or (weight > existing.weight and not challenger_is_weak):
+        promoted = DependencyEdge(
+            source,
+            target,
+            relation,
+            max(weight, existing.weight),
+            rationale,
+            dict(evidence),
         )
+        _merge_evidence(promoted, existing.relation, existing.evidence)
+        edges[key] = promoted
+    else:
+        _merge_evidence(existing, relation, evidence)
+        existing.weight = max(existing.weight, weight)
 
 
 def _break_cycles(n: int, edges: List[DependencyEdge]) -> List[DependencyEdge]:
@@ -345,6 +427,20 @@ def build_dependency_tree(
         id_to_index[key] = i
     token_sets = [_salient_tokens(t) for t in texts]
 
+    # Sequential cue and its trigger clause, computed once per requirement
+    # rather than per candidate pair.
+    cues: List[Optional[str]] = []
+    cue_clauses: List[str] = []
+    cue_clause_tokens: List[set] = []
+    for i in range(n):
+        cue = _first_cue(lowers[i], _SEQUENTIAL_CUES)
+        if cue in _REVERSED_SEQUENTIAL_CUES:
+            cue = None
+        clause = _cue_clause(lowers[i], cue) if cue else ""
+        cues.append(cue)
+        cue_clauses.append(clause)
+        cue_clause_tokens.append(_salient_tokens(clause))
+
     edges: Dict[tuple[int, int], DependencyEdge] = {}
 
     # ---- Pass 1: explicit cross-references --------------------------------
@@ -473,23 +569,34 @@ def build_dependency_tree(
                     shared = token_sets[i] & token_sets[j]
                     if not shared:
                         continue
-                    # Longest shared token, ties broken alphabetically so the
-                    # rationale text is stable across runs.
-                    shared_term = sorted(shared, key=lambda w: (-len(w), w))[0]
 
                     # 2b. Sequential: j is gated by a pre-condition cue => i -> j.
-                    cue = _first_cue(lowers[j], _SEQUENTIAL_CUES)
-                    if cue and cue not in _REVERSED_SEQUENTIAL_CUES:
+                    #
+                    # The cue alone proves nothing about a link to *i*: in EARS
+                    # style ("WHEN <trigger>, the software shall <action>") all
+                    # but a handful of requirements carry one, so firing on cue
+                    # presence plus any shared word anywhere makes almost every
+                    # similar pair sequential. Require the shared term to appear
+                    # inside the trigger clause itself, which is the actual
+                    # claim: j is triggered by something i is about.
+                    cue = cues[j]
+                    trigger_shared = shared & cue_clause_tokens[j] if cue else set()
+                    if cue and trigger_shared:
+                        trigger_term = sorted(
+                            trigger_shared, key=lambda w: (-len(w), w)
+                        )[0]
                         _add_edge(
                             edges, i, j, SEQUENTIAL, 0.45 + 0.4 * s,
                             f"{safe_req_ids[j]} occurs '{cue}' a precondition shared "
-                            f"with {safe_req_ids[i]} ('{shared_term}').",
+                            f"with {safe_req_ids[i]} ('{trigger_term}').",
                             {
                                 "pass": PASS_SEQUENTIAL,
                                 "cue": cue,
+                                "cue_clause": cue_clauses[j],
                                 "cosine_similarity": round(s, 4),
                                 "shared_tokens": sorted(shared)[:10],
-                                "primary_shared_token": shared_term,
+                                "trigger_shared_tokens": sorted(trigger_shared)[:10],
+                                "primary_shared_token": trigger_term,
                                 "span_in": "target",
                             },
                         )

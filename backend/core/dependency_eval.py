@@ -25,6 +25,7 @@ This module is pure: no I/O, no DB, no LLM — consistent with the rest of
 from __future__ import annotations
 
 import logging
+import re
 from typing import Any, Dict, Iterable, List, Sequence, Set, Tuple
 
 logger = logging.getLogger(__name__)
@@ -172,6 +173,55 @@ def score_dependency_tree(
             "n_gold_dropped": n_gold_dropped,
         },
     }
+
+
+_CITATION_RE = re.compile(r"\b(?:REQ|SR|FR|SYS|R)[-_ ]?\d{1,5}\b", re.IGNORECASE)
+
+
+def _normalize_req_id(value: str) -> str:
+    return re.sub(r"[-_ ]", "", str(value)).upper()
+
+
+def partition_gold_by_objectivity(
+    gold_edges: Sequence[Dict[str, Any]],
+    texts: Sequence[str],
+    req_ids: Sequence[str],
+) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+    """Split gold edges into objectively verifiable and judgment-based ones.
+
+    An edge is *objective* when the target requirement's text literally cites the
+    source's identifier — anyone can confirm it from the text alone, with no
+    appeal to the labeller's domain judgment. Everything else encodes a human
+    reading of what the requirements mean.
+
+    Scoring the two separately keeps the headline number honest: a hand-authored
+    gold set is only as trustworthy as its author, but the objective subset is
+    reproducible by construction.
+
+    Returns:
+        ``(objective, judgment)`` — the two disjoint subsets, in input order.
+    """
+    cited: Set[Pair] = set()
+    normalized_ids = {_normalize_req_id(r): str(r) for r in req_ids}
+
+    for index, text in enumerate(texts):
+        if index >= len(req_ids):
+            break
+        target_id = str(req_ids[index])
+        for match in _CITATION_RE.finditer(str(text or "")):
+            source_id = normalized_ids.get(_normalize_req_id(match.group(0)))
+            if source_id and source_id != target_id:
+                cited.add((source_id, target_id))
+
+    objective: List[Dict[str, Any]] = []
+    judgment: List[Dict[str, Any]] = []
+    for edge in gold_edges:
+        pair = (
+            str(edge.get("source_id") or "").strip(),
+            str(edge.get("target_id") or "").strip(),
+        )
+        (objective if pair in cited else judgment).append(edge)
+    return objective, judgment
 
 
 def summarize_errors(

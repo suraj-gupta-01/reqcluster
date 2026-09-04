@@ -593,16 +593,20 @@ MAX_NEAR_MATCH_NAMES = 4000
 #
 #   threshold | aerospace P | adversarial F1 | merges
 #   ----------|-------------|----------------|-------
-#   off       |    0.387    |     0.821      |   0
-#   0.85      |    0.387    |     0.850      |   1
-#   0.80      |    0.387    |     0.889      |   5
-#   0.75      |    0.387    |     0.913      |   6   <- chosen
-#   0.65      |    0.387    |     0.913      |   6
-#   0.60      |    0.375    |     0.913      |   6   <- precision starts to slip
+#   off       |    0.600    |     0.842      |   0
+#   0.85      |    0.600    |     0.872      |   1
+#   0.80      |    0.600    |     0.909      |   5
+#   0.75      |    0.600    |     0.933      |   6   <- chosen
+#   0.65      |    0.600    |     0.933      |   6
+#   0.60      |    0.571    |     0.933      |   6   <- precision starts to slip
 #
 # 0.75 is the loosest threshold that still leaves the original aerospace set's
-# precision untouched while capturing every synonym pair the adversarial set
-# was built to expose.
+# precision untouched while capturing every synonym pair the adversarial set was
+# built to expose.  Independently corroborated on a third-party EARS corpus
+# (BIT_Control_Algorithm_Requirements.xlsx, 100 requirements, not authored for
+# this work): it proposed exactly two merges there, both correct —
+# "operating mode" / "operating-mode status" (0.85) and "processor utilization" /
+# "average and peak processor utilization" (0.80).
 DEFAULT_NEAR_MATCH_THRESHOLD = 0.75
 
 _NEAR_MATCH_BLOCK = 512
