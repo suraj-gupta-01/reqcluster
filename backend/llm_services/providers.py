@@ -153,17 +153,25 @@ def parse_expansion_response(raw_response: str) -> ParsedExpansion:
         raise ProviderResponseError("LLM response must be a string.")
     if len(raw_response) > MAX_RESPONSE_CHARS:
         raise ProviderResponseError("LLM response exceeded the maximum allowed size.")
-    if "```" in raw_response:
-        raise ProviderResponseError("Markdown fenced JSON is not accepted.")
-
     raw = _CONTROL_CHARS_RE.sub("", raw_response).strip()
+    if raw.startswith("```"):
+        lines = [line for line in raw.splitlines() if not line.strip().startswith("```")]
+        raw = "\n".join(lines).strip()
+
     if not raw:
         raise ProviderResponseError("LLM response was empty.")
 
     try:
         data = json.loads(raw)
     except json.JSONDecodeError as exc:
-        raise ProviderResponseError("LLM response was not valid JSON.") from exc
+        match = re.search(r"\{.*\}", raw, re.DOTALL)
+        if match:
+            try:
+                data = json.loads(match.group(0))
+            except json.JSONDecodeError:
+                raise ProviderResponseError("LLM response was not valid JSON.") from exc
+        else:
+            raise ProviderResponseError("LLM response was not valid JSON.") from exc
 
     if isinstance(data, list):
         raise ProviderResponseError("Top-level JSON arrays are not accepted.")
@@ -481,17 +489,20 @@ class OpenAICompatibleProvider:
         }
         endpoint = f"{self.base_url}/chat/completions"
 
+        current_payload = dict(payload)
         last_error: Exception | None = None
         for attempt in range(self.max_retries + 1):
             try:
-                response = await asyncio.to_thread(_post_json, endpoint, payload, headers, timeout)
+                response = await asyncio.to_thread(_post_json, endpoint, current_payload, headers, timeout)
                 return parse_expansion_response(_extract_response_content(response))
             except ProviderResponseError as exc:
                 last_error = exc
+                if "response_format" in current_payload:
+                    current_payload.pop("response_format", None)
                 if attempt >= self.max_retries:
                     break
                 await asyncio.sleep(min(0.25 * (attempt + 1), 1.0))
-        raise ProviderResponseError("OpenAI-compatible provider failed after bounded retries.") from last_error
+        raise ProviderResponseError(f"OpenAI-compatible provider failed: {last_error}") from last_error
 
 
 class LocalLLMProvider:

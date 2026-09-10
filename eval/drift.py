@@ -58,6 +58,7 @@ def format_drift_table(
     n: int = 10,
     file_path: Optional[Path | str] = None,
 ) -> str:
+    """Format drift history into an aligned ASCII table for terminal inspection."""
     runs = load_drift_history(file_path)
     if not runs:
         return "No drift history recorded yet."
@@ -71,23 +72,54 @@ def format_drift_table(
         return f"No drift history found for dataset '{dataset_name}'."
 
     recent = filtered[-n:]
-    lines = [f"### Drift History (Last {len(recent)} runs)"]
+    header = (
+        f" {'Timestamp':<19}  {'Dataset':<14}  {'Commit':<7}  {'Model':<5}  "
+        f"{'Accuracy':>9}  {'ARI':>7}  {'Noise':>7}  {'Ref Recall':>11}  {'Parse Rate':>11}"
+    )
+    width = len(header) + 2
+    divider = "-" * width
+
+    lines = [
+        "",
+        "=" * width,
+        "                          Metric Drift History",
+        "=" * width,
+        header,
+        divider,
+    ]
 
     for r in recent:
-        ts = r.get("timestamp", "")[:19]
-        ds = r.get("dataset", "")
-        commit = r.get("commit", "")[:7]
-        prov = r.get("provider", "")
+        raw_ts = str(r.get("timestamp", ""))
+        ts = raw_ts[:19].replace("T", " ")
+        ds = str(r.get("dataset", ""))[:14]
+        commit = str(r.get("commit", ""))[:7]
+        model = str(r.get("model", "real"))[:5]
         m = r.get("metrics", {})
-        acc = m.get("accuracy_pct", "-")
-        ari = m.get("ari", "-")
-        noise = m.get("noise_pct", "-")
-        ref_rec = m.get("reference_recall", "-")
-        parse_suc = m.get("parse_success_rate", "-")
+
+        def _fmt(val, is_pct=False, decimals=2):
+            if val is None or val == "":
+                return "-"
+            try:
+                fval = float(val)
+                if is_pct:
+                    if fval <= 1.0 and fval > 0.0:
+                        fval = fval * 100.0
+                    return f"{fval:.{decimals}f}%"
+                return f"{fval:.{decimals}f}"
+            except Exception:
+                return str(val)
+
+        acc = _fmt(m.get("accuracy_pct"), is_pct=True, decimals=2)
+        ari = _fmt(m.get("ari"), decimals=4)
+        noise = _fmt(m.get("noise_pct"), is_pct=True, decimals=2)
+        ref_rec = _fmt(m.get("reference_recall"), is_pct=True, decimals=1)
+        parse_suc = _fmt(m.get("parse_success_rate"), is_pct=True, decimals=1)
 
         lines.append(
-            f"- [{ts}] {ds} ({prov}, {commit}): "
-            f"acc={acc}%, ari={ari}, noise={noise}%, ref_recall={ref_rec}, parse={parse_suc}"
+            f" {ts:<19}  {ds:<14}  {commit:<7}  {model:<5}  "
+            f"{acc:>9}  {ari:>7}  {noise:>7}  {ref_rec:>11}  {parse_suc:>11}"
         )
 
+    lines.append("=" * width)
+    lines.append("")
     return "\n".join(lines)

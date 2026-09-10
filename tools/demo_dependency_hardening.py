@@ -24,6 +24,7 @@ from __future__ import annotations
 import argparse
 import csv
 import importlib.util
+import os
 import subprocess
 import sys
 import tempfile
@@ -36,6 +37,15 @@ ROOT = Path(__file__).resolve().parents[1]
 for _path in (str(ROOT), str(ROOT / "backend")):
     if _path not in sys.path:
         sys.path.insert(0, _path)
+
+# Load .env if present
+env_file = ROOT / ".env"
+if env_file.exists():
+    for line in env_file.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if line and not line.startswith("#") and "=" in line:
+            k, v = line.split("=", 1)
+            os.environ.setdefault(k.strip(), v.strip())
 
 # Colour only when attached to a terminal, so piping to a file stays readable.
 if sys.stdout.isatty():
@@ -285,19 +295,38 @@ def section_explain() -> None:
             if key == "corroboration":
                 continue
             print(f"      {key:<26} {value}")
-        result = generate_edge_explanation(
-            source_text=source["requirement_text"],
-            target_text=target["requirement_text"],
-            relation=edge["relation"],
-            evidence=edge["evidence"],
-            source_id=source["node_id"],
-            target_id=target["node_id"],
-            confidence_tier=edge["confidence_tier"],
-            rationale=edge["rationale"],
-            provider_name="mock",
-        )
-        print(f"    {GREEN}explanation ({result['provider']}, offline):{RESET}")
-        print(f"      {result['explanation_text']}\n")
+        provider = os.getenv("REQCLUSTER_LLM_PROVIDER") or "mock"
+        try:
+            result = generate_edge_explanation(
+                source_text=source["requirement_text"],
+                target_text=target["requirement_text"],
+                relation=edge["relation"],
+                evidence=edge["evidence"],
+                source_id=source["node_id"],
+                target_id=target["node_id"],
+                confidence_tier=edge["confidence_tier"],
+                rationale=edge["rationale"],
+                provider_name=provider,
+            )
+            model_info = os.getenv("REQCLUSTER_LLM_MODEL", "") if provider != "mock" else "offline"
+            label = f"{result['provider']} ({model_info})" if model_info != "offline" else f"{result['provider']}, offline"
+            print(f"    {GREEN}explanation ({label}):{RESET}")
+            print(f"      {result['explanation_text']}\n")
+        except Exception as exc:
+            # Fallback to mock deterministic template if live call fails
+            mock_result = generate_edge_explanation(
+                source_text=source["requirement_text"],
+                target_text=target["requirement_text"],
+                relation=edge["relation"],
+                evidence=edge["evidence"],
+                source_id=source["node_id"],
+                target_id=target["node_id"],
+                confidence_tier=edge["confidence_tier"],
+                rationale=edge["rationale"],
+                provider_name="mock",
+            )
+            print(f"    {YELLOW}explanation (mock, offline - live LLM error: {exc}):{RESET}")
+            print(f"      {mock_result['explanation_text']}\n")
 
     print(f"{DIM}The evidence panel needs no model call — it is already in the payload,")
     print("so it renders instantly on click. The prose above is the deterministic")

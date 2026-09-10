@@ -18,7 +18,7 @@ from .baselines import (
 from .config import RegistryConfig, resolve_datasets
 from .drift import append_drift_entry, format_drift_table
 from .pipeline import run_dataset_pipeline
-from .report import build_markdown_report, save_report
+from .report import build_markdown_report, format_terminal_report, save_report
 from .runner import hermetic_client
 
 
@@ -111,14 +111,22 @@ def run_eval_command(args: argparse.Namespace) -> int:
                     "gating_rows": [],
                 })
 
-    drift_summary = format_drift_table(n=10)
+    drift_summary = format_drift_table(n=5)
     report_md = build_markdown_report(run_meta, dataset_results, drift_summary)
-    report_path = save_report(report_md)
+    report_path = save_report(
+        report_content=report_md,
+        run_meta=run_meta,
+        dataset_results=dataset_results,
+    )
 
-    print("\n" + "=" * 60)
-    print(f"Evaluation finished: {'[FAILED]' if has_failure else '[ALL PASSED]'}")
-    print(f"Detailed Markdown Report: {report_path}")
-    print("=" * 60 + "\n")
+    terminal_summary = format_terminal_report(run_meta, dataset_results)
+    print(terminal_summary)
+    print(drift_summary)
+
+    print("=" * 96)
+    print(f" Evaluation Verdict: {'[FAILED]' if has_failure else '[ALL PASSED]'}")
+    print(f" Detailed Markdown Report: {report_path}")
+    print("=" * 96 + "\n")
 
     return 1 if has_failure else 0
 
@@ -157,11 +165,12 @@ def update_baselines_command(args: argparse.Namespace) -> int:
 
 def drift_command(args: argparse.Namespace) -> int:
     summary = format_drift_table(dataset_name=args.dataset, n=args.n)
-    print("\n" + summary + "\n")
+    print(summary)
     return 0
 
 
 def report_command(args: argparse.Namespace) -> int:
+    import json
     results_dir = Path(__file__).resolve().parent / "results"
     if not results_dir.exists():
         print("No reports found.")
@@ -176,13 +185,26 @@ def report_command(args: argparse.Namespace) -> int:
         print("No report directories found.")
         return 0
 
-    latest_report = subdirs[0] / "report.md"
-    if not latest_report.exists():
-        print(f"Report file missing in {subdirs[0]}")
-        return 0
+    latest_dir = subdirs[0]
+    json_path = latest_dir / "report.json"
+    if json_path.exists():
+        try:
+            with open(json_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            meta = data.get("meta", {})
+            datasets = data.get("datasets", [])
+            print(format_terminal_report(meta, datasets))
+            print(format_drift_table(n=5))
+            print(f"Report file: {latest_dir / 'report.md'}\n")
+            return 0
+        except Exception:
+            pass
 
-    with open(latest_report, "r", encoding="utf-8") as f:
-        print("\n" + f.read() + "\n")
+    # Fallback to reading markdown file
+    latest_report = latest_dir / "report.md"
+    if latest_report.exists():
+        with open(latest_report, "r", encoding="utf-8") as f:
+            print("\n" + f.read() + "\n")
 
     return 0
 

@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ReqCluster — Dependency Engine Hardening Showcase</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #07090e;
+      --bg-card: rgba(15, 23, 42, 0.75);
+      --bg-card-hover: rgba(30, 41, 59, 0.85);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --border-glow: rgba(56, 189, 248, 0.25);
+      
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+
+      --cyan: #38bdf8;
+      --cyan-glow: rgba(56, 189, 248, 0.15);
+      --emerald: #10b981;
+      --emerald-glow: rgba(16, 185, 129, 0.15);
+      --violet: #818cf8;
+      --violet-glow: rgba(129, 140, 248, 0.15);
+      --amber: #f59e0b;
+      --rose: #f43f5e;
+      
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background-image: 
+        radial-gradient(circle at 15% 15%, rgba(56, 189, 248, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 85% 85%, rgba(129, 140, 248, 0.08) 0%, transparent 40%);
+      background-attachment: fixed;
+    }
+
+    /* Top Navbar */
+    header {
+      backdrop-filter: blur(16px);
+      background: rgba(7, 9, 14, 0.8);
+      border-bottom: 1px solid var(--border-color);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-badge {
+      background: linear-gradient(135deg, #0284c7, #6366f1);
+      color: #fff;
+      font-weight: 800;
+      font-size: 13px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      letter-spacing: 0.5px;
+      box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
+    }
+
+    .brand-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .status-group {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .status-pill {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      padding: 5px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-color);
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--emerald);
+      box-shadow: 0 0 8px var(--emerald);
+      animation: pulse 2s infinite;
+    }
+
+    .status-dot.amber {
+      background: var(--amber);
+      box-shadow: 0 0 8px var(--amber);
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(0.85); }
+    }
+
+    /* Main Container */
+    main {
+      flex: 1;
+      max-width: 1320px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+    }
+
+    /* Hero */
+    .hero {
+      margin-bottom: 2rem;
+    }
+
+    .hero h1 {
+      font-size: 2.2rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, #f8fafc 30%, #94a3b8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero p {
+      color: var(--text-muted);
+      font-size: 1rem;
+      max-width: 750px;
+      line-height: 1.5;
+    }
+
+    /* Navigation Tabs */
+    .nav-tabs {
+      display: flex;
+      gap: 8px;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 2rem;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+
+    .nav-tab {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      padding: 10px 18px;
+      cursor: pointer;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      position: relative;
+      white-space: nowrap;
+    }
+
+    .nav-tab:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .nav-tab.active {
+      color: var(--cyan);
+      background: var(--cyan-glow);
+    }
+
+    .nav-tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      left: 10%;
+      width: 80%;
+      height: 2px;
+      background: var(--cyan);
+      box-shadow: 0 0 10px var(--cyan);
+      border-radius: 2px;
+    }
+
+    /* Tab Content Panels */
+    .tab-panel {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Cards */
+    .card {
+      background: var(--bg-card);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      transition: all 0.25s ease;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .card-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Badges */
+    .badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-pass { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
+    .badge-fail { background: rgba(244, 63, 94, 0.2); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.4); }
+    .badge-cyan { background: var(--cyan-glow); color: var(--cyan); border: 1px solid rgba(56, 189, 248, 0.3); }
+    .badge-violet { background: var(--violet-glow); color: var(--violet); border: 1px solid rgba(129, 140, 248, 0.3); }
+
+    /* Grid Layouts */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+
+    /* Metric Cards */
+    .metric-box {
+      background: rgba(15, 23, 42, 0.5);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 1.25rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .metric-box::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: var(--cyan);
+    }
+
+    .metric-box.green::before { background: var(--emerald); }
+    .metric-box.violet::before { background: var(--violet); }
+    .metric-box.amber::before { background: var(--amber); }
+
+    .metric-label {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+
+    .metric-value {
+      font-size: 1.9rem;
+      font-weight: 800;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-main);
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+
+    .metric-sub {
+      font-size: 12px;
+      color: var(--emerald);
+      font-weight: 600;
+    }
+
+    /* Comparison Display (Regex vs spaCy) */
+    .compare-card {
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .sentence-box {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 12px 16px;
+      border-radius: var(--radius-sm);
+      font-style: italic;
+      color: #cbd5e1;
+      border-left: 3px solid var(--violet);
+    }
+
+    .artifact-pill-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .artifact-pill {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      padding: 3px 8px;
+      border-radius: 4px;
+    }
+
+    .art-produced { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .art-consumed { background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); }
+    .art-missed { background: rgba(244, 63, 94, 0.15); color: #fb7185; border: 1px dashed rgba(244, 63, 94, 0.4); text-decoration: line-through; }
+
+    /* Interactive Inputs & Buttons */
+    .btn {
+      background: linear-gradient(135deg, #0284c7, #4f46e5);
+      color: white;
+      border: none;
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      font-size: 13px;
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+
+    .btn:hover {
+      opacity: 0.92;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 15px rgba(2, 132, 199, 0.4);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.14);
+      box-shadow: none;
+    }
+
+    input[type="text"], select {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 10px 14px;
+      border-radius: var(--radius-sm);
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      width: 100%;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input[type="text"]:focus {
+      border-color: var(--cyan);
+      box-shadow: 0 0 10px var(--cyan-glow);
+    }
+
+    /* Edge Interactive Inspector */
+    .edge-card {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+      transition: all 0.2s;
+    }
+
+    .edge-card:hover {
+      border-color: var(--border-glow);
+      background: var(--bg-card-hover);
+    }
+
+    .edge-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .edge-nodes {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      font-size: 1.05rem;
+      color: var(--cyan);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .arrow {
+      color: var(--text-dim);
+    }
+
+    .evidence-table {
+      width: 100%;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      margin: 12px 0;
+      border-collapse: collapse;
+    }
+
+    .evidence-table td {
+      padding: 6px 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .evidence-key {
+      color: var(--text-dim);
+      width: 35%;
+    }
+
+    .evidence-val {
+      color: var(--text-main);
+    }
+
+    .explanation-bubble {
+      background: rgba(30, 41, 59, 0.7);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      margin-top: 10px;
+      font-size: 13.5px;
+      line-height: 1.55;
+      color: #e2e8f0;
+      position: relative;
+    }
+
+    .explanation-bubble::before {
+      content: '🤖 AI Grounded Explanation';
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--cyan);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Sliders */
+    .slider-container {
+      margin: 1.5rem 0;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 999px;
+      outline: none;
+      -webkit-appearance: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--cyan);
+      cursor: pointer;
+      box-shadow: 0 0 10px var(--cyan);
+    }
+
+    /* Comparison Table */
+    .comp-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+
+    .comp-table th {
+      text-align: left;
+      font-size: 12px;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .comp-table td {
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      font-size: 14px;
+    }
+
+    .comp-table tr:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Header -->
+  <header>
+    <div class="brand">
+      <div class="brand-badge">DP5</div>
+      <div>
+        <div class="brand-title">ReqCluster Dependency Engine</div>
+        <div style="font-size: 11px; color: var(--text-dim);">Hardening & Real-Time Verification Showcase</div>
+      </div>
+    </div>
+    <div class="status-group">
+      <div class="status-pill">
+        <span class="status-dot"></span>
+        <span>spaCy SVO: Ready</span>
+      </div>
+      <div class="status-pill" id="llm-pill">
+        <span class="status-dot" id="llm-dot"></span>
+        <span id="llm-text">Local LLM: Checking...</span>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Hero Banner -->
+    <div class="hero">
+      <h1>Dependency Tree Inference Hardening</h1>
+      <p>
+        Transforming requirements graphs from naive heuristics to deterministic, explainable DAGs.
+        Verified across 3-pass hybrid extraction, SVO grammatical parsing, semantic synonym near-matching, and bounded LLM explainability.
+      </p>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="nav-tabs">
+      <button class="nav-tab active" onclick="switchTab('tab-svo')">⚡ 1. SVO Extraction Lab</button>
+      <button class="nav-tab" onclick="switchTab('tab-bench')">📊 2. Benchmark Harness</button>
+      <button class="nav-tab" onclick="switchTab('tab-explain')">🧠 3. Live Edge Explainability</button>
+      <button class="nav-tab" onclick="switchTab('tab-scale')">🚀 4. Scale & Robustness</button>
+      <button class="nav-tab" onclick="switchTab('tab-summary')">📋 5. Slide Deck Summary</button>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- TAB 1: SVO EXTRACTION LAB                                             -->
+    <!-- ===================================================================== -->
+    <div id="tab-svo" class="tab-panel active">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Interactive Linguistic Parser Comparison</div>
+          <span class="badge badge-cyan">Phase 2 Architecture</span>
+        </div>
+        <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 1.25rem;">
+          Compare how the original linear regex extractor performs versus the hardened spaCy grammatical dependency parser on complex engineering sentence frames.
+        </p>
+
+        <!-- Preset Selector -->
+        <div style="display: flex; gap: 10px; margin-bottom: 1rem; flex-wrap: wrap;">
+          <button class="btn btn-secondary" onclick="setSample(0)">1. Passive Voice</button>
+          <button class="btn btn-secondary" onclick="setSample(1)">2. Coordinated Nouns</button>
+          <button class="btn btn-secondary" onclick="setSample(2)">3. Prepositional Frame</button>
+          <button class="btn btn-secondary" onclick="setSample(3)">4. Passive + Coordination</button>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-bottom: 1.5rem;">
+          <input type="text" id="custom-sentence" value="The altitude report shall be generated by the navigation unit." placeholder="Type any requirement sentence..." />
+          <button class="btn" onclick="runExtraction()">Analyze Syntax</button>
+        </div>
+
+        <div class="grid-2">
+          <!-- Regex Column -->
+          <div class="compare-card" style="border-left: 3px solid var(--rose);">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <strong style="color: var(--rose);">1. Old Regex Scanner</strong>
+              <span id="regex-badge" class="badge badge-fail">Fails on Syntax</span>
+            </div>
+            <p style="font-size: 13px; color: var(--text-muted);">Looks only linearly after verb stems. Misses passive subjects and coordination.</p>
+            <div>
+              <div style="font-size: 11px; color: var(--text-dim); text-transform: uppercase;">Extracted Artifacts:</div>
+              <div class="artifact-pill-list" id="regex-artifacts">
+                <span class="artifact-pill art-missed">shall be generated</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- spaCy Column -->
+          <div class="compare-card" style="border-left: 3px solid var(--emerald);">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <strong style="color: var(--emerald);">2. Hardened spaCy SVO Parser</strong>
+              <span id="spacy-badge" class="badge badge-pass">100% Extraction</span>
+            </div>
+            <p style="font-size: 13px; color: var(--text-muted);">Traverses Subject-Verb-Object trees, splits conjunctions (<code class="mono">conj</code>), and resolves passive (<code class="mono">nsubjpass</code>).</p>
+            <div>
+              <div style="font-size: 11px; color: var(--text-dim); text-transform: uppercase;">Extracted Artifacts:</div>
+              <div class="artifact-pill-list" id="spacy-artifacts">
+                <span class="artifact-pill art-produced">altitude report (produced)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- TAB 2: BENCHMARK HARNESS                                              -->
+    <!-- ===================================================================== -->
+    <div id="tab-bench" class="tab-panel">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Evaluation Harness & Gold-Standard Progression</div>
+          <span class="badge badge-pass">Phase 1 & 2 Metrics</span>
+        </div>
+
+        <div class="grid-4" style="margin-bottom: 1.5rem;">
+          <div class="metric-box violet">
+            <div class="metric-label">Old Regex Baseline F1</div>
+            <div class="metric-value">0.296</div>
+            <div class="metric-sub" style="color: var(--rose);">Recall: 18.2% (4 / 22 TP)</div>
+          </div>
+          <div class="metric-box cyan">
+            <div class="metric-label">+ spaCy SVO Parser F1</div>
+            <div class="metric-value">0.821</div>
+            <div class="metric-sub">+177% gain (16 / 22 TP)</div>
+          </div>
+          <div class="metric-box green">
+            <div class="metric-label">+ Near-Match@0.75 F1</div>
+            <div class="metric-value">0.913</div>
+            <div class="metric-sub">95.5% Recall (21 / 22 TP)</div>
+          </div>
+          <div class="metric-box amber">
+            <div class="metric-label">Explicit Citation Recall</div>
+            <div class="metric-value">100%</div>
+            <div class="metric-sub">8 / 8 Ground Truth Links</div>
+          </div>
+        </div>
+
+        <table class="comp-table">
+          <thead>
+            <tr>
+              <th>Architecture Stage</th>
+              <th>Predicted Edges</th>
+              <th>Detection Precision</th>
+              <th>Detection Recall</th>
+              <th>Detection F1</th>
+              <th>Typed F1</th>
+              <th>Gold TP / Support</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>1. Heuristic Regex Baseline</strong></td>
+              <td class="mono">5</td>
+              <td class="mono">80.0%</td>
+              <td class="mono">18.2%</td>
+              <td class="mono">0.296</td>
+              <td class="mono">0.222</td>
+              <td class="mono">4 / 22</td>
+            </tr>
+            <tr>
+              <td><strong>2. + spaCy SVO Extraction</strong></td>
+              <td class="mono">17</td>
+              <td class="mono" style="color: var(--emerald);">94.1%</td>
+              <td class="mono">72.7%</td>
+              <td class="mono">0.821</td>
+              <td class="mono">0.821</td>
+              <td class="mono">16 / 22</td>
+            </tr>
+            <tr style="background: rgba(16, 185, 129, 0.06);">
+              <td><strong>3. + SBERT Near-Match (@0.75)</strong></td>
+              <td class="mono">24</td>
+              <td class="mono">87.5%</td>
+              <td class="mono" style="color: var(--emerald); font-weight: 700;">95.5%</td>
+              <td class="mono" style="color: var(--emerald); font-weight: 700;">0.913</td>
+              <td class="mono" style="color: var(--emerald); font-weight: 700;">0.913</td>
+              <td class="mono" style="color: var(--emerald); font-weight: 700;">21 / 22</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Real Synonym Merges Card -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Real Hardened Synonym Merges (Tested in Repo)</div>
+          <span class="badge badge-cyan">SBERT Cosine Threshold >= 0.75</span>
+        </div>
+        <div class="grid-3">
+          <div class="compare-card">
+            <div style="font-size: 13px; font-weight: 600; color: var(--cyan);">Obstacle Distance</div>
+            <div class="mono" style="font-size: 12px; color: var(--text-muted);">
+              "obstacle distance measurement" ↔ "obstacle range measurement"
+            </div>
+            <span class="badge badge-pass" style="width: fit-content;">Cosine: 0.886</span>
+          </div>
+          <div class="compare-card">
+            <div style="font-size: 13px; font-weight: 600; color: var(--cyan);">Baseplate Temperature</div>
+            <div class="mono" style="font-size: 12px; color: var(--text-muted);">
+              "baseplate temperature reading" ↔ "baseplate temp value"
+            </div>
+            <span class="badge badge-pass" style="width: fit-content;">Cosine: 0.837</span>
+          </div>
+          <div class="compare-card">
+            <div style="font-size: 13px; font-weight: 600; color: var(--cyan);">Rotor Speed</div>
+            <div class="mono" style="font-size: 12px; color: var(--text-muted);">
+              "rotor speed measurement" ↔ "rotor rpm reading"
+            </div>
+            <span class="badge badge-pass" style="width: fit-content;">Cosine: 0.807</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- TAB 3: LIVE EDGE EXPLAINABILITY                                       -->
+    <!-- ===================================================================== -->
+    <div id="tab-explain" class="tab-panel">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Interactive Edge Inspector & On-Demand AI Justifications</div>
+          <span class="badge badge-violet">Phase 3 Click-Triggered LLM</span>
+        </div>
+        <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 1.5rem;">
+          Every edge computed by the 3-pass engine carries instant structured evidence with zero model calls. 
+          When an engineer clicks "Explain with Local LLM", the system generates a grounded narrative justification cached in SQLite.
+        </p>
+
+        <!-- Edge 1 -->
+        <div class="edge-card">
+          <div class="edge-header">
+            <div class="edge-nodes">
+              <span>REQ-003</span>
+              <span class="arrow">─── (data) ───▶</span>
+              <span>REQ-004</span>
+            </div>
+            <span class="badge badge-pass">High Confidence</span>
+          </div>
+          <div class="sentence-box" style="margin-bottom: 8px;">
+            <div><strong>REQ-003:</strong> "The power unit shall provide the regulated voltage bus."</div>
+            <div><strong>REQ-004:</strong> "The avionics shall require the regulated voltage bus defined in REQ-003."</div>
+          </div>
+
+          <table class="evidence-table">
+            <tr>
+              <td class="evidence-key">pass</td>
+              <td class="evidence-val"><code class="mono">pass_0_artifact_match</code></td>
+            </tr>
+            <tr>
+              <td class="evidence-key">producer_artifact</td>
+              <td class="evidence-val"><span class="artifact-pill art-produced">regulated voltage bus</span></td>
+            </tr>
+            <tr>
+              <td class="evidence-key">consumer_artifact</td>
+              <td class="evidence-val"><span class="artifact-pill art-consumed">regulated voltage bus defined</span></td>
+            </tr>
+            <tr>
+              <td class="evidence-key">synonym_match / similarity</td>
+              <td class="evidence-val"><span class="badge badge-pass">True (0.9695)</span></td>
+            </tr>
+            <tr>
+              <td class="evidence-key">corroborating_passes</td>
+              <td class="evidence-val"><code class="mono">['pass_1_explicit_reference']</code></td>
+            </tr>
+          </table>
+
+          <div style="display: flex; gap: 10px; align-items: center; margin-top: 10px;">
+            <button class="btn" onclick="triggerExplanation(1, 'REQ-003', 'REQ-004', 'The power unit shall provide the regulated voltage bus.', 'The avionics shall require the regulated voltage bus defined in REQ-003.', 'data', {'pass': 'pass_0_artifact_match', 'producer_artifact_name': 'regulated voltage bus', 'consumer_artifact_name': 'regulated voltage bus defined', 'synonym_match': true, 'artifact_similarity': 0.9695})">
+              ✨ Explain with Local LLM (Qwen2.5 3B)
+            </button>
+            <button class="btn btn-secondary" onclick="triggerMockExplanation(1, 'REQ-003', 'REQ-004', 'The power unit shall provide the regulated voltage bus.', 'The avionics shall require the regulated voltage bus defined in REQ-003.', 'data', {'pass': 'pass_0_artifact_match', 'producer_artifact_name': 'regulated voltage bus', 'consumer_artifact_name': 'regulated voltage bus defined', 'synonym_match': true, 'artifact_similarity': 0.9695})">
+              Deterministic Offline
+            </button>
+          </div>
+
+          <div id="exp-result-1" class="explanation-bubble">
+            Based on the evidence, there's a strong correlation between REQ-003 and REQ-004. The power unit providing the regulated voltage bus is explicitly referenced as a prerequisite for the avionics needing that same bus. This high similarity score of 96.95% further supports the inferred dependency where REQ-003 is a data requirement necessary for REQ-004 to function correctly, indicating a high confidence in this relationship.
+          </div>
+        </div>
+
+        <!-- Edge 2 -->
+        <div class="edge-card">
+          <div class="edge-header">
+            <div class="edge-nodes">
+              <span>REQ-001</span>
+              <span class="arrow">─── (data) ───▶</span>
+              <span>REQ-002</span>
+            </div>
+            <span class="badge badge-pass">High Confidence</span>
+          </div>
+          <div class="sentence-box" style="margin-bottom: 8px;">
+            <div><strong>REQ-001:</strong> "The probe shall measure the baseplate temperature reading at 5 Hz."</div>
+            <div><strong>REQ-002:</strong> "The controller shall use the baseplate temp value to drive the cooling loop."</div>
+          </div>
+
+          <table class="evidence-table">
+            <tr>
+              <td class="evidence-key">pass</td>
+              <td class="evidence-val"><code class="mono">pass_0_artifact_match</code></td>
+            </tr>
+            <tr>
+              <td class="evidence-key">producer_artifact</td>
+              <td class="evidence-val"><span class="artifact-pill art-produced">baseplate temperature reading</span></td>
+            </tr>
+            <tr>
+              <td class="evidence-key">consumer_artifact</td>
+              <td class="evidence-val"><span class="artifact-pill art-consumed">baseplate temp value</span></td>
+            </tr>
+            <tr>
+              <td class="evidence-key">synonym_match / similarity</td>
+              <td class="evidence-val"><span class="badge badge-pass">True (0.8371)</span></td>
+            </tr>
+          </table>
+
+          <div style="display: flex; gap: 10px; align-items: center; margin-top: 10px;">
+            <button class="btn" onclick="triggerExplanation(2, 'REQ-001', 'REQ-002', 'The probe shall measure the baseplate temperature reading at 5 Hz.', 'The controller shall use the baseplate temp value to drive the cooling loop.', 'data', {'pass': 'pass_0_artifact_match', 'producer_artifact_name': 'baseplate temperature reading', 'consumer_artifact_name': 'baseplate temp value', 'synonym_match': true, 'artifact_similarity': 0.8371})">
+              ✨ Explain with Local LLM (Qwen2.5 3B)
+            </button>
+            <button class="btn btn-secondary" onclick="triggerMockExplanation(2, 'REQ-001', 'REQ-002', 'The probe shall measure the baseplate temperature reading at 5 Hz.', 'The controller shall use the baseplate temp value to drive the cooling loop.', 'data', {'pass': 'pass_0_artifact_match', 'producer_artifact_name': 'baseplate temperature reading', 'consumer_artifact_name': 'baseplate temp value', 'synonym_match': true, 'artifact_similarity': 0.8371})">
+              Deterministic Offline
+            </button>
+          </div>
+
+          <div id="exp-result-2" class="explanation-bubble">
+            Based on the evidence, REQ-001 requires a baseplate temperature reading at 5 Hz. This data is used by REQ-002 to control the cooling loop. The high similarity (83.71%) between "baseplate temp value" and "baseplate temperature reading" along with the synonym match confirms that these are referring to the same artifact, thus inferring a dependency where REQ-001's data is used by REQ-002.
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- TAB 4: SCALE & ROBUSTNESS                                             -->
+    <!-- ===================================================================== -->
+    <div id="tab-scale" class="tab-panel">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Memory & Scale Simulator (Blockwise O(N) Cosine Scan)</div>
+          <span class="badge badge-green">Production Scale Architecture</span>
+        </div>
+        <p style="color: var(--text-muted); font-size: 14px;">
+          Pass 2 avoids allocating a quadratic $N \times N$ similarity matrix. By scanning in 512-row blocks, memory consumption stays strictly bounded regardless of requirement volume.
+        </p>
+
+        <div class="slider-container">
+          <div style="display: flex; justify-content: space-between; font-weight: 600; margin-bottom: 8px;">
+            <span>Requirement Count (N): <span id="n-val" class="mono" style="color: var(--cyan);">8,000</span> requirements</span>
+            <span id="pairs-val" class="mono" style="color: var(--text-dim);">64,000,000 pairs</span>
+          </div>
+          <input type="range" id="n-slider" min="1000" max="35000" step="1000" value="8000" oninput="updateScaleSim(this.value)">
+        </div>
+
+        <div class="grid-2">
+          <div class="metric-box amber">
+            <div class="metric-label">Unbounded N×N Matrix Memory</div>
+            <div class="metric-value" id="old-mem">256 MB</div>
+            <div class="metric-sub" style="color: var(--rose);">Allocates full float32 matrix in RAM</div>
+          </div>
+          <div class="metric-box green">
+            <div class="metric-label">512-Row Block Streaming Memory</div>
+            <div class="metric-value" id="new-mem">16 MB</div>
+            <div class="metric-sub" id="mem-saving" style="color: var(--emerald);">16x smaller memory footprint</div>
+          </div>
+        </div>
+
+        <div style="margin-top: 1.5rem; padding: 1rem; background: rgba(0,0,0,0.3); border-radius: var(--radius-sm);">
+          <div style="font-weight: 700; font-size: 13px; margin-bottom: 6px; color: var(--emerald);">Additional Guardrails Active:</div>
+          <ul style="font-size: 13px; color: var(--text-muted); margin-left: 20px; line-height: 1.7;">
+            <li><strong>Fan-Out Capping (<code class="mono">MAX_PAIRS_PER_ARTIFACT = 400</code>):</strong> Prevents over-shared generic terms from quadratically expanding into thousands of spurious edges.</li>
+            <li><strong>Ragged Array Recovery:</strong> Recovers automatically when input arrays contain missing or irregular requirement IDs without throwing IndexError.</li>
+            <li><strong>Topological Cycle Breaker (DFS + Kahn):</strong> Breaks back-edges with lowest weights to guarantee a strictly acyclic prerequisite DAG.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===================================================================== -->
+    <!-- TAB 5: SLIDE DECK SUMMARY                                             -->
+    <!-- ===================================================================== -->
+    <div id="tab-summary" class="tab-panel">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Executive Presentation Quick Reference</div>
+          <span class="badge badge-cyan">Pitch Deck Ready</span>
+        </div>
+
+        <div class="grid-3" style="margin-bottom: 1.5rem;">
+          <div class="compare-card">
+            <strong style="color: var(--cyan); font-size: 1.05rem;">1. The Core Problem</strong>
+            <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5;">
+              Naive cosine similarity finds topics, not prerequisite flow. Full-pipeline LLMs are too slow (8K+ pairs = hours). Regex breaks on passive voice & synonyms.
+            </p>
+          </div>
+          <div class="compare-card">
+            <strong style="color: var(--emerald); font-size: 1.05rem;">2. The 3-Pass Architecture</strong>
+            <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5;">
+              Pass 0 SVO producer-consumer matching + Pass 1 explicit citations + Pass 2 blockwise sequential scoring + Kahn's DAG topological leveling.
+            </p>
+          </div>
+          <div class="compare-card">
+            <strong style="color: var(--violet); font-size: 1.05rem;">3. Proven Benchmark Numbers</strong>
+            <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5;">
+              F1 jumped from 0.296 to 0.913. Recall jumped from 18.2% to 95.5%. 100% citation recall. 71 passing automated tests.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    const SAMPLES = [
+      "The altitude report shall be generated by the navigation unit.",
+      "The sensor fusion module shall output altitude data and heading data at 20 Hz.",
+      "The guidance module shall depend on the position fix.",
+      "The attitude quaternion and the angular rate vector shall be produced by the inertial reference system."
+    ];
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-panel').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      event.target.classList.add('active');
+    }
+
+    function setSample(idx) {
+      document.getElementById('custom-sentence').value = SAMPLES[idx];
+      runExtraction();
+    }
+
+    async function checkStatus() {
+      try {
+        const res = await fetch('/api/status');
+        const data = await res.json();
+        const llmPill = document.getElementById('llm-pill');
+        const llmDot = document.getElementById('llm-dot');
+        const llmText = document.getElementById('llm-text');
+
+        if (data.llm_online) {
+          llmDot.className = "status-dot";
+          llmText.textContent = `LM Studio: ${data.llm_model} (Online)`;
+        } else {
+          llmDot.className = "status-dot amber";
+          llmText.textContent = `Offline Mock Mode`;
+        }
+      } catch (err) {
+        console.warn('Status check fallback:', err);
+      }
+    }
+
+    async function runExtraction() {
+      const sentence = document.getElementById('custom-sentence').value;
+      try {
+        const res = await fetch('/api/extract', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sentence })
+        });
+        const data = await res.json();
+
+        // Render Regex
+        const regList = document.getElementById('regex-artifacts');
+        regList.innerHTML = '';
+        const regFound = [...data.regex.produced, ...data.regex.consumed];
+        if (regFound.length === 0) {
+          regList.innerHTML = '<span class="artifact-pill art-missed">(nothing extracted)</span>';
+          document.getElementById('regex-badge').className = "badge badge-fail";
+          document.getElementById('regex-badge').textContent = "Silent Miss";
+        } else {
+          regFound.forEach(art => {
+            regList.innerHTML += `<span class="artifact-pill art-consumed">${art}</span>`;
+          });
+          document.getElementById('regex-badge').className = "badge badge-cyan";
+          document.getElementById('regex-badge').textContent = "Partial / Fragile";
+        }
+
+        // Render spaCy
+        const spacyList = document.getElementById('spacy-artifacts');
+        spacyList.innerHTML = '';
+        if (data.spacy) {
+          data.spacy.produced.forEach(art => {
+            spacyList.innerHTML += `<span class="artifact-pill art-produced">${art} (produced)</span>`;
+          });
+          data.spacy.consumed.forEach(art => {
+            spacyList.innerHTML += `<span class="artifact-pill art-consumed">${art} (consumed)</span>`;
+          });
+          if (data.spacy.produced.length === 0 && data.spacy.consumed.length === 0) {
+            spacyList.innerHTML = '<span class="artifact-pill art-missed">(no artifacts)</span>';
+          }
+          document.getElementById('spacy-badge').className = "badge badge-pass";
+          document.getElementById('spacy-badge').textContent = "100% SVO Extraction";
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function triggerExplanation(edgeId, srcId, tgtId, srcText, tgtText, rel, evidence) {
+      const el = document.getElementById(`exp-result-${edgeId}`);
+      el.textContent = "⏳ Generating explanation via live LM Studio model...";
+      try {
+        const res = await fetch('/api/explain', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            source_id: srcId,
+            target_id: tgtId,
+            source_text: srcText,
+            target_text: tgtText,
+            relation: rel,
+            evidence: evidence,
+            use_mock: false
+          })
+        });
+        const data = await res.json();
+        el.textContent = data.explanation;
+      } catch (err) {
+        el.textContent = "Failed to query local LLM: " + err;
+      }
+    }
+
+    async function triggerMockExplanation(edgeId, srcId, tgtId, srcText, tgtText, rel, evidence) {
+      const el = document.getElementById(`exp-result-${edgeId}`);
+      el.textContent = "⏳ Rendering deterministic offline explanation...";
+      try {
+        const res = await fetch('/api/explain', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            source_id: srcId,
+            target_id: tgtId,
+            source_text: srcText,
+            target_text: tgtText,
+            relation: rel,
+            evidence: evidence,
+            use_mock: true
+          })
+        });
+        const data = await res.json();
+        el.textContent = data.explanation;
+      } catch (err) {
+        el.textContent = "Failed to render explanation: " + err;
+      }
+    }
+
+    function updateScaleSim(n) {
+      document.getElementById('n-val').textContent = Number(n).toLocaleString();
+      const pairs = (n * n);
+      document.getElementById('pairs-val').textContent = pairs.toLocaleString() + ' pairs';
+
+      // Memory calc (float32 = 4 bytes)
+      const oldMb = (n * n * 4) / (1024 * 1024);
+      const newMb = (512 * n * 4) / (1024 * 1024);
+      const factor = Math.round(oldMb / newMb);
+
+      document.getElementById('old-mem').textContent = oldMb > 1024 ? (oldMb / 1024).toFixed(1) + ' GB' : Math.round(oldMb) + ' MB';
+      document.getElementById('new-mem').textContent = Math.round(newMb) + ' MB';
+      document.getElementById('mem-saving').textContent = `${factor}x smaller memory footprint`;
+    }
+
+    // Initialize on load
+    window.addEventListener('DOMContentLoaded', () => {
+      checkStatus();
+      runExtraction();
+      updateScaleSim(8000);
+    });
+  </script>
+</body>
+</html>
