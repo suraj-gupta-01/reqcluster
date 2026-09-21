@@ -29,8 +29,19 @@ def extract_clustering_metrics(raw_metrics: Dict[str, Any]) -> Dict[str, Any]:
             "homogeneity",
             "completeness",
             "n_true_groups",
+            "hungarian_accuracy_pct",
+        ]:
+            if key in raw_metrics and raw_metrics[key] is not None:
+                result[key] = raw_metrics[key]
+
+        # Confusion matrix fields — included as structured data, not gated scalars
+        for key in [
+            "confusion_matrix_rows",
+            "confusion_matrix_cluster_ids",
+            "confusion_matrix_group_names",
         ]:
             if key in raw_metrics and raw_metrics[key] is not None:
                 result[key] = raw_metrics[key]
 
     return result
+

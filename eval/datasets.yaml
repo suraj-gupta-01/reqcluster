@@ -1,4 +1,24 @@
 datasets:
+  bit_control:
+    path: data/bit_control_requirements.csv
+    suite: fast
+    ground_truth: module
+    tolerances:
+      # Floors set after first run — update once baseline JSON is committed
+      ari:
+        floor: 0.05
+        delta: -0.10
+      noise_pct:
+        floor: 60.0
+        delta: 10.0
+        lower_is_better: true
+      hungarian_accuracy_pct:
+        floor: 20.0
+        delta: -5.0
+      parse_success_rate:
+        floor: 0.90
+        delta: -0.05
+
   aerospace:
     path: data/aerospace_requirements.csv
     suite: fast

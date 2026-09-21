@@ -6,8 +6,9 @@ Two families:
   geometry alone - silhouette on the 2-D layout, noise rate, cluster count.
 - **Extrinsic** (only when the upload carries ground-truth group labels in the
   `module` column): how well the clusters match the known grouping - Adjusted Rand
-  Index, Normalized Mutual Information, homogeneity / completeness / V-measure, and
-  cluster purity (surfaced as "accuracy").
+  Index, Normalized Mutual Information, homogeneity / completeness / V-measure,
+  cluster purity (surfaced as "accuracy"), Hungarian-matched accuracy, and a
+  confusion matrix.
 
 For a labelled dataset (e.g. the UAV-FMS sets, where `module` is the true
 subsystem) the extrinsic block is the real "accuracy". For unlabelled user data
@@ -83,6 +84,12 @@ def compute_metrics(
             by_cluster.setdefault(int(cid), Counter())[t] += 1
         purity = sum(c.most_common(1)[0][1] for c in by_cluster.values()) / len(cl)
 
+        # Hungarian-matched accuracy: optimal cluster→group 1-to-1 assignment
+        hung_acc = _hungarian_accuracy(cl, tr)
+
+        # Confusion matrix: rows=clusters (sorted), cols=true groups (sorted alpha)
+        conf_matrix, cluster_ids, group_names = _confusion_matrix(cl, tr)
+
         out.update({
             "has_ground_truth": True,
             "n_true_groups": int(len(set(tr.tolist()))),
@@ -92,7 +99,69 @@ def compute_metrics(
             "completeness": round(float(completeness), 4),
             "v_measure": round(float(v_measure), 4),
             "purity_pct": round(100.0 * purity, 2),
-            "accuracy_pct": round(100.0 * purity, 2),  # purity, surfaced as "accuracy"
+            "accuracy_pct": round(100.0 * purity, 2),  # purity alias, kept for compat
+            "hungarian_accuracy_pct": round(100.0 * hung_acc, 2),
+            "confusion_matrix_rows": conf_matrix,
+            "confusion_matrix_cluster_ids": cluster_ids,
+            "confusion_matrix_group_names": group_names,
         })
 
     return out
+
+
+def _hungarian_accuracy(
+    cluster_labels: np.ndarray,
+    true_labels: np.ndarray,
+) -> float:
+    """Compute optimal cluster→group matched accuracy via Hungarian algorithm.
+
+    Each predicted cluster is assigned to exactly one true group (1-to-1).
+    The total correctly assigned points divided by total clustered points is
+    the Hungarian accuracy — stricter than purity which allows many-to-one.
+    Returns 0.0 if fewer than 2 clusters or groups exist.
+    """
+    try:
+        from scipy.optimize import linear_sum_assignment
+    except ImportError:
+        return 0.0
+
+    cluster_ids = sorted(set(int(c) for c in cluster_labels))
+    group_ids = sorted(set(str(t) for t in true_labels))
+    if len(cluster_ids) < 2 or len(group_ids) < 1:
+        return 0.0
+
+    cid_index = {c: i for i, c in enumerate(cluster_ids)}
+    gid_index = {g: j for j, g in enumerate(group_ids)}
+
+    # Build cost matrix (negated counts so linear_sum_assignment minimises)
+    cost = np.zeros((len(cluster_ids), len(group_ids)), dtype=np.int64)
+    for c, t in zip(cluster_labels.tolist(), true_labels.tolist()):
+        cost[cid_index[int(c)], gid_index[str(t)]] += 1
+
+    row_ind, col_ind = linear_sum_assignment(-cost)
+    matched = int(cost[row_ind, col_ind].sum())
+    return matched / max(len(cluster_labels), 1)
+
+
+def _confusion_matrix(
+    cluster_labels: np.ndarray,
+    true_labels: np.ndarray,
+) -> tuple[list[list[int]], list[int], list[str]]:
+    """Return confusion matrix as list-of-lists (cluster rows × true-group columns).
+
+    Returns:
+        matrix: list[list[int]] — counts, rows = sorted cluster ids, cols = sorted group names
+        cluster_ids: list[int] — row labels
+        group_names: list[str] — column labels
+    """
+    cluster_ids = sorted(set(int(c) for c in cluster_labels))
+    group_names = sorted(set(str(t) for t in true_labels))
+
+    cid_index = {c: i for i, c in enumerate(cluster_ids)}
+    gid_index = {g: j for j, g in enumerate(group_names)}
+
+    matrix = [[0] * len(group_names) for _ in cluster_ids]
+    for c, t in zip(cluster_labels.tolist(), true_labels.tolist()):
+        matrix[cid_index[int(c)]][gid_index[str(t)]] += 1
+
+    return matrix, cluster_ids, group_names

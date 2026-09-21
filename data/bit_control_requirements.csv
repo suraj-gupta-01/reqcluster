@@ -1,0 +1,101 @@
+id,text,module
+REQ_001,"WHEN system initialization begins, the software shall execute the Power-On Built-In Test before enabling application outputs.",Built-In Test (BIT)
+REQ_002,"WHILE the Power-On Built-In Test is active, the software shall verify volatile memory using the configured memory-test sequence.",Built-In Test (BIT)
+REQ_003,"WHILE the Power-On Built-In Test is active, the software shall verify processor health using the configured processor self-test.",Built-In Test (BIT)
+REQ_004,"WHEN configuration data is loaded during initialization, the software shall verify its integrity using the stored checksum and schema identifier.",Built-In Test (BIT)
+REQ_005,"WHEN every mandatory startup test completes successfully, the software shall declare the Power-On Built-In Test result as PASS.",Built-In Test (BIT)
+REQ_006,"WHEN a mandatory startup test fails or exceeds its completion timeout, the software shall declare the Power-On Built-In Test result as FAIL.",Built-In Test (BIT)
+REQ_007,"WHILE the system is in an operational state, the software shall execute the Continuous Built-In Test once per health-monitoring cycle.",Built-In Test (BIT)
+REQ_008,"WHILE Continuous Built-In Test is active, the software shall assess each safety-significant sensor for freshness, range, validity, and plausibility.",Built-In Test (BIT)
+REQ_009,"WHILE actuator commands are enabled, the software shall compare commanded actuator state with qualified position or current feedback.",Built-In Test (BIT)
+REQ_010,"WHEN the communication supervision timer expires without a valid frame, the software shall identify the associated external interface as unavailable.",Built-In Test (BIT)
+REQ_011,"WHEN the age of a required sample exceeds its source-specific freshness threshold, the software shall classify the sample as stale.",Built-In Test (BIT)
+REQ_012,"WHEN a monitored parameter violates its configured boundary for the persistence interval, the software shall identify an out-of-range condition.",Built-In Test (BIT)
+REQ_013,"WHEN a protected arithmetic operation exceeds the representable numeric range, the software shall record an arithmetic-overflow fault.",Built-In Test (BIT)
+REQ_014,"WHEN a divisor magnitude is below the configured minimum, the software shall prevent the division operation and record a divide-by-zero fault.",Built-In Test (BIT)
+REQ_015,The software shall maintain a bit-mapped Built-In Test summary containing the severity and confirmation state of every monitored test.,Built-In Test (BIT)
+REQ_016,The software shall maintain an independent status indication for each detectable failure mode without clearing unrelated indications.,Built-In Test (BIT)
+REQ_017,"WHEN a suspected fault becomes confirmed, the software shall timestamp the confirmation using the monotonic system time.",Built-In Test (BIT)
+REQ_018,"WHEN a fault becomes active, the software shall log its code, operating mode, confirmation basis, and relevant snapshot data.",Built-In Test (BIT)
+REQ_019,"WHEN confirmed recovery evidence remains valid for the complete clearing interval, the software shall log the corresponding fault-clear event.",Built-In Test (BIT)
+REQ_020,"WHEN the Built-In Test reporting interval expires or critical status changes, the software shall publish the current test result to external interfaces.",Built-In Test (BIT)
+REQ_021,"WHERE initiated maintenance testing is supported, the software shall start Initiated Built-In Test following an authenticated command in a permitted state.",Built-In Test (BIT)
+REQ_022,"WHEN Initiated Built-In Test terminates, the software shall report completed, aborted, passed, failed, or inconclusive status.",Built-In Test (BIT)
+REQ_023,"WHILE actuation is active, a safety transition is pending, or execution margin is insufficient, the software shall inhibit Initiated Built-In Test.",Built-In Test (BIT)
+REQ_024,"WHEN a fault becomes confirmed, the software shall classify it using the configured safety classification and failure-effect criteria.",Built-In Test (BIT)
+REQ_025,"WHEN a critical fault becomes confirmed, the software shall enter fail-safe mode within the same processing cycle.",Built-In Test (BIT)
+REQ_026,"WHEN a sensor sample is received, the software shall qualify its validity before admission to the current-cycle monitored data set.",Fault Detection and Health Monitoring
+REQ_027,"WHEN redundant qualified measurements exceed the mode-dependent disagreement tolerance for the persistence interval, the software shall declare sensor disagreement.",Fault Detection and Health Monitoring
+REQ_028,"WHILE an actuator is commanded, the software shall evaluate feedback validity using qualified position, current, and communication evidence.",Fault Detection and Health Monitoring
+REQ_029,"WHILE the system is operational, the software shall calculate processor utilization over the configured averaging window excluding idle and startup intervals.",Fault Detection and Health Monitoring
+REQ_030,"WHEN task completion exceeds its allocated execution budget for the configured number of cycles, the software shall declare a task-overrun condition.",Fault Detection and Health Monitoring
+REQ_031,"WHEN the watchdog service deadline is missed or a watchdog reset cause is detected, the software shall declare a watchdog-timeout event.",Fault Detection and Health Monitoring
+REQ_032,"WHEN controlled initialization begins, the software shall reset transient fault counters without altering retained maintenance history.",Fault Detection and Health Monitoring
+REQ_033,"WHEN a confirmed fault occurrence is recorded, the software shall increment its saturating cumulative occurrence counter.",Fault Detection and Health Monitoring
+REQ_034,"WHEN valid recovery evidence satisfies the configured hysteresis and duration criteria, the software shall clear the associated transient fault.",Fault Detection and Health Monitoring
+REQ_035,"WHILE a critical fault remains latched, the software shall retain its indication until an authorized reset is accepted after the initiating condition is absent.",Fault Detection and Health Monitoring
+REQ_036,"WHEN the health-reporting interval expires, the software shall generate a coherent snapshot of mode, Built-In Test summary, active faults, and resource status.",Fault Detection and Health Monitoring
+REQ_037,"WHEN a confirmed fault permits continued operation with approved limitations, the software shall indicate degraded-mode operation.",Fault Detection and Health Monitoring
+REQ_038,"WHEN a maintenance-significant fault activates, clears, or changes severity, the software shall report the transition to the maintenance interface.",Fault Detection and Health Monitoring
+REQ_039,"WHEN sufficient diagnostic evidence is available, the software shall isolate the confirmed fault to the lowest supported replaceable or diagnosable subsystem.",Fault Detection and Health Monitoring
+REQ_040,"WHEN fault-history storage reaches its configured capacity, the software shall remove the oldest non-latched entry before storing the new event.",Fault Detection and Health Monitoring
+REQ_041,"WHEN a control cycle begins, the software shall calculate control error from the selected reference and qualified feedback for the active mode.",Control Algorithm
+REQ_042,"WHEN the periodic control trigger occurs, the software shall execute one non-overlapping instance of the control algorithm.",Control Algorithm
+REQ_043,"WHEN sensor qualification completes, the software shall admit only valid, fresh, in-range, and source-consistent measurements to control calculations.",Control Algorithm
+REQ_044,"WHEN an input sample fails qualification, the software shall exclude it from control-state updates and record the rejection reason.",Control Algorithm
+REQ_045,"WHEN a non-critical input becomes invalid and a mode-specific substitute is configured, the software shall apply the substitute and indicate substitution.",Control Algorithm
+REQ_046,"WHEN qualified control error is available, the software shall calculate the proportional contribution using the scheduled gain for the operating point.",Control Algorithm
+REQ_047,"WHEN the integration step is due, the software shall calculate the integral contribution from accumulated qualified error and the configured sample interval.",Control Algorithm
+REQ_048,"WHEN filtered error change is available, the software shall calculate the derivative contribution using the configured time constant and noise-limiting filter.",Control Algorithm
+REQ_049,"WHEN proportional, integral, and derivative contributions are available, the software shall combine their independently limited values into a preliminary command.",Control Algorithm
+REQ_050,"WHEN the active operating mode changes, the software shall select the validated control-gain set associated with the new mode.",Control Algorithm
+REQ_051,"WHEN the unsaturated and applied commands indicate further integrator windup, the software shall constrain the integral state using the configured anti-windup method.",Control Algorithm
+REQ_052,"WHEN a preliminary command exceeds the directional slew constraint, the software shall limit its change to the applicable rate boundary.",Control Algorithm
+REQ_053,"WHEN control-law computation completes, the software shall constrain the preliminary command to the configured output saturation limits.",Control Algorithm
+REQ_054,"WHILE a command value is propagated through the control path, the software shall enforce the applicable lower and upper numeric boundaries.",Control Algorithm
+REQ_055,"WHEN an approved gain-scheduling boundary is reached, the software shall activate the validated gain set after continuity checks pass.",Control Algorithm
+REQ_056,"WHERE controller tuning is configurable, the software shall maintain parameter units, ranges, defaults, and compatibility metadata in the controlled parameter set.",Control Algorithm
+REQ_057,"WHEN a validated parameter update reaches a control-cycle boundary, the software shall activate the complete authorized parameter set atomically.",Control Algorithm
+REQ_058,"WHEN controller parameters are initialized or updated, the software shall verify their signature, version, length, range, and schema compatibility.",Control Algorithm
+REQ_059,"WHEN control processing initializes, the software shall set controller states to mode-specific values that avoid an uncontrolled command discontinuity.",Control Algorithm
+REQ_060,"WHEN an authorized controller-reset command is accepted, the software shall reset controller states to bumpless values consistent with current reference and feedback.",Control Algorithm
+REQ_061,"WHEN successful initialization completes without an enable authorization, the software shall enter STANDBY as the default non-actuating mode.",State Management
+REQ_062,"WHEN control prerequisites and output authorization become valid, the software shall make ACTIVE mode available for transition.",State Management
+REQ_063,"WHEN continued control is permitted with approved functional limitations, the software shall make DEGRADED mode available for transition.",State Management
+REQ_064,"WHEN a confirmed critical condition requires safe behavior, the software shall make FAIL-SAFE mode the highest-priority transition target.",State Management
+REQ_065,"WHEN an enable command is authorized and all activation guards are satisfied, the software shall transition from STANDBY to ACTIVE.",State Management
+REQ_066,"WHEN a confirmed non-critical fault maps to an approved degraded capability, the software shall transition to DEGRADED mode.",State Management
+REQ_067,"WHEN a confirmed critical fault requires safe operation, the software shall transition to FAIL-SAFE ahead of non-safety transition requests.",State Management
+REQ_068,"WHEN a mode transition completes, the software shall record the previous mode, new mode, initiating event, result, and monotonic timestamp.",State Management
+REQ_069,"WHEN a requested mode transition violates authorization or guard criteria, the software shall reject the request and retain the current mode.",State Management
+REQ_070,The software shall provide one authoritative operating-mode indication consistent with all completed state entry and exit actions.,State Management
+REQ_071,"WHEN control computation and authorization gating complete, the software shall generate the cycle output command from the accepted control result.",Command and Output
+REQ_072,"WHEN an output command is generated, the software shall qualify it for range, rate, freshness, numeric validity, and mode consistency before transmission.",Command and Output
+REQ_073,"WHILE the system is in FAIL-SAFE mode, the software shall inhibit every output not explicitly permitted by the safety-output configuration.",Command and Output
+REQ_074,"WHILE FAIL-SAFE operation is active, the software shall command the mode-specific safe-state values without dependence on an unqualified control result.",Command and Output
+REQ_075,"WHEN an output command is released, the software shall publish its classification as valid, substituted, held, inhibited, or safe-state.",Command and Output
+REQ_076,"WHEN an unconstrained command reaches a configured magnitude or directional boundary, the software shall report command saturation.",Command and Output
+REQ_077,"WHEN the output interface deadline approaches, the software shall complete the corresponding command update within the allocated cycle time.",Command and Output
+REQ_078,"WHILE command tracking is enabled, the software shall compare qualified feedback with the delayed commanded response over the configured observation window.",Command and Output
+REQ_079,"WHEN qualified command and feedback data are available, the software shall calculate absolute, signed, and accumulated output-error metrics.",Command and Output
+REQ_080,"WHEN required command generation, qualification, authorization, or transmission does not complete, the software shall flag an output-generation failure.",Command and Output
+REQ_081,"WHILE an operational control mode is active, the software shall execute the control algorithm at the mode-defined periodic rate without concurrent instances.",Timing and Performance
+REQ_082,"WHEN a control cycle begins, the software shall complete all control calculations before the cycle output-update deadline.",Timing and Performance
+REQ_083,"WHEN consecutive control-cycle starts are observed, the software shall calculate cycle duration using the monotonic system clock.",Timing and Performance
+REQ_084,"WHEN cycle duration exceeds its budget by the configured tolerance and persistence count, the software shall report a cycle overrun.",Timing and Performance
+REQ_085,"WHILE the system is operational, the software shall monitor average and peak processor utilization over the configured observation window.",Timing and Performance
+REQ_086,"WHEN a control cycle starts, the software shall calculate loop jitter as deviation from the scheduled periodic release time.",Timing and Performance
+REQ_087,"The software shall maintain deterministic control execution through bounded completion time, fixed operation ordering, and mode-defined data dependencies.",Timing and Performance
+REQ_088,"WHEN a qualified system-time update is accepted, the software shall synchronize time-dependent functions without propagating discontinuities from external wall-clock time.",Timing and Performance
+REQ_089,"WHEN configuration parameters are committed, the software shall store them in non-volatile memory with integrity metadata, version information, and atomic replacement.",Data Management
+REQ_090,"WHEN startup configuration data becomes available, the software shall validate it before dependent functions access the data or operational outputs are enabled.",Data Management
+REQ_091,"WHEN checksum, signature, schema, range, or cross-parameter consistency verification fails, the software shall reject the affected configuration data set.",Data Management
+REQ_092,"WHEN an authorized recovery command is accepted and the protected default set passes validation, the software shall restore factory-default parameters atomically.",Data Management
+REQ_093,"WHEN an approved configuration change is committed, the software shall update configuration-version information for compatibility assessment.",Data Management
+REQ_094,The software shall provide software-build version information from immutable metadata associated with the executing image.,Data Management
+REQ_095,"WHEN the periodic health-reporting interval expires, the software shall generate a coherent message from qualified health information.",Diagnostic and Reporting
+REQ_096,"WHEN an authenticated diagnostic request is accepted, the software shall generate the requested report without blocking safety-critical cyclic processing.",Diagnostic and Reporting
+REQ_097,"WHEN active-fault information is requested, the software shall report identifier, severity, status, occurrence count, and transition timestamps.",Diagnostic and Reporting
+REQ_098,"WHEN controller status is requested, the software shall report active mode, execution status, limiting state, substitution state, and parameter-set version.",Diagnostic and Reporting
+REQ_099,"WHEN operating-mode status is requested, the software shall report the authoritative state-machine result and the cause of the latest completed transition.",Diagnostic and Reporting
+REQ_100,"WHEN overall Built-In Test status is requested, the software shall report passed, failed, degraded, in-progress, or inconclusive from qualified test evidence.",Diagnostic and Reporting
