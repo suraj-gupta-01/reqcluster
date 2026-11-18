@@ -46,11 +46,13 @@ explicit = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = ["acceptance: black-box contract tests for the redesign"]
+addopts = "-m 'not acceptance'"
 
 [tool.ruff]
 line-length = 100
 target-version = "py312"
-extend-exclude = ["frontend", "docs/build_deck.py"]
+extend-exclude = ["frontend", "docs/pitch"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "B", "UP", "SIM"]

@@ -1,5 +1,7 @@
 """Tests for Phase 4 Human-in-the-Loop feedback service layer."""
 
+import tempfile
+
 import pytest
 import numpy as np
 import sys
@@ -16,7 +18,7 @@ from core.feedback_bridge import detect_constraints_conflicts, generate_constrai
 from llm_services.feedback_analyst import FeedbackAnalyst
 
 # In-memory test database
-TEST_DATABASE_URL = "sqlite:///./test_feedback_service.db"
+TEST_DATABASE_URL = f"sqlite:///{tempfile.mkdtemp()}/test_feedback_service.db"
 engine = create_engine(TEST_DATABASE_URL, connect_args={"check_same_thread": False})
 TestSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

@@ -5,7 +5,7 @@ FastAPI + React app: upload requirements -> embed (SBERT) -> UMAP -> HDBSCAN clu
 ## Commands
 
 ```bash
-uv sync --extra all                 # Python 3.12 env (.venv); CPU torch by default
+uv sync --extra all --extra cpu     # Python 3.12 env (.venv); use --extra gpu for CUDA 12.6 torch
 uv run pytest -q                    # backend tests
 uv run ruff check backend tests     # lint
 cd frontend && npm install && npm run build && npm run lint
@@ -13,7 +13,6 @@ cd frontend && npm install && npm run build && npm run lint
 uv run python -m eval --help        # evaluation harness
 ```
 
-GPU: `./run-gpu.sh` installs CUDA torch into the venv.
 Optional extras (all lazily imported with fallbacks): `fast` hnswlib, `nlp` spaCy, `charts` matplotlib, `postgres`, `redis`, `eval`.
 
 ## Code navigation: CodeGraph
@@ -41,6 +40,7 @@ Rules:
 ## Engineering rules
 
 Karpathy guidelines are installed (`andrej-karpathy-skills` plugin): think before coding, simplicity first, surgical changes, goal-driven verification.
+- Portable: must run on Windows and Linux, CPU and NVIDIA GPU. Use `pathlib` (no hard-coded `/` or `\`), `os.replace` for atomic writes, threads not `fork`, Python entrypoints (`uv run ...`) instead of shell-only scripts. Device is auto-detected (cuda > cpu) and overridable via config.
 - Every bug fix ships with a test that failed before the fix.
 - Keep the HTTP API contract in `backend/` in sync with `frontend/src/utils/api.js`.
 - Never commit `.env`, `*.db`, model caches, or `.codegraph/`.

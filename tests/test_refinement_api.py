@@ -1,5 +1,7 @@
 """Tests for Phase 3 refinement API endpoints."""
 
+import tempfile
+
 import pytest
 import sys
 import os
@@ -17,7 +19,7 @@ from main import app
 
 
 # In-memory test database
-TEST_DATABASE_URL = "sqlite:///./test_refinement.db"
+TEST_DATABASE_URL = f"sqlite:///{tempfile.mkdtemp()}/test_refinement.db"
 engine = create_engine(TEST_DATABASE_URL, connect_args={"check_same_thread": False})
 TestSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

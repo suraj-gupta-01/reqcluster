@@ -1,5 +1,8 @@
 {
   "enabledPlugins": {
     "andrej-karpathy-skills@karpathy-skills": true
+  },
+  "permissions": {
+    "deny": ["Agent(general-purpose)"]
   }
 }
