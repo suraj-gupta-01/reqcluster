@@ -14,6 +14,11 @@ Workflow:
 4. Verify: run the spec's test command, else `uv run pytest -q -x <nearest test file>`. Frontend: `cd frontend && npm run build`. Fix until green. Never weaken or delete a test to pass it; if a test encodes the old bug, update its expectation and say so.
 5. Run `codegraph sync -q` after edits.
 
+Token discipline (each tool call resends your whole context, so fewer, smaller calls):
+- Spec gives line ranges: Read only those (`offset`/`limit`). Never Read a whole file over 200 lines. Never re-Read after Edit.
+- Batch independent Edits/Reads in one turn.
+- Pipe noisy output: `pytest -q 2>&1 | tail -15`, `npm run build 2>&1 | tail -10`.
+
 Rules:
 - Smallest complete change. No speculative options, wrappers, or "for later" code.
 - Keep validation at trust boundaries, error handling that prevents data loss, and security checks.
