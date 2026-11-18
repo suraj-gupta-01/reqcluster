@@ -1,6 +1,6 @@
 import numpy as np
 from typing import Tuple, Optional
-import hdbscan
+from sklearn.cluster import HDBSCAN
 
 
 def cluster_requirements(
@@ -25,11 +25,10 @@ def cluster_requirements(
     actual_min_samples = min(min_samples, min_cluster_size - 1)
     actual_min_samples = max(1, actual_min_samples)
 
-    clusterer = hdbscan.HDBSCAN(
+    clusterer = HDBSCAN(
         min_cluster_size=min_cluster_size,
         min_samples=actual_min_samples,
         metric=metric,
-        prediction_data=True,
         cluster_selection_method="eom",
     )
 

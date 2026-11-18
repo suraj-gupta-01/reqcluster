@@ -1,36 +1,57 @@
 [project]
 name = "reqcluster"
-version = "0.1.0"
-description = "Add your description here"
+version = "0.2.0"
+description = "Requirement clustering, dependency analysis and LLM refinement for systems engineering"
 readme = "README.md"
-requires-python = ">=3.10.11"
+requires-python = ">=3.12"
 dependencies = [
-    "fastapi==0.111.0",
-    "hdbscan==0.8.38.post1",
-    "numpy==1.26.4",
-    "openpyxl==3.1.2",
-    "pandas==2.2.2",
-    "pydantic==2.7.1",
-    "pytest>=9.0.3",
-    "python-multipart==0.0.9",
-    "scikit-learn==1.5.0",
-    "sentence-transformers==3.0.1",
-    "sqlalchemy==2.0.30",
-    "umap-learn==0.5.6",
-    "uvicorn[standard]==0.30.1",
-    # PostgreSQL driver (bottleneck #1)
-    "psycopg2-binary>=2.9.9",
-    # Redis client for embedding cache (bottleneck #3)
-    "redis>=5.0.0",
-    # PDF clustering-report export (with charts)
-    "reportlab>=4.0.0",
-    "matplotlib>=3.7.0",
-    # Approximate-kNN similarity graph (O(N log N) instead of O(N^2))
-    "hnswlib>=0.8.0",
-    # NLP: spaCy for dependency-parse-based artifact extraction (DP5 hardening).
-    # The en_core_web_sm model (~13 MB) is a separate one-time download:
-    #     python -m spacy download en_core_web_sm
-    # It is not a PyPI package, so it cannot be pinned here. Without it the
-    # extractor falls back to its regex path rather than failing.
-    "spacy>=3.7.0",
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "python-multipart>=0.0.18",
+    "pydantic>=2.9",
+    "sqlalchemy>=2.0.36",
+    "numpy>=2.0",
+    "pandas>=2.2.3",
+    "openpyxl>=3.1.5",
+    "scikit-learn>=1.5",          # also provides HDBSCAN (sklearn.cluster)
+    "umap-learn>=0.5.7",
+    "sentence-transformers>=3.3",
+    "torch>=2.4",                 # CPU wheel by default; run-gpu.sh swaps in CUDA
+    "reportlab>=4.2",             # PDF export (imported at module load)
 ]
+
+[project.optional-dependencies]
+# Each extra is lazily imported with a fallback, so the app runs without it.
+fast = ["hnswlib>=0.8.0"]                 # ANN similarity graph; falls back to exact kNN
+nlp = ["spacy>=3.8"]                      # dependency-parse artifacts; falls back to regex
+charts = ["matplotlib>=3.9"]              # charts inside the PDF report
+postgres = ["psycopg2-binary>=2.9.10"]    # DATABASE_URL=postgresql://...
+redis = ["redis>=5.2"]                    # REDIS_URL embedding cache
+eval = ["pyyaml>=6.0"]
+all = ["reqcluster[fast,nlp,charts,postgres,redis,eval]"]
+
+[dependency-groups]
+dev = ["pytest>=8.3", "pytest-cov>=6.0", "ruff>=0.8", "pyyaml>=6.0"]
+
+[tool.uv]
+default-groups = ["dev"]
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = ["frontend", "docs/build_deck.py"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "B", "UP", "SIM"]
+ignore = ["E501"]
