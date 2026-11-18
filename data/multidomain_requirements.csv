@@ -1,0 +1,1205 @@
+id,text,domain,module
+MD-0001,Doors shall close within 5 s after the close command.,rail,Door Control
+MD-0002,A wheel speed sensor plausibility error shall be detected by the ABS function and keep the data consistent after a reset.,automotive,Braking
+MD-0003,"When an alarm is not acknowledged, the alarm escalation logic shall validate the signal quality within 2 s in accordance with IEC 81001-5-1.",medical,Alarms
+MD-0004,"When a handover is performed, the communication manager shall report the section status with a worst-case latency of 10 ms.",rail,Rail Communications
+MD-0005,The point controller shall lock the points within 4 s.,rail,Interlocking
+MD-0006,"When the syringe is empty and the programmed rate exceeds the hard limit, the pump motor driver shall verify the entered dose against the drug library, deliver the programmed volume, and, where applicable, additionally record the outcome, to reduce the residual risk within 3.7 s.",medical,Infusion Dosing
+MD-0007,"When the sensor reports an out of range value, the ECG front end will detect a lead-off condition and shall remain functional in degraded mode.",medical,Sensor Acquisition
+MD-0008,"The electronic stability control shall release the brake caliper pressure if the vehicle is stopped on a gradient, to maintain the safe state.",automotive,Braking
+MD-0009,"When any cell voltage exceeds 4.25 V and an isolation fault is detected, the battery management system shall derate the charging power, estimate the state of charge, and, where applicable, additionally flag the result, to meet the ASIL target.",automotive,Battery Management
+MD-0010,"When the train is stopped at the platform and the train is stopped at the platform, the door controller must detect an obstacle, close the doors, and, where applicable, also record the outcome, to maintain a safe state with a force of less than 122 N.",rail,Door Control
+MD-0011,The SpO2 value must be reported with an accuracy of +/- 2 %.,medical,Sensor Acquisition
+MD-0012,The onboard ETCS unit shall release the route after 72 s of time delay.,rail,Interlocking
+MD-0013,The charging power derated at 44 degC.,automotive,Battery Management
+MD-0014,The headlamps shall be switched by the DTC memory and keep the data consistent after a reset.,automotive,Diagnostics OBD
+MD-0015,The communication manager shall buffer the messages and log any detected fault with a timestamp.,rail,Rail Communications
+MD-0016,The navigation application shall monitor the cell temperature.,automotive,Battery Management
+MD-0017,The trackside network shall transmit safety messages and authenticate the peer in accordance with EN 50126.,rail,Rail Communications
+MD-0018,Log storage: time stamp every log entry.,medical,Audit Logging
+MD-0019,The trackside RBC shall revoke the authority and log any detected fault with a timestamp.,rail,Movement Authority
+MD-0020,Mains interference shall be attenuated by at least 40 dB.,medical,Sensor Acquisition
+MD-0021,The on-screen keyboard will accept numeric input with a font size of at least 11 pt and keep the data consistent after a power cycle.,medical,Medical UI
+MD-0022,"The HL7 gateway shall switch to battery operation for at least 3.3 hours, as required by IEC 60601-1.",medical,Power Management
+MD-0023,The DTC memory shall respond the UDS service requests and shall remain functional in degraded mode.,automotive,Diagnostics OBD
+MD-0024,"When the vehicle speed exceeds 130 km/h and a torque sensor fault is detected, the EPS controller will reduce the steering assistance, hold the road wheel angle, and, where applicable, also flag the result, to maintain the safe state.",automotive,Steering
+MD-0025,Exported data shall be anonymised in accordance with applicable privacy regulations.,medical,Patient Data Privacy
+MD-0026,The axle counter shall report the section status within 478 ms.,rail,Train Detection
+MD-0027,"When the train passes the counting point, the evaluator unit shall evaluate the wheel sensor pulses and report the fault status over the data bus.",rail,Train Detection
+MD-0028,The wiper shall adapt its interval to rain sensor output.,automotive,Body Control
+MD-0029,The wheel sensor pulses evaluated with a latency below 232 ms.,rail,Rail Communications
+MD-0030,Maintenance actions logged within 26 s.,rail,Rail Maintenance
+MD-0031,Rear camera video shall be displayed within 2 s of selecting reverse gear.,automotive,Infotainment
+MD-0032,"When the tester requests the VIN, the OBD-II interface will respond the UDS service requests and set the corresponding diagnostic flag.",automotive,Diagnostics OBD
+MD-0033,The battery management system will open the high voltage contactors and shall remain functional in degraded mode.,automotive,Battery Management
+MD-0034,"When the point detection is lost, the point controller shall release the route within 4 s and shall remain functional in degraded mode.",rail,Interlocking
+MD-0035,"When the odometer detects wheel slip, the onboard computer must measure the travelled distance with an error below 2.7 % in accordance with IEEE 1474.1.",rail,Speed Supervision
+MD-0036,The network interface will calibrate the pressure sensor with a resolution of 17 bit with a worst-case latency of 16 ms.,medical,Sensor Acquisition
+MD-0037,"When an occlusion is detected, the pump motor driver shall escalate the unacknowledged alarm in accordance with IEC 81001-5-1.",medical,Infusion Dosing
+MD-0038,Monitoring function: display the alarm message.,medical,Alarms
+MD-0039,The inspection shall be scheduled by the interlocking within 52 s in accordance with EN 50129.,rail,Rail Maintenance
+MD-0040,"The communication manager must switch to the redundant channel while a handover is performed, to avoid conflicting movements.",rail,Rail Communications
+MD-0041,The alarm annunciator shall silence the audible signal.,medical,Alarms
+MD-0042,An obstacle shall be detected by the platform screen door system at a speed below 3.7 km/h and notify the supervisor of any fault.,rail,Door Control
+MD-0043,The infusion rate shall be calculated from the concentration and the prescribed dose.,medical,Infusion Dosing
+MD-0044,The trackside RBC shall issue a movement authority and calculate the permitted distance and notify the supervisor of any fault.,rail,Movement Authority
+MD-0045,To the redundant channel shall be switched by the communication manager with a latency below 254 ms in accordance with EN 50159.,rail,Rail Communications
+MD-0046,"When a wheel sensor fails, the axle counter shall supervise the sensor health with a shunt sensitivity of 0.7 ohm in accordance with EN 50129.",rail,Train Detection
+MD-0047,Passenger information shall be updated within 10 s of a schedule change.,rail,Timetable
+MD-0048,Critical settings shall require a two step confirmation.,medical,Medical UI
+MD-0049,Exported data sets shall be anonymised by the dose calculation module.,medical,Infusion Dosing
+MD-0050,User profile data will be stored encrypted.,automotive,Infotainment
+MD-0051,The OBD-II interface will hold the road wheel angle in accordance with ISO 26262-5.,automotive,Diagnostics OBD
+MD-0052,The body control module shall operate the windshield wipers.,automotive,Body Control
+MD-0053,"When the point detection is lost and a route request is received, the signal controller shall release the route, prevent conflicting routes, and, where applicable, additionally flag the result, to avoid conflicting movements.",rail,Interlocking
+MD-0054,The smartphone integration service must store the user profile with 23 ms of audio latency and shall remain functional in degraded mode.,automotive,Infotainment
+MD-0055,The drug library shall be validated before it is activated.,medical,Infusion Dosing
+MD-0056,The alarm manager will inhibit the nuisance alarms after 103 s.,medical,Alarms
+MD-0057,The lane keeping assist shall limit the assist torque within 8 ms in accordance with ISO 21434.,automotive,Steering
+MD-0058,The speed supervision function shall display the permitted speed.,rail,Speed Supervision
+MD-0059,Access to the records shall be restricted by the SpO2 sensor driver at a rate of 639 Hz and keep the data consistent after a power cycle.,medical,Sensor Acquisition
+MD-0060,The speed supervision function shall supervise the train speed and shall remain functional in degraded mode.,rail,Speed Supervision
+MD-0061,Traction inhibited every 4587 operating hours.,rail,Rail Maintenance
+MD-0062,"The audio manager will apply the hydraulic brake pressure demand if the user changes the display language, to meet the ASIL target.",automotive,Infotainment
+MD-0063,The peer shall be authenticated by the communication manager within 437 ms in accordance with EN 50159.,rail,Rail Communications
+MD-0064,"The touchscreen must highlight the changed parameter within 2.3 s, as required by IEC 62304.",medical,Medical UI
+MD-0065,The lane keeping assist must provide the steering wheel angle signal and reduce the steering assistance with an accuracy of +/-2.0 degrees.,automotive,Steering
+MD-0066,Object tracks shall be maintained for at least 500 ms after the target leaves the field of view.,automotive,ADAS Perception
+MD-0067,"When the patient parameter violates the alarm limit, the alarm annunciator will silence the audible signal in accordance with IEC 62366.",medical,Alarms
+MD-0068,The ABS function will detect a wheel speed sensor plausibility error and limit the wheel slip ratio.,automotive,Braking
+MD-0069,"When a torque sensor fault is detected, the steering angle sensor will hold the road wheel angle in accordance with ISO 21434.",automotive,Steering
+MD-0070,The audit logger shall store the event history and shall remain functional in degraded mode.,medical,Audit Logging
+MD-0071,Sample the analogue signal with a resolution of 18 bit.,medical,Sensor Acquisition
+MD-0072,The speed supervision function shall authenticate the peer within 386 ms and notify the supervisor of any fault.,rail,Rail Communications
+MD-0073,The charge controller must monitor the cell temperature and limit the discharge current.,automotive,Battery Management
+MD-0074,"When the radio link is interrupted, the onboard modem shall switch to the redundant channel within 62 ms in accordance with IEEE 1474.1.",rail,Rail Communications
+MD-0075,The head unit shall mute the media playback at a minimum frame rate of 25 fps.,automotive,Infotainment
+MD-0076,The battery management system must verify the package signature and estimate the state of charge with a worst-case latency of 82 ms.,automotive,Battery Management
+MD-0077,"When the user changes the display language, the audio manager shall pair a Bluetooth device at a minimum frame rate of 32 fps.",automotive,Infotainment
+MD-0078,The passenger door must monitor the door closed and locked status at a speed below 4.3 km/h.,rail,Door Control
+MD-0079,"When an alarm is not acknowledged and the patient parameter violates the alarm limit, the patient record service shall display the alarm message, latch the technical alarm, and, where applicable, additionally flag the result, to reduce the residual risk.",medical,Alarms
+MD-0080,The axle counter will trigger an emergency brake application and shall remain functional in degraded mode.,rail,Speed Supervision
+MD-0081,The network interface shall filter mains interference and shall remain functional in degraded mode.,medical,Sensor Acquisition
+MD-0082,"When the radar reports a low confidence target, the smartphone integration service will estimate the state of charge within 47 ms and log any detected fault with a timestamp.",automotive,ADAS Perception
+MD-0083,The body control module shall disable the central locking within 405 ms and set the corresponding diagnostic flag.,automotive,Body Control
+MD-0084,"When a torque sensor fault is detected, the EPS controller shall provide the steering wheel angle signal with an accuracy of +/-2.9 degrees and report the fault status on the CAN bus.",automotive,Steering
+MD-0085,"When the dispatcher modifies a route, the dispatcher interface shall publish the passenger information and notify the supervisor of any fault.",rail,Timetable
+MD-0086,The diagnostic manager must derate the charging power.,automotive,Diagnostics OBD
+MD-0087,The train schedule must be generated by the maintenance system.,rail,Rail Maintenance
+MD-0088,The time to collision shall be estimated by the camera perception module in accordance with AUTOSAR R20-11.,automotive,ADAS Perception
+MD-0089,"The dose calculation module shall inhibit the nuisance alarms within 3.8 s, as required by IEC 81001-5-1.",medical,Infusion Dosing
+MD-0090,"When a wheel sensor fails, the diagnostic recorder will evaluate the wheel sensor pulses with a shunt sensitivity of 0.5 ohm in accordance with EN 50129.",rail,Train Detection
+MD-0091,Mains interference filtered at a rate of 205 Hz.,medical,Sensor Acquisition
+MD-0092,"When a handover is performed, the GSM-R radio shall supervise the sensor health with a latency below 274 ms and log any detected fault with a timestamp.",rail,Rail Communications
+MD-0093,The body control module shall lock all vehicle doors and operate the windshield wipers at 1.3 Hz.,automotive,Body Control
+MD-0094,The battery charger shall time stamp every log entry and detect a lead-off condition at a rate of 54 Hz.,medical,Sensor Acquisition
+MD-0095,Patient identifiers shall never be written to the diagnostic log.,medical,Patient Data Privacy
+MD-0096,"The lane keeping assist shall hold the road wheel angle with an accuracy of +/-1.4 degrees, as required by ISO 26262-5.",automotive,Steering
+MD-0097,The emergency braking curve shall be calculated by the odometer in accordance with EN 50128.,rail,Speed Supervision
+MD-0098,"The secure bootloader must download the update package while the signature verification fails, to meet the ASIL target.",automotive,OTA Update
+MD-0099,"The monitoring function will display the alarm message while the patient parameter violates the alarm limit, to maintain basic safety.",medical,Alarms
+MD-0100,The interlocking shall extend the end of authority in accordance with EN 50128.,rail,Interlocking
+MD-0101,The lane keeping assist must reduce the steering assistance and set the corresponding diagnostic flag.,automotive,Steering
+MD-0102,"When the tester requests the VIN, the DTC memory will illuminate the malfunction indicator lamp over a period of 34 driving cycles and log any detected fault with a timestamp.",automotive,Diagnostics OBD
+MD-0103,The ECU shall respond to a UDS request within 50 ms.,automotive,Diagnostics OBD
+MD-0104,The technical alarm will be latched by the monitoring function.,medical,Alarms
+MD-0105,The point detection must be verified by the interlocking with a safety integrity level of SIL 2.1 and notify the supervisor of any fault.,rail,Interlocking
+MD-0106,The inspection shall be scheduled by the condition monitoring unit in accordance with IEEE 1474.1.,rail,Rail Maintenance
+MD-0107,Lead vehicle distance shall be estimated with an error below 2 % up to 80 m.,automotive,ADAS Perception
+MD-0108,The trackside RBC shall reject an invalid position report with a worst-case latency of 134 ms.,rail,Movement Authority
+MD-0109,Traction inhibited within 1.7 s.,rail,Movement Authority
+MD-0110,The audio manager will stream the audio content.,automotive,Infotainment
+MD-0111,"When an object enters the monitored corridor, the sensor fusion function shall control the interior lighting with a false positive rate below 1.2 per hour.",automotive,ADAS Perception
+MD-0112,On loss of communication for 20 s the train shall brake to a standstill.,rail,Rail Communications
+MD-0113,"When the user changes the display language, the navigation application shall mute the media playback and keep the data consistent after a reset.",automotive,Infotainment
+MD-0114,Revoke the authority.,rail,Movement Authority
+MD-0115,The signal quality validated within 69 ms.,medical,Sensor Acquisition
+MD-0116,The flow rate shall be calibrated by the pump motor driver within 4.0 s.,medical,Infusion Dosing
+MD-0117,The system must prevent charging when the cell temperature is below -10 degC.,automotive,Battery Management
+MD-0118,"When the vehicle speed exceeds 130 km/h, the EPS controller shall hold the road wheel angle with an accuracy of +/-1.6 degrees and set the corresponding diagnostic flag.",automotive,Steering
+MD-0119,"When a fault is confirmed in three consecutive driving cycles, the thermal management function shall respond the UDS service requests and log any detected fault with a timestamp.",automotive,Diagnostics OBD
+MD-0120,Diagnostic data shall be accessible only after security access.,automotive,Diagnostics OBD
+MD-0121,The previous software version rolled back within 33 minutes.,automotive,OTA Update
+MD-0122,Updates shall not start unless the vehicle is stationary.,automotive,OTA Update
+MD-0123,The radio link shall be established by the route manager.,rail,Rail Communications
+MD-0124,"When the driver does not react to the warning, the braking curve calculator shall apply the service brake and keep the data consistent after a restart.",rail,Speed Supervision
+MD-0125,A lead-off condition will be detected by the signal acquisition unit with a resolution of 19 bit.,medical,Sensor Acquisition
+MD-0126,"The thermal management function shall limit the discharge current unless the pack temperature drops below 0 degC, to meet the ASIL target.",automotive,Battery Management
+MD-0127,Each clinician authenticated within 7 minutes.,medical,Patient Data Privacy
+MD-0128,Conflicting routes must never be set simultaneously.,rail,Interlocking
+MD-0129,Raw samples shall be time stamped with the device clock.,medical,Sensor Acquisition
+MD-0130,The battery must be charged by the pump motor driver.,medical,Infusion Dosing
+MD-0131,The ECG front end must detect a lead-off condition and calibrate the pressure sensor and keep the data consistent after a power cycle.,medical,Sensor Acquisition
+MD-0132,The HL7 gateway must pair the device with the server and transmit the infusion data and record the event in the audit log.,medical,Connectivity
+MD-0133,The axle counter shall revoke the authority and issue a movement authority.,rail,Movement Authority
+MD-0134,The route manager shall detect track occupancy in accordance with EN 50126.,rail,Interlocking
+MD-0135,"When wheel slip exceeds the ABS threshold and wheel slip exceeds the ABS threshold, the brake pedal sensor interface shall modulate the rear axle brake force, release the brake caliper pressure, and, where applicable, additionally record the outcome, so that hazardous events are avoided.",automotive,Braking
+MD-0136,"When a torque sensor fault is detected, the steering torque overlay function shall detect a steering column torque sensor offset within 91 ms and shall remain functional in degraded mode.",automotive,Steering
+MD-0137,The route manager will release the route within 3 s.,rail,Interlocking
+MD-0138,The backup battery shall report the remaining runtime in accordance with ISO 14971.,medical,Power Management
+MD-0139,The radio block centre shall issue a movement authority up to a distance of 2147 m.,rail,Movement Authority
+MD-0140,"The anonymisation function shall authenticate each clinician unless the record is exported, to reduce the residual risk.",medical,Patient Data Privacy
+MD-0141,"When a crash is detected, the body control module shall lock all vehicle doors.",automotive,Body Control
+MD-0142,"The power manager will pair the device with the server while the wireless signal strength is low, to maintain basic safety.",medical,Connectivity
+MD-0143,The wireless module shall exchange HL7 messages and encrypt the link.,medical,Connectivity
+MD-0144,The entered dose against the drug library will be verified by the signal acquisition unit at a rate of 343 Hz in accordance with IEC 60601-1.,medical,Sensor Acquisition
+MD-0145,The points shall be locked by the route manager after 118 s of time delay.,rail,Interlocking
+MD-0146,Limit the discharge current.,automotive,Battery Management
+MD-0147,"When a brake circuit failure is detected, the ABS function shall pair a Bluetooth device at a deceleration of 2 m/s2 and report the fault status on the CAN bus.",automotive,Braking
+MD-0148,The odometer shall measure distance with an error below 2 %.,rail,Speed Supervision
+MD-0149,The audio manager shall lock all vehicle doors with a worst-case latency of 38 ms.,automotive,Infotainment
+MD-0150,The time to collision will be estimated by the navigation application and shall remain functional in degraded mode.,automotive,ADAS Perception
+MD-0151,The EPS controller must calculate the torque overlay request.,automotive,Steering
+MD-0152,The OTA client will resume an interrupted download and notify the user with 3.7 retries and set the corresponding diagnostic flag.,automotive,OTA Update
+MD-0153,"When a new timetable is imported and a new timetable is imported, the traffic management system shall generate the train schedule, publish the passenger information, and, where applicable, additionally flag the result, to maintain a safe state.",rail,Timetable
+MD-0154,The drug library will limit the maximum bolus.,medical,Infusion Dosing
+MD-0155,"When a new timetable is imported and a platform is blocked, the dispatcher interface will update the planned arrival times, display the train graph, and, where applicable, also flag the result, to maintain a safe state with a headway of 247 s in accordance with EN 50129.",rail,Timetable
+MD-0156,"When an isolation fault is detected, the charge controller shall limit the assist torque.",automotive,Battery Management
+MD-0157,Detected pedestrians shall be classified by the sensor fusion function with a false positive rate below 2.4 per hour.,automotive,ADAS Perception
+MD-0158,The DTC memory must report the freeze frame data for up to 126 DTCs with a worst-case latency of 42 ms.,automotive,Diagnostics OBD
+MD-0159,"When the train speed exceeds the permitted speed, the speed supervision function shall calculate the permitted distance above 34 km/h.",rail,Speed Supervision
+MD-0160,The monitoring function shall escalate the unacknowledged alarm.,medical,Alarms
+MD-0161,Cell voltages shall be sampled every 10 ms with a resolution of 1 mV.,automotive,Battery Management
+MD-0162,The door enable shall be released by the onboard modem and log any detected fault with a timestamp.,rail,Train Detection
+MD-0163,Detected pedestrians will be classified by the sensor fusion function at a range of up to 152 m in accordance with ISO 26262-6.,automotive,ADAS Perception
+MD-0164,"When visibility is reduced by rain or fog, the radar processing unit shall output the free space grid and set the corresponding diagnostic flag.",automotive,ADAS Perception
+MD-0165,The steering angle sensor shall provide the steering wheel angle signal within 8 ms and keep the data consistent after a reset.,automotive,Steering
+MD-0166,An emergency brake application shall be triggered by the braking curve calculator and shall remain functional in degraded mode.,rail,Speed Supervision
+MD-0167,The alarm escalation logic shall escalate the unacknowledged alarm and inhibit the nuisance alarms.,medical,Alarms
+MD-0168,The data protection layer shall encrypt patient identifiable data using 220 bit encryption in accordance with IEC 60601-1.,medical,Patient Data Privacy
+MD-0169,"When the vehicle speed exceeds 10 km/h, the lighting controller will lock all vehicle doors with a delay of at most 8 s.",automotive,Body Control
+MD-0170,"When the user changes the display language, the head unit shall store the user profile at a minimum frame rate of 35 fps and log any detected fault with a timestamp.",automotive,Infotainment
+MD-0171,The device server shall encrypt the link in accordance with IEC 81001-5-1.,medical,Connectivity
+MD-0172,Interior lighting will fade out over 3 s after door closing.,automotive,Body Control
+MD-0173,"When the device is first connected, the wireless module must require a confirmation and keep the data consistent after a power cycle.",medical,Connectivity
+MD-0174,The door status shall be reported to the driver cabin.,rail,Door Control
+MD-0175,The audit logger shall protect the log against modification within 196 ms.,medical,Audit Logging
+MD-0176,The patient record service shall raise a high priority alarm.,medical,Patient Data Privacy
+MD-0177,Position reports must be processed within 1 s of reception.,rail,Movement Authority
+MD-0178,The link shall be encrypted by the network interface with a latency below 472 ms.,medical,Connectivity
+MD-0179,The DTC memory must store diagnostic trouble codes within 30 ms and shall remain functional in degraded mode.,automotive,Diagnostics OBD
+MD-0180,The settings menu will highlight the changed parameter and switch to battery operation with a font size of at least 14 pt and keep the data consistent after a power cycle.,medical,Medical UI
+MD-0181,The brake controller will limit the wheel slip ratio and detect a wheel speed sensor plausibility error.,automotive,Braking
+MD-0182,The catalyst efficiency shall be monitored by the diagnostic manager over a period of 35 driving cycles in accordance with ISO 26262-6.,automotive,Diagnostics OBD
+MD-0183,The battery management system shall estimate the state of charge with a tolerance of +/-8 mV.,automotive,Battery Management
+MD-0184,The timetable planner must detect conflicts on single track sections.,rail,Timetable
+MD-0185,The braking curve calculator must trigger an emergency brake application above 26 km/h and shall remain functional in degraded mode.,rail,Speed Supervision
+MD-0186,"When the train enters a new RBC area and the train enters a new RBC area, the movement authority generator shall reject an invalid position report, revoke the authority, and, where applicable, additionally record the outcome, to maintain a safe state in accordance with EN 50128.",rail,Movement Authority
+MD-0187,Report the freeze frame data.,automotive,Diagnostics OBD
+MD-0188,The backup battery shall protect the circuit against overcurrent for at least 4.6 hours with a worst-case latency of 173 ms.,medical,Power Management
+MD-0189,"When the pack temperature drops below 0 degC, the charge controller shall monitor the cell temperature and keep the data consistent after a reset.",automotive,Battery Management
+MD-0190,The update orchestrator shall roll back the previous software version.,automotive,OTA Update
+MD-0191,Access to patient records shall be role based.,medical,Patient Data Privacy
+MD-0192,"When the vehicle is stopped on a gradient, the wiper control function shall detect a wheel speed sensor plausibility error with a worst-case latency of 132 ms.",automotive,Braking
+MD-0193,The update orchestrator must download the update package with 2.4 retries and shall remain functional in degraded mode.,automotive,OTA Update
+MD-0194,The patient record service must restrict access to the records for at most 32 days in accordance with IEC 62304.,medical,Patient Data Privacy
+MD-0195,The movement authority generator shall calculate the permitted distance up to a distance of 1705 m.,rail,Movement Authority
+MD-0196,The radio block centre will issue a movement authority and notify the supervisor of any fault.,rail,Movement Authority
+MD-0197,"When the battery capacity falls below 10 %, the backup battery shall shut down the device safely.",medical,Power Management
+MD-0198,The body control module will switch the headlamps and log any detected fault with a timestamp.,automotive,Body Control
+MD-0199,The battery management system shall respond the UDS service requests in accordance with ISO 26262-5.,automotive,Diagnostics OBD
+MD-0200,The door controller shall release the door enable within 2 s.,rail,Door Control
+MD-0201,The onboard computer shall trigger an emergency brake application and resolve scheduling conflicts above 19 km/h and shall remain functional in degraded mode.,rail,Speed Supervision
+MD-0202,"When a diagnostic session is opened, the diagnostic manager shall monitor the catalyst efficiency for up to 65 DTCs and shall remain functional in degraded mode.",automotive,Diagnostics OBD
+MD-0203,The signal controller shall command the signal to red and set the requested route in accordance with EN 50126.,rail,Interlocking
+MD-0204,The patient record service shall mask the patient name on the display.,medical,Patient Data Privacy
+MD-0205,"When the driver depresses the brake pedal and the vehicle is stopped on a gradient, the brake controller shall apply the hydraulic brake pressure demand, detect a wheel speed sensor plausibility error, and, where applicable, also flag the result, so that hazardous events are avoided with a tolerance of +/-2.2 % with a worst-case latency of 193 ms.",automotive,Braking
+MD-0206,"The navigation application shall store the user profile unless the user changes the display language, to maintain the safe state.",automotive,Infotainment
+MD-0207,Radar and camera object lists shall be fused by the brake pedal sensor interface within 216 ms.,automotive,Braking
+MD-0208,The signal controller shall lock the points and report the fault status over the data bus.,rail,Interlocking
+MD-0209,Fuse radar and camera object lists at a range of up to 141 m.,automotive,ADAS Perception
+MD-0210,The passenger information must be published by the timetable planner for up to 270 trains.,rail,Timetable
+MD-0211,"The pump motor driver shall protect the circuit against overcurrent if the programmed rate exceeds the hard limit, to avoid harm to the patient.",medical,Infusion Dosing
+MD-0212,"The update orchestrator shall roll back the previous software version while the vehicle is parked and the battery level is above 50 %, to maintain the safe state.",automotive,OTA Update
+MD-0213,The SpO2 sensor driver shall validate the signal quality and convert the raw measurement.,medical,Sensor Acquisition
+MD-0214,The platform screen door system will detect an obstacle at a speed below 3.1 km/h and log any detected fault with a timestamp.,rail,Door Control
+MD-0215,"When the alarm silence period expires, the monitoring function shall buffer the outgoing data in accordance with ISO 14971.",medical,Alarms
+MD-0216,Verify the point detection after 66 s of time delay.,rail,Interlocking
+MD-0217,The door lock actuator shall operate the windshield wipers within 285 ms and log any detected fault with a timestamp.,automotive,Body Control
+MD-0218,The touchscreen will show the remaining volume and accept numeric input.,medical,Medical UI
+MD-0219,The odometer will apply the service brake and calculate the permitted distance with an error below 3.0 %.,rail,Speed Supervision
+MD-0220,"When the programmed rate exceeds the hard limit, the infusion controller shall verify the entered dose against the drug library within 3.1 s in accordance with ISO 14971.",medical,Infusion Dosing
+MD-0221,The axle counter shall reset the axle counting section and shall remain functional in degraded mode.,rail,Train Detection
+MD-0222,The smartphone integration service shall mute the media playback with 81 ms of audio latency.,automotive,Infotainment
+MD-0223,The anonymisation function shall limit the maximum bolus with an accuracy of +/-4.2 % with a worst-case latency of 139 ms.,medical,Infusion Dosing
+MD-0224,The point controller shall command the signal to red after 59 s of time delay.,rail,Interlocking
+MD-0225,Lane keeping assist: hold the road wheel angle.,automotive,Steering
+MD-0226,"When an alarm is not acknowledged, the monitoring function will inhibit the nuisance alarms within 6 s.",medical,Alarms
+MD-0227,The update orchestrator shall roll back the previous software version within 56 minutes.,automotive,OTA Update
+MD-0228,DTC aging counters shall be reset after 40 warm-up cycles.,automotive,Diagnostics OBD
+MD-0229,The ABS function will monitor the brake fluid level with a tolerance of +/-3.4 % in accordance with ISO 26262-5.,automotive,Braking
+MD-0230,The signal acquisition unit shall validate the signal quality and calibrate the pressure sensor.,medical,Sensor Acquisition
+MD-0231,The pump motor driver shall compute the infusion rate and notify the supervisor of any fault.,medical,Infusion Dosing
+MD-0232,Diagnostic trouble codes stored for up to 195 DTCs.,automotive,Diagnostics OBD
+MD-0233,The user session shall be expired by the anonymisation function.,medical,Patient Data Privacy
+MD-0234,The alarm escalation logic will silence the audible signal and escalate the unacknowledged alarm within 7 s.,medical,Alarms
+MD-0235,The battery charger must escalate the unacknowledged alarm and raise a high priority alarm and log any detected fault with a timestamp.,medical,Alarms
+MD-0236,The condition monitoring unit shall report the equipment fault.,rail,Rail Maintenance
+MD-0237,The SpO2 sensor driver will filter mains interference and convert the raw measurement and keep the data consistent after a power cycle.,medical,Sensor Acquisition
+MD-0238,The dispatcher interface will display the train graph.,rail,Timetable
+MD-0239,The timetable planner must schedule the inspection and detect track occupancy with a headway of 159 s.,rail,Timetable
+MD-0240,Doors shall be locked automatically when the vehicle speed exceeds 15 km/h.,automotive,Body Control
+MD-0241,"The camera perception module shall operate the windshield wipers unless the camera is blinded by direct sunlight, to meet the ASIL target.",automotive,ADAS Perception
+MD-0242,"The signal acquisition unit must convert the raw measurement at a rate of 109 Hz, as required by IEC 60601-1.",medical,Sensor Acquisition
+MD-0243,"The brake controller must detect a wheel speed sensor plausibility error at a deceleration of 2 m/s2, as required by ISO 26262-5.",automotive,Braking
+MD-0244,The diagnostic manager shall report the freeze frame data and shall remain functional in degraded mode.,automotive,Diagnostics OBD
+MD-0245,The radar processing unit will classify detected pedestrians and log any detected fault with a timestamp.,automotive,ADAS Perception
+MD-0246,Monitor the door closed and locked status.,rail,Door Control
+MD-0247,"The monitoring function shall display the alarm message if the alarm silence period expires, to avoid harm to the patient.",medical,Alarms
+MD-0248,"The signal controller shall detect track occupancy unless the component reaches its service life, to ensure the required SIL.",rail,Rail Maintenance
+MD-0249,Raise a high priority alarm.,medical,Alarms
+MD-0250,"When the screen is touched with gloves, the user interface must show the remaining volume with a font size of at least 16 pt.",medical,Medical UI
+MD-0251,Store the user profile at a minimum frame rate of 29 fps.,automotive,Infotainment
+MD-0252,The route manager shall set the requested route after 172 s of time delay in accordance with IEEE 1474.1.,rail,Interlocking
+MD-0253,"The movement authority generator must transmit the track description up to a distance of 857 m, as required by EN 50128.",rail,Movement Authority
+MD-0254,"When the radar reports a low confidence target, the camera perception module must track the lead vehicle at a range of up to 118 m and shall remain functional in degraded mode.",automotive,ADAS Perception
+MD-0255,The onboard computer shall supervise the train speed.,rail,Speed Supervision
+MD-0256,"The time service shall export the audit trail if the audit trail is requested, to reduce the residual risk.",medical,Audit Logging
+MD-0257,"The brake controller shall detect a wheel speed sensor plausibility error within 45 ms, as required by ISO 26262-5.",automotive,Braking
+MD-0258,An emergency brake application will be triggered by the speed supervision function and notify the supervisor of any fault.,rail,Speed Supervision
+MD-0259,The alarm system shall comply with IEC 60601-1-8.,medical,Alarms
+MD-0260,Detected pedestrians shall be classified by the object tracker with a false positive rate below 1.1 per hour with a worst-case latency of 54 ms.,automotive,ADAS Perception
+MD-0261,"The drug library shall export the audit trail within 4.6 s, as required by IEC 62366.",medical,Infusion Dosing
+MD-0262,The radar shall provide a target list every 50 ms.,automotive,ADAS Perception
+MD-0263,The torque overlay request must be calculated by the EPS controller.,automotive,Steering
+MD-0264,The interlocking will verify the point detection and lock the points after 116 s of time delay and shall remain functional in degraded mode.,rail,Interlocking
+MD-0265,"The data protection layer shall expire the user session unless the session is idle, to avoid harm to the patient.",medical,Patient Data Privacy
+MD-0266,"When the section is reset by the operator, the track circuit shall transmit the track description at speeds up to 124 km/h in accordance with IEEE 1474.1.",rail,Train Detection
+MD-0267,Speed measurements must be cross checked with two independent sources.,rail,Speed Supervision
+MD-0268,The battery charger shall restrict access to the records.,medical,Patient Data Privacy
+MD-0269,The audible alarm volume must be at least 45 dB at 1 m.,medical,Alarms
+MD-0270,"The route manager shall schedule the inspection after 54 s of time delay, as required by EN 50159.",rail,Interlocking
+MD-0271,"When the dispatcher modifies a route, the traffic management system shall update the planned arrival times and report the fault status over the data bus.",rail,Timetable
+MD-0272,The movement authority generator shall transmit the track description and revoke the authority and log any detected fault with a timestamp.,rail,Movement Authority
+MD-0273,"When an emergency stop is requested and the train enters a new RBC area, the track circuit shall issue a movement authority, revoke the authority, and, where applicable, also flag the result, to ensure the required SIL every 30 s.",rail,Movement Authority
+MD-0274,The entered dose against the drug library will be verified by the pump motor driver at a rate of 977 mL/h in accordance with IEC 62304.,medical,Infusion Dosing
+MD-0275,The pressure transducer interface will store the event history and shall remain functional in degraded mode.,medical,Sensor Acquisition
+MD-0276,The UDS service requests will be responded to by the OBD-II interface.,automotive,Diagnostics OBD
+MD-0277,The body control module shall activate the turn indicators and operate the windshield wipers with a worst-case latency of 120 ms.,automotive,Body Control
+MD-0278,"The radar processing unit shall fuse radar and camera object lists at a range of up to 130 m, as required by ISO 14229.",automotive,ADAS Perception
+MD-0279,"When the radio link is interrupted, the onboard modem shall buffer the messages in accordance with EN 50159.",rail,Rail Communications
+MD-0280,"When a user logs in from an unknown terminal, the anonymisation function shall mask the patient name on the display using 176 bit encryption and notify the supervisor of any fault.",medical,Patient Data Privacy
+MD-0281,The track circuit must detect track occupancy and keep the data consistent after a restart.,rail,Train Detection
+MD-0282,The infusion controller shall calibrate the flow rate and compute the infusion rate at a rate of 824 mL/h and log any detected fault with a timestamp.,medical,Infusion Dosing
+MD-0283,"When the radar reports a low confidence target, the radar processing unit shall estimate the time to collision.",automotive,ADAS Perception
+MD-0284,Braking curve calculator: authenticate the peer.,rail,Rail Communications
+MD-0285,"The dose calculation module shall limit the maximum bolus if an occlusion is detected, to maintain basic safety.",medical,Infusion Dosing
+MD-0286,The system shall record each alarm event in the event history.,medical,Audit Logging
+MD-0287,"The ECG front end will filter mains interference with a resolution of 17 bit, as required by ISO 14971.",medical,Sensor Acquisition
+MD-0288,The electronic stability control must open the high voltage contactors with a tolerance of +/-4 mV.,automotive,Battery Management
+MD-0289,"When the patient parameter violates the alarm limit, the alarm escalation logic shall latch the technical alarm with a worst-case latency of 136 ms.",medical,Alarms
+MD-0290,The on-screen keyboard shall show the remaining volume within 4.0 s and keep the data consistent after a power cycle.,medical,Medical UI
+MD-0291,All doors must unlock upon crash signal reception.,automotive,Body Control
+MD-0292,"When the alarm silence period expires and the alarm silence period expires, the device server shall rotate the log files, silence the audible signal, and, where applicable, additionally record the outcome, to maintain basic safety with a worst-case latency of 128 ms.",medical,Alarms
+MD-0293,"When a fault is detected during operation, the condition monitoring unit must report the section status within 34 s with a worst-case latency of 193 ms.",rail,Rail Maintenance
+MD-0294,The regulation function shall publish the passenger information.,rail,Timetable
+MD-0295,"When the vehicle is stopped on a gradient, the brake pedal sensor interface must apply the hydraulic brake pressure demand with a tolerance of +/-4.7 % with a worst-case latency of 38 ms.",automotive,Braking
+MD-0296,"When a brake circuit failure is detected, the brake controller shall monitor the brake fluid level and shall remain functional in degraded mode.",automotive,Braking
+MD-0297,"The patient record service shall expire the user session for at most 184 days, as required by IEC 81001-5-1.",medical,Patient Data Privacy
+MD-0298,The steering system shall remain mechanically operable after loss of electrical assist.,automotive,Steering
+MD-0299,"When the driver selects a new media source, the navigation application shall store the user profile with 108 ms of audio latency and shall remain functional in degraded mode.",automotive,Infotainment
+MD-0300,"The audio manager must limit the discharge current while the charger is connected, to meet the ASIL target.",automotive,Battery Management
+MD-0301,"The timetable planner shall update the planned arrival times within 10 s, as required by EN 50129.",rail,Timetable
+MD-0302,The cell monitoring unit must limit the discharge current within 141 ms.,automotive,Battery Management
+MD-0303,The infusion controller shall stop the infusion with an accuracy of +/-3.0 % and keep the data consistent after a power cycle.,medical,Infusion Dosing
+MD-0304,"When the session is idle, the patient record service shall switch to battery operation for at most 53 days and log any detected fault with a timestamp.",medical,Patient Data Privacy
+MD-0305,"When three consecutive logins fail, the patient record service shall mask the patient name on the display and notify the supervisor of any fault.",medical,Patient Data Privacy
+MD-0306,The charger must terminate charging at the end of charge voltage.,medical,Power Management
+MD-0307,The onboard unit shall reject a movement authority with an invalid sequence number.,rail,Movement Authority
+MD-0308,The movement authority generator shall calculate the permitted distance and extend the end of authority every 15 s with a worst-case latency of 171 ms.,rail,Movement Authority
+MD-0309,The drug library shall verify the entered dose against the drug library at a rate of 654 mL/h.,medical,Infusion Dosing
+MD-0310,High priority alarms shall be annunciated within 2 s of the alarm condition.,medical,Alarms
+MD-0311,The interlocking shall set the requested route in accordance with IEEE 1474.1.,rail,Interlocking
+MD-0312,The user interface shall be usable with gloved hands.,medical,Medical UI
+MD-0313,"When a wheel sensor fails, the track circuit must detect track occupancy at speeds up to 282 km/h.",rail,Train Detection
+MD-0314,The point controller shall set the requested route with a worst-case latency of 112 ms.,rail,Interlocking
+MD-0315,The cell monitoring unit shall derate the charging power and keep the data consistent after a reset.,automotive,Battery Management
+MD-0316,The drug library shall verify the entered dose against the drug library and notify the supervisor of any fault.,medical,Infusion Dosing
+MD-0317,"When the device is first connected, the device server must transmit the infusion data with a latency below 135 ms.",medical,Connectivity
+MD-0318,The alarm manager shall reconnect the hospital network within 2 s in accordance with IEC 62366.,medical,Alarms
+MD-0319,The device server will encrypt the link and pair the device with the server.,medical,Connectivity
+MD-0320,The network shall support a maximum end-to-end latency of 100 ms.,rail,Rail Communications
+MD-0321,The SpO2 sensor driver will sample the analogue signal and inhibit the nuisance alarms.,medical,Sensor Acquisition
+MD-0322,"When the train speed exceeds the permitted speed and the train speed exceeds the permitted speed, the speed supervision function will supervise the train speed, log maintenance actions, and, where applicable, also flag the result, to avoid conflicting movements within 381 ms.",rail,Speed Supervision
+MD-0323,The radio link shall be established by the onboard ETCS unit and shall remain functional in degraded mode.,rail,Rail Communications
+MD-0324,The occupied section shall be cleared by the interlocking and notify the supervisor of any fault.,rail,Train Detection
+MD-0325,"When a setting is changed, the time service shall time stamp every log entry for at least 5 years.",medical,Audit Logging
+MD-0326,The dose calculation module shall calibrate the flow rate with an accuracy of +/-3.5 % in accordance with IEC 81001-5-1.,medical,Infusion Dosing
+MD-0327,The authority revoked every 23 s.,rail,Movement Authority
+MD-0328,The point controller will set the requested route within 4 s in accordance with EN 50129.,rail,Interlocking
+MD-0329,The body control module shall detect a wheel speed sensor plausibility error and keep the data consistent after a reset.,automotive,Braking
+MD-0330,"When the vehicle speed exceeds 130 km/h, the battery management system shall provide the steering wheel angle signal with an accuracy of +/-1.4 degrees and shall remain functional in degraded mode.",automotive,Steering
+MD-0331,The ABS function must monitor the brake fluid level at a deceleration of 6 m/s2 with a worst-case latency of 182 ms.,automotive,Braking
+MD-0332,"The cell monitoring unit must derate the charging power at 54 degC, as required by ISO 26262-5.",automotive,Battery Management
+MD-0333,The device shall shut down safely when the battery is depleted.,medical,Power Management
+MD-0334,The head unit must mute the media playback in accordance with ISO 26262-5.,automotive,Infotainment
+MD-0335,The audio manager shall fuse radar and camera object lists at 1.5 Hz and report the fault status on the CAN bus.,automotive,Body Control
+MD-0336,The track description will be transmitted by the platform screen door system up to a distance of 1930 m with a worst-case latency of 116 ms.,rail,Movement Authority
+MD-0337,The signal acquisition unit must sample the analogue signal and calibrate the pressure sensor in accordance with IEC 81001-5-1.,medical,Sensor Acquisition
+MD-0338,The display shall remain readable at 500 lux ambient light.,medical,Medical UI
+MD-0339,The settings menu will convert the raw measurement at a rate of 472 Hz.,medical,Sensor Acquisition
+MD-0340,"When the odometer detects wheel slip, the speed supervision function shall display the permitted speed above 17 km/h.",rail,Speed Supervision
+MD-0341,The infusion controller will display the current infusion status and restrict access to the records.,medical,Medical UI
+MD-0342,Pair the device with the server within 33 s.,medical,Connectivity
+MD-0343,The camera perception module shall fuse radar and camera object lists and reject ghost targets and keep the data consistent after a reset.,automotive,ADAS Perception
+MD-0344,Extend the end of authority up to a distance of 3278 m.,rail,Movement Authority
+MD-0345,The log against modification protected for at least 3 years.,medical,Audit Logging
+MD-0346,The point controller will release the route after 85 s of time delay and report the fault status over the data bus.,rail,Interlocking
+MD-0347,The on-screen keyboard shall raise a high priority alarm and accept numeric input after 41 s.,medical,Medical UI
+MD-0348,All vehicle doors will be locked by the door lock actuator with a delay of at most 8 s.,automotive,Body Control
+MD-0349,Technical alarms shall remain latched until the cause is cleared.,medical,Alarms
+MD-0350,The onboard ETCS unit shall issue a movement authority within 4.9 s and notify the supervisor of any fault.,rail,Movement Authority
+MD-0351,The diagnostic manager will report the freeze frame data for up to 149 DTCs and keep the data consistent after a reset.,automotive,Diagnostics OBD
+MD-0352,The head unit shall boot to a usable home screen within 4 s of ignition on.,automotive,Infotainment
+MD-0353,The brake caliper pressure shall be released by the electronic stability control.,automotive,Braking
+MD-0354,"When the train is stopped at the platform, the door controller shall verify the point detection.",rail,Door Control
+MD-0355,The SpO2 sensor driver shall filter mains interference and sample the analogue signal.,medical,Sensor Acquisition
+MD-0356,"When an axle count mismatch occurs, the train detection system shall reset the axle counting section with a worst-case latency of 35 ms.",rail,Train Detection
+MD-0357,"When the pack temperature drops below 0 degC and an isolation fault is detected, the battery management system shall balance the cell voltages, limit the discharge current, and, where applicable, additionally flag the result, to meet the ASIL target within 132 ms and keep the data consistent after a reset.",automotive,Battery Management
+MD-0358,The cell monitoring unit shall open the high voltage contactors and balance the cell voltages within 97 ms and log any detected fault with a timestamp.,automotive,Battery Management
+MD-0359,The device shall buffer up to 24 hours of data while offline.,medical,Connectivity
+MD-0360,Encrypt the link within 48 s.,medical,Connectivity
+MD-0361,The ECG front end shall time stamp every log entry at a rate of 895 mL/h and shall remain functional in degraded mode.,medical,Infusion Dosing
+MD-0362,The infusion rate shall be computed by the infusion controller with an accuracy of +/-2.1 %.,medical,Infusion Dosing
+MD-0363,The system shall switch to the redundant channel on link failure.,rail,Rail Communications
+MD-0364,The power supply unit must report the remaining runtime at 19 V and shall remain functional in degraded mode.,medical,Power Management
+MD-0365,The data protection layer shall encrypt the link with a worst-case latency of 101 ms.,medical,Patient Data Privacy
+MD-0366,The audio content must be streamed by the head unit with a worst-case latency of 57 ms.,automotive,Infotainment
+MD-0367,The train detection system must supervise the sensor health at speeds up to 208 km/h.,rail,Train Detection
+MD-0368,"The secure bootloader shall monitor the brake fluid level with 3.8 retries, as required by AUTOSAR R20-11.",automotive,OTA Update
+MD-0369,The lane keeping assist shall provide the steering wheel angle signal with an accuracy of +/-1.5 degrees with a worst-case latency of 192 ms.,automotive,Steering
+MD-0370,"When the route is no longer required, the signal controller shall record the operating hours within 9 s and log any detected fault with a timestamp.",rail,Interlocking
+MD-0371,"The charge controller shall estimate the state of charge while the pack temperature drops below 0 degC, so that hazardous events are avoided.",automotive,Battery Management
+MD-0372,"When the user postpones the installation, the OTA client shall download the update package.",automotive,OTA Update
+MD-0373,The track circuit must authenticate the peer.,rail,Rail Communications
+MD-0374,"When the download is interrupted and the signature verification fails, the update orchestrator must pair a Bluetooth device, roll back the previous software version, and, where applicable, also record the outcome, to maintain the safe state with a worst-case latency of 56 ms.",automotive,OTA Update
+MD-0375,The OTA client shall roll back the previous software version using a 152 bit key and shall remain functional in degraded mode.,automotive,OTA Update
+MD-0376,"The update orchestrator shall roll back the previous software version while the user postpones the installation, to meet the ASIL target.",automotive,OTA Update
+MD-0377,The route manager will verify the point detection.,rail,Interlocking
+MD-0378,The device with the server shall be paired by the alarm annunciator with a latency below 406 ms.,medical,Connectivity
+MD-0379,The thermal management function must verify the package signature and open the high voltage contactors.,automotive,Battery Management
+MD-0380,"When a wheel sensor fails, the train detection system shall report the section status and log any detected fault with a timestamp.",rail,Train Detection
+MD-0381,Release the door enable within 7 s.,rail,Door Control
+MD-0382,The electronic parking brake must hold the vehicle on a 30 % slope with all drive sources off.,automotive,Braking
+MD-0383,The smartphone integration service shall derate the charging power in accordance with ISO 21434.,automotive,Infotainment
+MD-0384,Points shall be moved to the required position within 6 s.,rail,Interlocking
+MD-0385,The alarm annunciator shall silence the audible signal and record the event in the audit log.,medical,Alarms
+MD-0386,"The infusion controller shall verify the entered dose against the drug library with an accuracy of +/-2.7 %, as required by IEC 62304.",medical,Infusion Dosing
+MD-0387,The wiper control function must roll back the previous software version with a delay of at most 9 s and set the corresponding diagnostic flag.,automotive,Body Control
+MD-0388,The patient record service must reconnect the hospital network.,medical,Alarms
+MD-0389,The system shall schedule inspections based on operating hours.,rail,Rail Maintenance
+MD-0390,"When the route is no longer required and the route is no longer required, the signal controller must release the route, lock the points, and, where applicable, additionally flag the result, to avoid conflicting movements with a safety integrity level of SIL 3.0 in accordance with EN 50159.",rail,Interlocking
+MD-0391,The regulation function shall update the planned arrival times and display the train graph with a headway of 289 s in accordance with EN 50129.,rail,Timetable
+MD-0392,Entered values shall be echoed before being applied.,medical,Medical UI
+MD-0393,"When the point detection is lost, the interlocking shall prevent conflicting routes.",rail,Interlocking
+MD-0394,The communication manager shall establish the radio link and buffer the messages and keep the data consistent after a restart.,rail,Rail Communications
+MD-0395,The DTC memory shall download the update package.,automotive,OTA Update
+MD-0396,"The braking curve calculator shall schedule the inspection above 11 km/h, as required by EN 50159.",rail,Speed Supervision
+MD-0397,"The evaluator unit will report the section status with a shunt sensitivity of 0.6 ohm, as required by EN 50159.",rail,Train Detection
+MD-0398,"The thermal management function shall monitor the cell temperature while any cell voltage exceeds 4.25 V, to maintain the safe state.",automotive,Battery Management
+MD-0399,The electronic stability control shall limit the wheel slip ratio with a tolerance of +/-1.7 % in accordance with ISO 26262-6.,automotive,Braking
+MD-0400,The touchscreen shall highlight the changed parameter with a font size of at least 11 pt.,medical,Medical UI
+MD-0401,An obstacle shall be detected by the door controller within 4 s and shall remain functional in degraded mode.,rail,Door Control
+MD-0402,Steering torque overlay function: calculate the torque overlay request.,automotive,Steering
+MD-0403,"When the camera is blinded by direct sunlight, the object tracker shall fuse radar and camera object lists within 92 ms.",automotive,ADAS Perception
+MD-0404,The SpO2 sensor driver will calibrate the pressure sensor at a rate of 347 Hz.,medical,Sensor Acquisition
+MD-0405,The battery charger will shut down the device safely within 32 ms and record the event in the audit log.,medical,Power Management
+MD-0406,Odometer: apply the service brake.,rail,Speed Supervision
+MD-0407,"When the electrode impedance exceeds the limit, the pressure transducer interface shall detect a lead-off condition and keep the data consistent after a power cycle.",medical,Sensor Acquisition
+MD-0408,On loss of the primary brake circuit the system shall fall back to the secondary circuit and illuminate the brake warning lamp.,automotive,Braking
+MD-0409,"The point controller will reset the axle counting section while the section is reset by the operator, to ensure the required SIL.",rail,Train Detection
+MD-0410,Event recorder: rotate the log files.,medical,Audit Logging
+MD-0411,"The maintenance system will report the equipment fault for at least 8 years, as required by EN 50129.",rail,Rail Maintenance
+MD-0412,"The electronic stability control shall notify the user within 179 ms, as required by ISO 26262-6.",automotive,Braking
+MD-0413,"When the train passes the counting point, the trackside network shall supervise the sensor health within 990 ms.",rail,Train Detection
+MD-0414,The movement authority generator shall report the equipment fault and download the diagnostic data.,rail,Rail Maintenance
+MD-0415,"When the wireless signal strength is low, the dose calculation module shall pair the device with the server and shall remain functional in degraded mode.",medical,Connectivity
+MD-0416,The event history shall be stored by the audit logger within 377 ms.,medical,Audit Logging
+MD-0417,The communication manager shall report the section status with a latency below 52 ms and report the fault status over the data bus.,rail,Rail Communications
+MD-0418,The traffic management system shall open the doors.,rail,Timetable
+MD-0419,"The steering torque overlay function shall switch the headlamps while a torque sensor fault is detected, so that hazardous events are avoided.",automotive,Steering
+MD-0420,Cell balancing will be disabled during fast charging.,automotive,Battery Management
+MD-0421,"When the alarm silence period expires and the battery is critically low, the alarm annunciator will display the alarm message, inhibit the nuisance alarms, and, where applicable, additionally record the outcome, to reduce the residual risk after 52 s.",medical,Alarms
+MD-0422,"The DTC memory must monitor the catalyst efficiency if a fault is confirmed in three consecutive driving cycles, so that hazardous events are avoided.",automotive,Diagnostics OBD
+MD-0423,The user interface rendered with 121 ms of audio latency.,automotive,Infotainment
+MD-0424,"When a crash is detected and a crash is detected, the door lock actuator shall activate the turn indicators, disable the central locking, and, where applicable, additionally record the outcome, so that hazardous events are avoided.",automotive,Body Control
+MD-0425,"When an obstacle is detected between the doors and the emergency release is operated, the passenger door shall supervise the train speed, open the doors, and, where applicable, also flag the result, to ensure the required SIL with a force of less than 114 N and notify the supervisor of any fault.",rail,Door Control
+MD-0426,"When visibility is reduced by rain or fog, the radar processing unit shall estimate the time to collision.",automotive,ADAS Perception
+MD-0427,Maintenance actions shall be logged by the trackside network.,rail,Rail Maintenance
+MD-0428,"When visibility is reduced by rain or fog, the sensor fusion function will track the lead vehicle within 92 ms.",automotive,ADAS Perception
+MD-0429,The maintenance system will generate the train schedule and log any detected fault with a timestamp.,rail,Rail Maintenance
+MD-0430,"When the syringe is empty and the syringe is empty, the dose calculation module will limit the maximum bolus, verify the entered dose against the drug library, and, where applicable, also flag the result, to reduce the residual risk and notify the supervisor of any fault.",medical,Infusion Dosing
+MD-0431,The outgoing data will be buffered by the wireless module and notify the supervisor of any fault.,medical,Connectivity
+MD-0432,The changed parameter shall be highlighted by the settings menu within 4.9 s in accordance with ISO 14971.,medical,Medical UI
+MD-0433,The charging power will be derated by the cell monitoring unit within 88 ms.,automotive,Battery Management
+MD-0434,"When the charger is connected, the thermal management function shall derate the charging power.",automotive,Battery Management
+MD-0435,"The patient record service shall authenticate each clinician for at most 338 days, as required by IEC 62304.",medical,Patient Data Privacy
+MD-0436,"The patient record service shall mask the patient name on the display while three consecutive logins fail, to maintain basic safety.",medical,Patient Data Privacy
+MD-0437,"When the alarm silence period expires and the alarm silence period expires, the alarm escalation logic shall display the alarm message, silence the audible signal, and, where applicable, additionally flag the result, to reduce the residual risk within 6 s.",medical,Alarms
+MD-0438,The evaluator unit shall reset the axle counting section.,rail,Train Detection
+MD-0439,The communication manager shall authenticate the peer within 123 ms and report the fault status over the data bus.,rail,Rail Communications
+MD-0440,The points shall be locked by the interlocking.,rail,Interlocking
+MD-0441,The smartphone integration service shall mute the media playback and keep the data consistent after a reset.,automotive,Infotainment
+MD-0442,Conflicting routes must be prevented by the route manager after 93 s of time delay and notify the supervisor of any fault.,rail,Interlocking
+MD-0443,"When a brake circuit failure is detected, the electronic stability control must apply the hydraulic brake pressure demand with a tolerance of +/-3.3 %.",automotive,Braking
+MD-0444,"The authentication module shall expire the user session within 10 minutes, as required by IEC 60601-1.",medical,Patient Data Privacy
+MD-0445,The navigation application will pair a Bluetooth device and keep the data consistent after a reset.,automotive,Infotainment
+MD-0446,The alarm escalation logic shall escalate the unacknowledged alarm and silence the audible signal and keep the data consistent after a power cycle.,medical,Alarms
+MD-0447,"The axle counter shall predict component wear every 2294 operating hours, as required by EN 50159.",rail,Rail Maintenance
+MD-0448,Event recorder: protect the log against modification.,medical,Audit Logging
+MD-0449,"When the alarm silence period expires, the monitoring function shall display the alarm message at a sound level of 47 dB in accordance with ISO 14971.",medical,Alarms
+MD-0450,Insulation resistance shall be monitored continuously and reported on the CAN bus.,automotive,Battery Management
+MD-0451,"When a train is delayed by more than 2 minutes, the odometer shall display the train graph.",rail,Timetable
+MD-0452,"The brake pedal sensor interface shall monitor the brake fluid level while the driver depresses the brake pedal, so that hazardous events are avoided.",automotive,Braking
+MD-0453,The ABS function shall modulate the rear axle brake force in accordance with ISO 26262-5.,automotive,Braking
+MD-0454,The interlocking shall command the signal to red within 7 s.,rail,Interlocking
+MD-0455,The passenger information shall be published by the platform screen door system within 8 s.,rail,Door Control
+MD-0456,The user interface will protect the circuit against overcurrent and log any detected fault with a timestamp.,medical,Alarms
+MD-0457,The malfunction indicator lamp must be illuminated by the navigation application over a period of 5 driving cycles and log any detected fault with a timestamp.,automotive,Diagnostics OBD
+MD-0458,The permitted distance shall be calculated by the radio block centre within 4.8 s.,rail,Movement Authority
+MD-0459,"The diagnostic recorder shall revoke the authority within 3.4 s, as required by EN 50159.",rail,Movement Authority
+MD-0460,"When a setting is changed and the audit trail is requested, the audit logger must protect the log against modification, export the audit trail, and, where applicable, also record the outcome, to avoid harm to the patient within 107 ms and log any detected fault with a timestamp.",medical,Audit Logging
+MD-0461,"The maintenance system shall extend the end of authority up to a distance of 1688 m, as required by EN 50126.",rail,Movement Authority
+MD-0462,The dispatcher interface will display the permitted speed above 40 km/h with a worst-case latency of 87 ms.,rail,Speed Supervision
+MD-0463,"The EPS controller shall provide the steering wheel angle signal unless the driver releases the steering wheel, to maintain the safe state.",automotive,Steering
+MD-0464,"When the diagnostic data is requested, the condition monitoring unit shall download the diagnostic data within 59 s.",rail,Rail Maintenance
+MD-0465,The patient record service shall authenticate each clinician and switch to battery operation and notify the supervisor of any fault.,medical,Patient Data Privacy
+MD-0466,The bootloader shall authenticate the application image before jump.,automotive,OTA Update
+MD-0467,Audio playback must be muted when a high priority warning chime is active.,automotive,Infotainment
+MD-0468,"When a new timetable is imported, the door controller shall resolve scheduling conflicts and notify the supervisor of any fault.",rail,Timetable
+MD-0469,The signal quality shall be validated by the signal acquisition unit at a rate of 680 Hz.,medical,Sensor Acquisition
+MD-0470,Lane keeping assist: reduce the steering assistance.,automotive,Steering
+MD-0471,"When the device is first connected, the network interface shall anonymise exported data sets in accordance with IEC 62366.",medical,Connectivity
+MD-0472,The pump motor driver will rotate the log files with a worst-case latency of 192 ms.,medical,Infusion Dosing
+MD-0473,The time service shall record each user action and keep the data consistent after a power cycle.,medical,Audit Logging
+MD-0474,"The braking curve calculator shall measure the travelled distance while the train speed exceeds the permitted speed, to ensure the required SIL.",rail,Speed Supervision
+MD-0475,The power manager shall sample the analogue signal and record the event in the audit log.,medical,Sensor Acquisition
+MD-0476,"The interlocking shall prevent conflicting routes unless the track section ahead is occupied, to ensure the required SIL.",rail,Interlocking
+MD-0477,The time to collision estimated at a range of up to 175 m.,automotive,ADAS Perception
+MD-0478,"When an emission relevant fault becomes active, the diagnostic manager shall respond the UDS service requests and set the corresponding diagnostic flag.",automotive,Diagnostics OBD
+MD-0479,Exchange HL7 messages with a latency below 157 ms.,medical,Connectivity
+MD-0480,The axle counter shall report a section clear only when in and out counts are equal.,rail,Train Detection
+MD-0481,The user interface shall show the remaining volume with a worst-case latency of 120 ms.,medical,Medical UI
+MD-0482,The catalyst efficiency must be monitored by the diagnostic manager and shall remain functional in degraded mode.,automotive,Diagnostics OBD
+MD-0483,The movement authority generator will calculate the permitted distance and issue a movement authority every 24 s.,rail,Movement Authority
+MD-0484,The timetable planner shall log maintenance actions and download the diagnostic data within 21 s.,rail,Rail Maintenance
+MD-0485,The alarm annunciator shall rotate the log files within 361 ms in accordance with IEC 62304.,medical,Audit Logging
+MD-0486,The ECG front end shall filter mains interference and log any detected fault with a timestamp.,medical,Sensor Acquisition
+MD-0487,"When a fault is confirmed in three consecutive driving cycles, the brake controller shall clear the fault memory for up to 188 DTCs.",automotive,Diagnostics OBD
+MD-0488,The UDS server shall disable the central locking within 209 ms.,automotive,Body Control
+MD-0489,Radar and camera object lists must be fused by the object tracker with a false positive rate below 3.8 per hour and log any detected fault with a timestamp.,automotive,ADAS Perception
+MD-0490,The GSM-R radio will switch to the redundant channel and generate the train schedule with a latency below 108 ms in accordance with EN 50129.,rail,Rail Communications
+MD-0491,"When the driver depresses the brake pedal and the vehicle is stopped on a gradient, the ABS function shall detect a wheel speed sensor plausibility error, notify the user, and, where applicable, also flag the result, to meet the ASIL target at a deceleration of 5 m/s2.",automotive,Braking
+MD-0492,The overlay request from the lane keeping function must be rate limited.,automotive,Steering
+MD-0493,The speed supervision function will display the permitted speed above 35 km/h in accordance with EN 50159.,rail,Speed Supervision
+MD-0494,"When the battery capacity falls below 10 %, the battery charger will monitor the mains supply and keep the data consistent after a power cycle.",medical,Power Management
+MD-0495,"When the battery is critically low, the monitoring function shall silence the audible signal.",medical,Alarms
+MD-0496,The door lock actuator will operate the windshield wipers and classify detected pedestrians with a delay of at most 2 s and report the fault status on the CAN bus.,automotive,Body Control
+MD-0497,Limit the discharge current at 56 degC.,automotive,Battery Management
+MD-0498,"When an isolation fault is detected and the pack temperature drops below 0 degC, the EPS controller shall derate the charging power, estimate the state of charge, and, where applicable, also flag the result, to meet the ASIL target with a tolerance of +/-3 mV and keep the data consistent after a reset.",automotive,Battery Management
+MD-0499,The diagnostic manager shall store a DTC together with a freeze frame upon fault confirmation.,automotive,Diagnostics OBD
+MD-0500,The update campaign status shall be reported to the backend.,automotive,OTA Update
+MD-0501,The wheel slip ratio shall be limited by the brake pedal sensor interface.,automotive,Braking
+MD-0502,Interface messages shall conform to HL7 v2.5.,medical,Connectivity
+MD-0503,The device with the server shall be paired by the device server.,medical,Connectivity
+MD-0504,The track circuit shall supervise the sensor health with a shunt sensitivity of 0.6 ohm and report the fault status over the data bus.,rail,Train Detection
+MD-0505,"When the pack temperature drops below 0 degC and an isolation fault is detected, the camera perception module shall estimate the state of charge, open the high voltage contactors, and, where applicable, additionally flag the result, so that hazardous events are avoided at 42 degC and set the corresponding diagnostic flag.",automotive,Battery Management
+MD-0506,The pressure sensor calibrated within 26 ms.,medical,Sensor Acquisition
+MD-0507,"The ABS function will operate the windshield wipers if the vehicle speed exceeds 10 km/h, so that hazardous events are avoided.",automotive,Body Control
+MD-0508,Smartphone integration service: store the user profile.,automotive,Infotainment
+MD-0509,The asset manager shall record the operating hours and predict component wear for at least 7 years.,rail,Rail Maintenance
+MD-0510,"The diagnostic recorder shall schedule the inspection within 41 s, as required by EN 50126.",rail,Rail Maintenance
+MD-0511,"When the driver does not react to the warning and the odometer detects wheel slip, the odometer shall measure the travelled distance, apply the service brake, and, where applicable, also flag the result, to avoid conflicting movements with an error below 4.8 %.",rail,Speed Supervision
+MD-0512,The secure bootloader shall roll back the previous software version and resume an interrupted download using a 197 bit key.,automotive,OTA Update
+MD-0513,Delivery shall stop within 1 s when an occlusion is detected.,medical,Infusion Dosing
+MD-0514,The smartphone integration service will render the user interface and pair a Bluetooth device in accordance with ISO 14229.,automotive,Infotainment
+MD-0515,The pressure transducer interface shall detect a lead-off condition and notify the supervisor of any fault.,medical,Sensor Acquisition
+MD-0516,The power supply unit shall protect the circuit against overcurrent within 67 ms with a worst-case latency of 151 ms.,medical,Power Management
+MD-0517,The sensor health supervised at speeds up to 166 km/h.,rail,Train Detection
+MD-0518,The train detection system will detect track occupancy and report the fault status over the data bus.,rail,Train Detection
+MD-0519,The wiper control function shall lock all vehicle doors and log any detected fault with a timestamp.,automotive,Body Control
+MD-0520,The brake pedal sensor interface must monitor the brake fluid level.,automotive,Braking
+MD-0521,The time service must record each user action within 157 ms and keep the data consistent after a power cycle.,medical,Audit Logging
+MD-0522,The cell monitoring unit shall track the lead vehicle and balance the cell voltages at 47 degC.,automotive,Battery Management
+MD-0523,The power manager shall switch to battery operation and monitor the mains supply within 96 ms and record the event in the audit log.,medical,Power Management
+MD-0524,An obstacle shall cause the door to reverse within 300 ms.,rail,Door Control
+MD-0525,"When an emission relevant fault becomes active and a diagnostic session is opened, the diagnostic manager must monitor the catalyst efficiency, clear the fault memory, and, where applicable, additionally flag the result, to meet the ASIL target and report the fault status on the CAN bus.",automotive,Diagnostics OBD
+MD-0526,The EPS shall reduce assist torque smoothly over 2 s when the motor temperature exceeds 120 degC.,automotive,Steering
+MD-0527,A wheel speed sensor plausibility error shall be detected by the electronic stability control.,automotive,Braking
+MD-0528,The steering angle sensor shall limit the assist torque within 15 ms and log any detected fault with a timestamp.,automotive,Steering
+MD-0529,The electronic stability control shall release the brake caliper pressure.,automotive,Braking
+MD-0530,"When an object enters the monitored corridor, the camera perception module shall classify detected pedestrians.",automotive,ADAS Perception
+MD-0531,The communication manager must buffer the messages.,rail,Rail Communications
+MD-0532,"The onboard computer shall apply the service brake within 294 ms, as required by EN 50129.",rail,Speed Supervision
+MD-0533,"When the battery is critically low, the alarm manager will display the alarm message and notify the supervisor of any fault.",medical,Alarms
+MD-0534,The power manager must protect the circuit against overcurrent.,medical,Power Management
+MD-0535,"The ECG front end shall detect a lead-off condition if the signal quality index falls below the threshold, to avoid harm to the patient.",medical,Sensor Acquisition
+MD-0536,The audio content shall be streamed by the navigation application.,automotive,Infotainment
+MD-0537,The maximum bolus shall be limited by the pump motor driver within 2.6 s and notify the supervisor of any fault.,medical,Infusion Dosing
+MD-0538,The train graph must be displayed by the radio block centre and shall remain functional in degraded mode.,rail,Timetable
+MD-0539,Messages must be protected according to EN 50159.,rail,Rail Communications
+MD-0540,The EPS controller shall limit the assist torque below 6.5 Nm.,automotive,Steering
+MD-0541,The route shall be released after the train has cleared the last section.,rail,Interlocking
+MD-0542,"The power supply unit must escalate the unacknowledged alarm while the mains supply is interrupted, to avoid harm to the patient.",medical,Power Management
+MD-0543,"When the programmed rate exceeds the hard limit and an occlusion is detected, the drug library shall limit the maximum bolus, verify the entered dose against the drug library, and, where applicable, additionally record the outcome, to reduce the residual risk at a rate of 123 mL/h.",medical,Infusion Dosing
+MD-0544,The body control module will operate the windshield wipers and activate the turn indicators and keep the data consistent after a reset.,automotive,Body Control
+MD-0545,Exported data sets must be anonymised by the anonymisation function within 10 minutes and shall remain functional in degraded mode.,medical,Patient Data Privacy
+MD-0546,The brake controller must apply the hydraulic brake pressure demand and switch the headlamps at a deceleration of 8 m/s2 and set the corresponding diagnostic flag.,automotive,Braking
+MD-0547,"When the train enters a new RBC area, the movement authority generator shall revoke the authority every 7 s.",rail,Movement Authority
+MD-0548,The electronic stability control shall limit the wheel slip ratio and report the fault status on the CAN bus.,automotive,Braking
+MD-0549,The RBC shall issue a movement authority only for sections that are locked and free.,rail,Movement Authority
+MD-0550,Detect a lead-off condition with a resolution of 17 bit.,medical,Sensor Acquisition
+MD-0551,"The traffic management system shall measure the travelled distance with an error below 2.7 %, as required by IEEE 1474.1.",rail,Speed Supervision
+MD-0552,The data protection layer will authenticate each clinician within 9 minutes.,medical,Patient Data Privacy
+MD-0553,The signal controller shall lock the points after 53 s of time delay in accordance with EN 50159.,rail,Interlocking
+MD-0554,"When the programmed rate exceeds the hard limit, the dose calculation module shall compute the infusion rate and log any detected fault with a timestamp.",medical,Infusion Dosing
+MD-0555,The axle counting section shall be reset by the evaluator unit.,rail,Train Detection
+MD-0556,"The door lock actuator must limit the assist torque while a torque sensor fault is detected, to meet the ASIL target.",automotive,Steering
+MD-0557,"The infusion controller shall stop the infusion within 3.2 s, as required by IEC 62304.",medical,Infusion Dosing
+MD-0558,Keypad lock shall engage automatically after 30 s of inactivity.,medical,Medical UI
+MD-0559,The hydraulic brake pressure demand applied within 220 ms.,automotive,Braking
+MD-0560,The system shall support pairing of at least 7 Bluetooth devices.,automotive,Infotainment
+MD-0561,The steering assistance must be reduced by the EPS controller within 71 ms in accordance with ISO 14229.,automotive,Steering
+MD-0562,"When the download is interrupted, the secure bootloader will verify the package signature using a 192 bit key and keep the data consistent after a reset.",automotive,OTA Update
+MD-0563,"When the battery is critically low, the alarm escalation logic shall escalate the unacknowledged alarm after 110 s and log any detected fault with a timestamp.",medical,Alarms
+MD-0564,The camera perception module must classify detected pedestrians at a range of up to 133 m in accordance with AUTOSAR R20-11.,automotive,ADAS Perception
+MD-0565,The communication manager shall report the section status and shall remain functional in degraded mode.,rail,Train Detection
+MD-0566,The flow rate calibrated within 5.0 s.,medical,Infusion Dosing
+MD-0567,The OTA client shall install the software image in accordance with ISO 21434.,automotive,OTA Update
+MD-0568,"When the network connection is lost, the alarm manager shall transmit the infusion data at a throughput of 167 kbit/s with a worst-case latency of 14 ms.",medical,Connectivity
+MD-0569,The patient record service must display the current infusion status and notify the supervisor of any fault.,medical,Patient Data Privacy
+MD-0570,Safety messages must be transmitted by the trackside network for at most 18 s.,rail,Rail Communications
+MD-0571,"The diagnostic manager shall activate the turn indicators while the ignition is switched off, to maintain the safe state.",automotive,Body Control
+MD-0572,The drug library shall buffer the outgoing data and calibrate the flow rate and notify the supervisor of any fault.,medical,Infusion Dosing
+MD-0573,"When the track section ahead is occupied and the track section ahead is occupied, the GSM-R radio will command the signal to red, display the permitted speed, and, where applicable, also flag the result, to avoid conflicting movements in accordance with EN 50128.",rail,Interlocking
+MD-0574,A wheel speed sensor plausibility error detected with a tolerance of +/-4.9 %.,automotive,Braking
+MD-0575,The communication manager shall buffer the messages within 373 ms.,rail,Rail Communications
+MD-0576,The smartphone integration service shall render the user interface with 96 ms of audio latency with a worst-case latency of 118 ms.,automotive,Infotainment
+MD-0577,"The camera perception module will estimate the time to collision within 87 ms, as required by AUTOSAR R20-11.",automotive,ADAS Perception
+MD-0578,"The patient record service must encrypt patient identifiable data while the record is exported, to reduce the residual risk.",medical,Patient Data Privacy
+MD-0579,The sensor fusion function will estimate the time to collision.,automotive,ADAS Perception
+MD-0580,The time service shall protect the log against modification and shall remain functional in degraded mode.,medical,Audit Logging
+MD-0581,The media playback will be muted by the audio manager with 86 ms of audio latency in accordance with AUTOSAR R20-11.,automotive,Infotainment
+MD-0582,The trackside RBC will transmit the track description up to a distance of 2645 m in accordance with EN 50128.,rail,Movement Authority
+MD-0583,Display the permitted speed within 291 ms.,rail,Speed Supervision
+MD-0584,Pressure readings shall be zeroed before each measurement.,medical,Sensor Acquisition
+MD-0585,The DTC memory shall render the user interface over a period of 26 driving cycles in accordance with ISO 26262-6.,automotive,Diagnostics OBD
+MD-0586,Supervise the train speed above 21 km/h.,rail,Speed Supervision
+MD-0587,The head unit will release the brake caliper pressure.,automotive,Braking
+MD-0588,"When the alarm silence period expires, the monitoring function shall inhibit the nuisance alarms after 106 s.",medical,Alarms
+MD-0589,The UDS server must store the user profile for up to 119 DTCs in accordance with ISO 14229.,automotive,Diagnostics OBD
+MD-0590,"The audio manager shall download the update package at a minimum frame rate of 28 fps, as required by ISO 26262-5.",automotive,Infotainment
+MD-0591,"When the user confirms a bolus, the drug library will compute the infusion rate at a rate of 468 mL/h.",medical,Infusion Dosing
+MD-0592,The requested route shall be set by the route manager and notify the supervisor of any fault.,rail,Interlocking
+MD-0593,HL7 messages will be exchanged by the backup battery with a resolution of 19 bit.,medical,Sensor Acquisition
+MD-0594,"When the train speed exceeds the permitted speed and the train speed exceeds the permitted speed, the speed supervision function shall measure the travelled distance, display the permitted speed, and, where applicable, additionally record the outcome, to ensure the required SIL within 414 ms.",rail,Speed Supervision
+MD-0595,The power supply unit shall display the alarm message at a rate of 848 Hz.,medical,Sensor Acquisition
+MD-0596,"When the sensor reports an out of range value, the SpO2 sensor driver shall detect a lead-off condition at a rate of 457 Hz in accordance with IEC 62304.",medical,Sensor Acquisition
+MD-0597,All vehicle doors shall be locked by the brake controller with a tolerance of +/-3.1 % and shall remain functional in degraded mode.,automotive,Braking
+MD-0598,Failed login attempts shall be limited to five before lockout.,medical,Patient Data Privacy
+MD-0599,"The onboard ETCS unit shall trigger an emergency brake application up to a distance of 1556 m, as required by EN 50128.",rail,Movement Authority
+MD-0600,The diagnostic recorder shall download the diagnostic data for at least 9 years and keep the data consistent after a restart.,rail,Rail Maintenance
+MD-0601,The HL7 gateway shall exchange HL7 messages.,medical,Connectivity
+MD-0602,Safety messages shall be transmitted by the GSM-R radio with a latency below 199 ms.,rail,Rail Communications
+MD-0603,Messages shall be sent over a TLS 1.2 or higher connection.,medical,Connectivity
+MD-0604,"When the network connection is lost, the wireless module shall buffer the outgoing data in accordance with IEC 81001-5-1.",medical,Connectivity
+MD-0605,The braking curve calculator shall supervise the train speed and report the fault status over the data bus.,rail,Speed Supervision
+MD-0606,"The pump motor driver must deliver the programmed volume at a rate of 511 mL/h, as required by IEC 62304.",medical,Infusion Dosing
+MD-0607,The time service shall export the audit trail.,medical,Audit Logging
+MD-0608,"The alarm manager shall inhibit the nuisance alarms while the patient parameter violates the alarm limit, to maintain basic safety.",medical,Alarms
+MD-0609,Track occupancy must be detected by the point controller with a shunt sensitivity of 0.9 ohm and shall remain functional in degraded mode.,rail,Train Detection
+MD-0610,Display the route guidance with 119 ms of audio latency.,automotive,Infotainment
+MD-0611,The user shall be notified by the OTA client and log any detected fault with a timestamp.,automotive,OTA Update
+MD-0612,The brake caliper pressure shall be released by the body control module and log any detected fault with a timestamp.,automotive,Braking
+MD-0613,"When the emergency release is operated and the emergency release is operated, the platform screen door system must buffer the messages, display the permitted speed, and, where applicable, also record the outcome, to avoid conflicting movements with a force of less than 130 N.",rail,Door Control
+MD-0614,The data protection layer shall compute the infusion rate and record the event in the audit log.,medical,Patient Data Privacy
+MD-0615,The dose calculation module shall verify the entered dose against the drug library.,medical,Infusion Dosing
+MD-0616,"When the route ahead is cleared, the movement authority generator must extend the end of authority up to a distance of 4361 m and keep the data consistent after a restart.",rail,Movement Authority
+MD-0617,The infusion rate computed with an accuracy of +/-3.9 %.,medical,Infusion Dosing
+MD-0618,The planned arrival times shall be updated by the dispatcher interface.,rail,Timetable
+MD-0619,The power manager shall protect the circuit against overcurrent.,medical,Power Management
+MD-0620,The device shall switch to battery operation without interruption of therapy.,medical,Power Management
+MD-0621,Brake pressure shall build up to 100 bar within 150 ms of a full pedal application.,automotive,Braking
+MD-0622,The radio block centre shall extend the end of authority and transmit the track description in accordance with EN 50126.,rail,Movement Authority
+MD-0623,Reset the axle counting section within 419 ms.,rail,Speed Supervision
+MD-0624,"The body control module shall respond the UDS service requests while a diagnostic session is opened, to meet the ASIL target.",automotive,Diagnostics OBD
+MD-0625,The user interface shall be rendered by the head unit in accordance with ISO 26262-6.,automotive,Infotainment
+MD-0626,The signal controller shall set the requested route within 3 s.,rail,Interlocking
+MD-0627,The ABS function shall monitor the brake fluid level and limit the wheel slip ratio within 27 ms.,automotive,Braking
+MD-0628,The head unit shall mute the media playback and stream the audio content with 51 ms of audio latency with a worst-case latency of 164 ms.,automotive,Infotainment
+MD-0629,"When the section is reset by the operator, the track circuit shall report the section status within 909 ms.",rail,Train Detection
+MD-0630,The thermal management function shall clear the fault memory within 32 ms.,automotive,Battery Management
+MD-0631,The battery management system shall respond the UDS service requests within 19 ms.,automotive,Battery Management
+MD-0632,The system must lock the session after 10 minutes of inactivity.,medical,Patient Data Privacy
+MD-0633,"When the download is interrupted, the secure bootloader shall roll back the previous software version within 25 minutes and set the corresponding diagnostic flag.",automotive,OTA Update
+MD-0634,The communication manager will monitor the link quality within 418 ms.,rail,Rail Communications
+MD-0635,"When the driver releases the steering wheel, the lane keeping assist will hold the road wheel angle and keep the data consistent after a reset.",automotive,Steering
+MD-0636,"The smartphone integration service will stream the audio content with 36 ms of audio latency, as required by ISO 21434.",automotive,Infotainment
+MD-0637,The ABS function shall display the route guidance and modulate the rear axle brake force at a deceleration of 7 m/s2 and shall remain functional in degraded mode.,automotive,Braking
+MD-0638,The power supply unit shall shut down the device safely.,medical,Power Management
+MD-0639,The pump motor driver must sample the analogue signal and shall remain functional in degraded mode.,medical,Infusion Dosing
+MD-0640,"The passenger door will publish the passenger information at a speed below 3.3 km/h, as required by IEEE 1474.1.",rail,Door Control
+MD-0641,"When the train speed exceeds 3 km/h, the passenger door must monitor the door closed and locked status within 9 s.",rail,Door Control
+MD-0642,"When the pack temperature drops below 0 degC, the battery management system shall monitor the cell temperature.",automotive,Battery Management
+MD-0643,The GSM-R radio shall release the route and inhibit traction with a safety integrity level of SIL 2.8 in accordance with EN 50159.,rail,Interlocking
+MD-0644,"When the screen is touched with gloves and the screen is touched with gloves, the user interface will highlight the changed parameter, compute the infusion rate, and, where applicable, additionally record the outcome, to avoid harm to the patient in accordance with IEC 60601-1.",medical,Medical UI
+MD-0645,The brake pedal sensor interface shall notify the user.,automotive,Braking
+MD-0646,The onboard ETCS unit will extend the end of authority every 21 s.,rail,Movement Authority
+MD-0647,The authentication module shall mask the patient name on the display.,medical,Patient Data Privacy
+MD-0648,The torque overlay request will be calculated by the steering angle sensor in accordance with ISO 21434.,automotive,Steering
+MD-0649,The sensor fusion function must disable the central locking.,automotive,ADAS Perception
+MD-0650,Patient data shall be encrypted at rest using AES-256.,medical,Patient Data Privacy
+MD-0651,The anonymisation function must lock the keypad with a font size of at least 12 pt in accordance with IEC 62304.,medical,Medical UI
+MD-0652,The alarm manager shall raise a high priority alarm after 16 s.,medical,Alarms
+MD-0653,"When the screen is touched with gloves, the on-screen keyboard shall raise a high priority alarm.",medical,Medical UI
+MD-0654,The object tracker must fuse radar and camera object lists in accordance with ISO 26262-6.,automotive,ADAS Perception
+MD-0655,The pump motor driver shall compute the infusion rate with a capacity of 5773 entries and record the event in the audit log.,medical,Audit Logging
+MD-0656,Stream the audio content with 52 ms of audio latency.,automotive,Infotainment
+MD-0657,"The steering torque overlay function shall provide the steering wheel angle signal within 80 ms, as required by ISO 21434.",automotive,Steering
+MD-0658,"The route manager must release the route if the point detection is lost, to ensure the required SIL.",rail,Interlocking
+MD-0659,The signal controller must verify the point detection and report the fault status over the data bus.,rail,Interlocking
+MD-0660,"When the train speed exceeds the permitted speed, the track circuit shall supervise the train speed.",rail,Speed Supervision
+MD-0661,"The body control module shall operate the windshield wipers at 1.9 Hz, as required by ISO 26262-5.",automotive,Body Control
+MD-0662,"When the device is connected to the charger and an overvoltage is detected, the backup battery shall shut down the device safely, switch to battery operation, and, where applicable, also record the outcome, to reduce the residual risk for at least 7.0 hours in accordance with IEC 62366.",medical,Power Management
+MD-0663,"When an object enters the monitored corridor, the object tracker shall output the free space grid with a false positive rate below 4.9 per hour and log any detected fault with a timestamp.",automotive,ADAS Perception
+MD-0664,"When an isolation fault is detected, the charge controller shall estimate the state of charge at 58 degC and report the fault status on the CAN bus.",automotive,Battery Management
+MD-0665,"The door lock actuator shall disable the central locking with a delay of at most 7 s, as required by ISO 26262-5.",automotive,Body Control
+MD-0666,Leakage current shall not exceed the limits of IEC 60601-1.,medical,Power Management
+MD-0667,The interlocking will set the requested route and lock the points within 4 s.,rail,Interlocking
+MD-0668,"When the wireless signal strength is low, the network interface will buffer the outgoing data and shall remain functional in degraded mode.",medical,Connectivity
+MD-0669,The traffic management system will update the planned arrival times within 19 s in accordance with IEEE 1474.1.,rail,Timetable
+MD-0670,"When the charger is connected, the thermal management function shall estimate the state of charge in accordance with AUTOSAR R20-11.",automotive,Battery Management
+MD-0671,The onboard unit shall trigger the emergency brake if the speed exceeds the permitted speed by 5 km/h.,rail,Speed Supervision
+MD-0672,The smartphone integration service shall store the user profile and limit the wheel slip ratio with 64 ms of audio latency.,automotive,Infotainment
+MD-0673,"When an axle count mismatch occurs and a wheel sensor fails, the track circuit shall switch to the redundant channel, clear the occupied section, and, where applicable, also record the outcome, to ensure the required SIL within 302 ms.",rail,Train Detection
+MD-0674,"The camera perception module shall derate the charging power with a false positive rate below 2.2 per hour, as required by AUTOSAR R20-11.",automotive,ADAS Perception
+MD-0675,"When a handover is performed, the trackside network shall switch to the redundant channel for at most 28 s.",rail,Rail Communications
+MD-0676,The signal acquisition unit shall convert the raw measurement with a resolution of 13 bit and notify the supervisor of any fault.,medical,Sensor Acquisition
+MD-0677,The service brake shall be applied after the warning limit is exceeded.,rail,Speed Supervision
+MD-0678,The pressure transducer interface shall escalate the unacknowledged alarm and keep the data consistent after a power cycle.,medical,Alarms
+MD-0679,The DTC memory shall monitor the catalyst efficiency for up to 30 DTCs.,automotive,Diagnostics OBD
+MD-0680,"The traffic management system must display the permitted speed within 230 ms, as required by IEEE 1474.1.",rail,Speed Supervision
+MD-0681,"When the log storage is 90 % full and a setting is changed, the log storage must latch the technical alarm, display the alarm message, and, where applicable, additionally record the outcome, to avoid harm to the patient.",medical,Audit Logging
+MD-0682,Radar and camera object lists shall be fused by the object tracker with a false positive rate below 3.2 per hour.,automotive,ADAS Perception
+MD-0683,"When the device is first connected and the wireless signal strength is low, the wireless module will exchange HL7 messages, buffer the outgoing data, and, where applicable, also record the outcome, to reduce the residual risk.",medical,Connectivity
+MD-0684,The user interface shall highlight the changed parameter and lock the keypad after 28 s in accordance with IEC 62366.,medical,Medical UI
+MD-0685,"The communication manager shall switch to the redundant channel unless the message integrity check fails, to maintain a safe state.",rail,Rail Communications
+MD-0686,The object tracker shall calculate the torque overlay request.,automotive,ADAS Perception
+MD-0687,"The object tracker will estimate the state of charge if the charger is connected, to meet the ASIL target.",automotive,Battery Management
+MD-0688,"When the keypad lock is active, the settings menu will highlight the changed parameter within 2.0 s in accordance with ISO 14971.",medical,Medical UI
+MD-0689,"When a wheel sensor fails, the axle counter shall detect track occupancy at speeds up to 342 km/h.",rail,Train Detection
+MD-0690,The radar processing unit must limit the assist torque and set the corresponding diagnostic flag.,automotive,ADAS Perception
+MD-0691,The audit log shall be tamper evident.,medical,Audit Logging
+MD-0692,The radar processing unit shall classify detected pedestrians.,automotive,ADAS Perception
+MD-0693,Display the current infusion status within 4.5 s.,medical,Medical UI
+MD-0694,"When the user enters a value outside the allowed range and the keypad lock is active, the touchscreen shall deliver the programmed volume, accept numeric input, and, where applicable, additionally flag the result, to avoid harm to the patient with a font size of at least 16 pt in accordance with ISO 14971.",medical,Medical UI
+MD-0695,The UDS service requests responded to over a period of 30 driving cycles.,automotive,Diagnostics OBD
+MD-0696,Lead-off shall be detected within 1 s.,medical,Sensor Acquisition
+MD-0697,The platform screen door system shall release the door enable and monitor the door closed and locked status in accordance with EN 50129.,rail,Door Control
+MD-0698,"The traffic management system shall update the planned arrival times if a platform is blocked, to avoid conflicting movements.",rail,Timetable
+MD-0699,"When the syringe is empty, the infusion controller shall export the audit trail at a rate of 211 mL/h.",medical,Infusion Dosing
+MD-0700,"When the network connection is lost, the device server shall reconnect the hospital network at a throughput of 229 kbit/s with a worst-case latency of 65 ms.",medical,Connectivity
+MD-0701,The speed supervision function shall display the permitted speed within 348 ms and keep the data consistent after a restart.,rail,Speed Supervision
+MD-0702,"When the session is idle, the data protection layer shall anonymise exported data sets within 21 minutes and notify the supervisor of any fault.",medical,Patient Data Privacy
+MD-0703,The gateway ECU will verify the package signature using a 231 bit key.,automotive,OTA Update
+MD-0704,The network interface shall pair the device with the server and transmit the infusion data in accordance with IEC 81001-5-1.,medical,Connectivity
+MD-0705,The track circuit must detect a shunt of 0.5 ohm.,rail,Train Detection
+MD-0706,"When the vehicle speed exceeds 130 km/h, the EPS controller will detect a steering column torque sensor offset with an accuracy of +/-3.0 degrees.",automotive,Steering
+MD-0707,The device server will buffer the outgoing data at a throughput of 884 kbit/s in accordance with ISO 14971.,medical,Connectivity
+MD-0708,"When a fault is confirmed in three consecutive driving cycles and a diagnostic session is opened, the ABS function shall report the freeze frame data, respond the UDS service requests, and, where applicable, also record the outcome, to meet the ASIL target for up to 143 DTCs in accordance with AUTOSAR R20-11.",automotive,Diagnostics OBD
+MD-0709,The link shall be encrypted by the time service in accordance with IEC 60601-1.,medical,Medical UI
+MD-0710,Time service: export the audit trail.,medical,Audit Logging
+MD-0711,The UDS server shall modulate the rear axle brake force.,automotive,Braking
+MD-0712,Display the permitted speed.,rail,Speed Supervision
+MD-0713,The cell monitoring unit shall balance the cell voltages and limit the discharge current within 105 ms in accordance with ISO 26262-5.,automotive,Battery Management
+MD-0714,"The steering torque overlay function will detect a steering column torque sensor offset below 5.9 Nm, as required by ISO 26262-5.",automotive,Steering
+MD-0715,The onboard modem must supervise the sensor health and establish the radio link.,rail,Rail Communications
+MD-0716,The dispatcher interface shall update the planned arrival times with a headway of 177 s with a worst-case latency of 146 ms.,rail,Timetable
+MD-0717,The on-screen keyboard will require a confirmation within 1.7 s and log any detected fault with a timestamp.,medical,Medical UI
+MD-0718,The point controller shall buffer the messages.,rail,Rail Communications
+MD-0719,The track circuit must calculate the permitted distance.,rail,Movement Authority
+MD-0720,Supervise the sensor health for at most 13 s.,rail,Rail Communications
+MD-0721,Steering angle shall be reported with a resolution of 0.1 degrees.,automotive,Steering
+MD-0722,"When visibility is reduced by rain or fog, the sensor fusion function must estimate the time to collision.",automotive,ADAS Perception
+MD-0723,The ECG front end shall sample at 500 Hz with 16 bit resolution.,medical,Sensor Acquisition
+MD-0724,"The sensor fusion function shall classify detected pedestrians if the radar reports a low confidence target, to maintain the safe state.",automotive,ADAS Perception
+MD-0725,The system shall recompute arrival times within 5 s of a delay report.,rail,Timetable
+MD-0726,The brake controller shall respond the UDS service requests and illuminate the malfunction indicator lamp and keep the data consistent after a reset.,automotive,Diagnostics OBD
+MD-0727,Supervise the train speed with a shunt sensitivity of 0.5 ohm.,rail,Train Detection
+MD-0728,The turn indicators shall be activated by the steering angle sensor in accordance with ISO 21434.,automotive,Steering
+MD-0729,"When the syringe is empty, the dose calculation module must pair the device with the server at a rate of 838 mL/h and keep the data consistent after a power cycle.",medical,Infusion Dosing
+MD-0730,"The charge controller shall lock all vehicle doors with a tolerance of +/-10 mV, as required by ISO 26262-6.",automotive,Battery Management
+MD-0731,The track circuit shall report the section status.,rail,Train Detection
+MD-0732,"The diagnostic recorder shall log maintenance actions within 73 s, as required by EN 50128.",rail,Rail Maintenance
+MD-0733,The BMS shall estimate the state of charge with an error of less than 3 %.,automotive,Battery Management
+MD-0734,"When the train enters a new RBC area and the train sends a position report, the radio block centre shall issue a movement authority, extend the end of authority, and, where applicable, also record the outcome, to maintain a safe state and notify the supervisor of any fault.",rail,Movement Authority
+MD-0735,"The gateway ECU shall install the software image within 27 minutes, as required by ISO 14229.",automotive,OTA Update
+MD-0736,Settings menu: expire the user session.,medical,Medical UI
+MD-0737,The user session expired within 14 minutes.,medical,Patient Data Privacy
+MD-0738,"The cell monitoring unit shall monitor the cell temperature with a tolerance of +/-3 mV, as required by ISO 26262-6.",automotive,Battery Management
+MD-0739,"When the component reaches its service life, the maintenance system shall predict component wear within 72 s and notify the supervisor of any fault.",rail,Rail Maintenance
+MD-0740,The infusion controller shall rotate the log files with a capacity of 11516 entries in accordance with IEC 62304.,medical,Audit Logging
+MD-0741,Maintenance actions must be logged with technician identity.,rail,Rail Maintenance
+MD-0742,"When the keypad lock is active and the user selects a drug from the list, the pump motor driver must display the current infusion status, show the remaining volume, and, where applicable, also record the outcome, to avoid harm to the patient.",medical,Medical UI
+MD-0743,"The route manager shall command the signal to red with a safety integrity level of SIL 3.0, as required by EN 50128.",rail,Interlocking
+MD-0744,The diagnostic recorder shall apply the service brake above 18 km/h.,rail,Speed Supervision
+MD-0745,The settings menu shall export the audit trail within 3.5 s and shall remain functional in degraded mode.,medical,Medical UI
+MD-0746,A low battery alarm shall be raised at 20 % remaining capacity.,medical,Power Management
+MD-0747,The device server shall switch to battery operation and notify the supervisor of any fault.,medical,Power Management
+MD-0748,"The asset manager shall download the diagnostic data while the maintenance interval expires, to avoid conflicting movements.",rail,Rail Maintenance
+MD-0749,"The train detection system shall reset the axle counting section unless a wheel sensor fails, to maintain a safe state.",rail,Train Detection
+MD-0750,The navigation application shall recalculate the route within 3 s after a missed turn.,automotive,Infotainment
+MD-0751,"The braking curve calculator must trigger an emergency brake application unless the train speed exceeds the permitted speed, to avoid conflicting movements.",rail,Speed Supervision
+MD-0752,"When the dispatcher modifies a route and a new timetable is imported, the regulation function shall update the planned arrival times, display the train graph, and, where applicable, additionally record the outcome, to maintain a safe state with a headway of 110 s.",rail,Timetable
+MD-0753,The software image installed with 2.7 retries.,automotive,OTA Update
+MD-0754,"When a route request is received, the interlocking will verify the point detection after 145 s of time delay and log any detected fault with a timestamp.",rail,Interlocking
+MD-0755,Condition monitoring unit: open the doors.,rail,Train Detection
+MD-0756,"The electronic stability control must modulate the rear axle brake force unless a brake circuit failure is detected, to maintain the safe state.",automotive,Braking
+MD-0757,Exchange HL7 messages with a latency below 224 ms.,medical,Connectivity
+MD-0758,The traffic management system shall report the section status at speeds up to 277 km/h.,rail,Train Detection
+MD-0759,"When the track section ahead is occupied, the signal controller shall release the route in accordance with EN 50159.",rail,Interlocking
+MD-0760,The onboard modem will measure the travelled distance in accordance with IEEE 1474.1.,rail,Speed Supervision
+MD-0761,"When the dispatcher modifies a route, the dispatcher interface shall update the planned arrival times and shall remain functional in degraded mode.",rail,Timetable
+MD-0762,The alarm annunciator shall latch the technical alarm in accordance with IEC 62304.,medical,Alarms
+MD-0763,"When the radar reports a low confidence target, the sensor fusion function must fuse radar and camera object lists with a false positive rate below 3.6 per hour.",automotive,ADAS Perception
+MD-0764,The ABS function shall prevent wheel lock-up on surfaces with a friction coefficient above 0.3.,automotive,Braking
+MD-0765,Turn indicators shall flash at 1.5 Hz +/- 0.5 Hz.,automotive,Body Control
+MD-0766,The user profile shall be stored by the smartphone integration service within 3.5 s.,automotive,Infotainment
+MD-0767,On-screen keyboard: rotate the log files.,medical,Audit Logging
+MD-0768,The alarm manager must inhibit the nuisance alarms.,medical,Alarms
+MD-0769,The door controller shall release the door enable with a force of less than 150 N.,rail,Door Control
+MD-0770,The interlocking logic shall be developed according to EN 50128.,rail,Interlocking
+MD-0771,The onboard ETCS unit shall issue a movement authority in accordance with IEEE 1474.1.,rail,Movement Authority
+MD-0772,The equipment fault reported within 12 s.,rail,Rail Maintenance
+MD-0773,"When the session is idle, the authentication module shall buffer the outgoing data and record the event in the audit log.",medical,Patient Data Privacy
+MD-0774,The condition monitoring unit shall report the equipment fault and schedule the inspection every 4586 operating hours and report the fault status over the data bus.,rail,Rail Maintenance
+MD-0775,"When three consecutive logins fail, the anonymisation function shall anonymise exported data sets using 192 bit encryption with a worst-case latency of 34 ms.",medical,Patient Data Privacy
+MD-0776,Log entries must be retained for at least 2 years.,medical,Audit Logging
+MD-0777,"When the battery capacity falls below 10 %, the dose calculation module shall restrict access to the records at 15 V and log any detected fault with a timestamp.",medical,Power Management
+MD-0778,The movement authority generator must publish the passenger information.,rail,Movement Authority
+MD-0779,The log shall store at least 10000 entries.,medical,Audit Logging
+MD-0780,"When the point detection is lost, the signal controller shall command the signal to red within 4 s in accordance with EN 50159.",rail,Interlocking
+MD-0781,"The radio block centre shall transmit the track description while the train enters a new RBC area, to avoid conflicting movements.",rail,Movement Authority
+MD-0782,The route manager will issue a movement authority and release the route after 152 s of time delay.,rail,Interlocking
+MD-0783,"When a brake circuit failure is detected, the ABS function shall display the route guidance within 219 ms in accordance with ISO 26262-6.",automotive,Braking
+MD-0784,"The interlocking shall download the diagnostic data unless the route is no longer required, to maintain a safe state.",rail,Interlocking
+MD-0785,"The trackside network shall switch to the redundant channel within 418 ms, as required by EN 50159.",rail,Rail Communications
+MD-0786,"When an emission relevant fault becomes active and a diagnostic session is opened, the diagnostic manager shall illuminate the malfunction indicator lamp, clear the fault memory, and, where applicable, additionally record the outcome, to maintain the safe state with a worst-case latency of 176 ms.",automotive,Diagnostics OBD
+MD-0787,"The ECG front end shall convert the raw measurement within 474 ms, as required by IEC 62366.",medical,Sensor Acquisition
+MD-0788,The door closed and locked status monitored with a safety integrity level of SIL 2.6.,rail,Interlocking
+MD-0789,Calculate the permitted distance.,rail,Movement Authority
+MD-0790,The door enable shall be released by the onboard modem within 10 s in accordance with IEEE 1474.1.,rail,Door Control
+MD-0791,"When the user selects a drug from the list, the touchscreen shall show the remaining volume.",medical,Medical UI
+MD-0792,The anonymisation function shall restrict access to the records and authenticate each clinician.,medical,Patient Data Privacy
+MD-0793,The onboard modem shall update the planned arrival times and establish the radio link with a worst-case latency of 172 ms.,rail,Rail Communications
+MD-0794,The train detection system shall clear the occupied section at speeds up to 296 km/h.,rail,Train Detection
+MD-0795,The diagnostic manager shall monitor the catalyst efficiency over a period of 27 driving cycles and report the fault status on the CAN bus.,automotive,Diagnostics OBD
+MD-0796,"When the message integrity check fails and the network latency exceeds the limit, the trackside network shall buffer the messages, transmit safety messages, and, where applicable, also record the outcome, to avoid conflicting movements with a latency below 167 ms.",rail,Rail Communications
+MD-0797,The OBD interface shall support the ISO 15765-4 protocol.,automotive,Diagnostics OBD
+MD-0798,The previous software version rolled back using a 246 bit key.,automotive,OTA Update
+MD-0799,Establish the radio link.,rail,Rail Communications
+MD-0800,"When a handover is performed, the communication manager must monitor the link quality within 229 ms.",rail,Rail Communications
+MD-0801,The audible signal silenced within 9 s.,medical,Alarms
+MD-0802,The radio link shall be re-established within 5 s after loss.,rail,Rail Communications
+MD-0803,"When the dispatcher modifies a route and the dispatcher modifies a route, the dispatcher interface will establish the radio link, publish the passenger information, and, where applicable, additionally record the outcome, to maintain a safe state with a worst-case latency of 118 ms.",rail,Timetable
+MD-0804,"When any cell voltage exceeds 4.25 V, the thermal management function shall derate the charging power and log any detected fault with a timestamp.",automotive,Battery Management
+MD-0805,The device server must encrypt the link within 35 s and keep the data consistent after a power cycle.,medical,Connectivity
+MD-0806,A sensor failure shall cause the section to be reported occupied.,rail,Train Detection
+MD-0807,"The ECG front end shall compute the infusion rate while the syringe is empty, to maintain basic safety.",medical,Infusion Dosing
+MD-0808,The SpO2 sensor driver will validate the signal quality and sample the analogue signal in accordance with IEC 62366.,medical,Sensor Acquisition
+MD-0809,The update orchestrator shall resume an interrupted download.,automotive,OTA Update
+MD-0810,A movement authority issued up to a distance of 3139 m.,rail,Movement Authority
+MD-0811,The UDS server must store diagnostic trouble codes and respond the UDS service requests in accordance with ISO 21434.,automotive,Diagnostics OBD
+MD-0812,The touchscreen shall accept numeric input and shall remain functional in degraded mode.,medical,Medical UI
+MD-0813,The circuit against overcurrent shall be protected by the power supply unit within 99 ms and keep the data consistent after a power cycle.,medical,Power Management
+MD-0814,Every parameter change shall be logged with the user identity and a timestamp.,medical,Audit Logging
+MD-0815,"When the train sends a position report and an emergency stop is requested, the trackside RBC must set the requested route, calculate the permitted distance, and, where applicable, additionally flag the result, to maintain a safe state.",rail,Movement Authority
+MD-0816,"When the sensor is disconnected and the signal quality index falls below the threshold, the SpO2 sensor driver shall validate the signal quality, calibrate the pressure sensor, and, where applicable, also record the outcome, to maintain basic safety at a rate of 350 Hz in accordance with IEC 60601-1.",medical,Sensor Acquisition
+MD-0817,The OTA client must resume interrupted downloads without restarting from zero.,automotive,OTA Update
+MD-0818,"When a route request is received, the maintenance system shall verify the point detection after 160 s of time delay and notify the supervisor of any fault.",rail,Interlocking
+MD-0819,"When the driver depresses the brake pedal, the electronic stability control must detect a wheel speed sensor plausibility error and shall remain functional in degraded mode.",automotive,Braking
+MD-0820,Disable the central locking at 2.8 Hz.,automotive,Body Control
+MD-0821,The audio content shall be streamed by the audio manager at a minimum frame rate of 42 fps.,automotive,Infotainment
+MD-0822,The monitoring function will convert the raw measurement and detect a lead-off condition.,medical,Sensor Acquisition
+MD-0823,Maintenance system: generate the train schedule.,rail,Rail Maintenance
+MD-0824,Platform doors shall open in synchronisation with train doors.,rail,Door Control
+MD-0825,Sensor fusion function: estimate the time to collision.,automotive,ADAS Perception
+MD-0826,The circuit against overcurrent protected at 21 V.,medical,Power Management
+MD-0827,The flow rate will be calibrated by the infusion controller in accordance with IEC 62304.,medical,Infusion Dosing
+MD-0828,Door controller: inhibit traction.,rail,Door Control
+MD-0829,Alarm limits shall be adjustable by authorised clinicians only.,medical,Alarms
+MD-0830,"The radio block centre will detect track occupancy unless the route ahead is cleared, to avoid conflicting movements.",rail,Movement Authority
+MD-0831,"When the point detection is lost, the point controller shall verify the point detection after 171 s of time delay in accordance with IEEE 1474.1.",rail,Interlocking
+MD-0832,The permitted speed shall be displayed to the driver at all times.,rail,Speed Supervision
+MD-0833,"When a diagnostic session is opened and an emission relevant fault becomes active, the OBD-II interface will report the freeze frame data, clear the fault memory, and, where applicable, also record the outcome, to meet the ASIL target and log any detected fault with a timestamp.",automotive,Diagnostics OBD
+MD-0834,The ABS function shall limit the wheel slip ratio.,automotive,Braking
+MD-0835,"The device server must exchange HL7 messages within 10 s, as required by IEC 62304.",medical,Connectivity
+MD-0836,The steering assistance shall be reduced by the steering angle sensor.,automotive,Steering
+MD-0837,Smartphone integration service: store diagnostic trouble codes.,automotive,Infotainment
+MD-0838,Ghost targets shall be rejected by the radar processing unit.,automotive,ADAS Perception
+MD-0839,Validate the signal quality.,medical,Medical UI
+MD-0840,"When visibility is reduced by rain or fog, the object tracker shall estimate the state of charge at a range of up to 138 m.",automotive,ADAS Perception
+MD-0841,"The door lock actuator shall activate the turn indicators at 1.6 Hz, as required by ISO 26262-5.",automotive,Body Control
+MD-0842,Update packages shall be signed and verified before installation.,automotive,OTA Update
+MD-0843,The authentication module shall restrict access to the records and log any detected fault with a timestamp.,medical,Patient Data Privacy
+MD-0844,Drug library: compute the infusion rate.,medical,Infusion Dosing
+MD-0845,"When the point detection is lost, the signal controller shall release the route in accordance with EN 50129.",rail,Interlocking
+MD-0846,The infusion shall be stopped by the pump motor driver with an accuracy of +/-3.6 %.,medical,Infusion Dosing
+MD-0847,"When a wheel sensor fails, the axle counter must evaluate the wheel sensor pulses in accordance with EN 50129.",rail,Train Detection
+MD-0848,The evaluator unit will evaluate the wheel sensor pulses and detect track occupancy with a shunt sensitivity of 0.7 ohm with a worst-case latency of 88 ms.,rail,Train Detection
+MD-0849,"When visibility is reduced by rain or fog, the radar processing unit shall estimate the time to collision at a range of up to 54 m.",automotive,ADAS Perception
+MD-0850,"When the point detection is lost, the interlocking must prevent conflicting routes with a safety integrity level of SIL 2.8 and notify the supervisor of any fault.",rail,Interlocking
+MD-0851,A wheel speed sensor plausibility error shall be detected by the ABS function with a tolerance of +/-2.3 % with a worst-case latency of 49 ms.,automotive,Braking
+MD-0852,Transmit the infusion data.,medical,Connectivity
+MD-0853,The system shall prevent a free flow condition when the cassette is removed.,medical,Infusion Dosing
+MD-0854,The point controller shall calculate the emergency braking curve within 8 s in accordance with EN 50128.,rail,Interlocking
+MD-0855,Dose calculation module: calibrate the flow rate.,medical,Infusion Dosing
+MD-0856,The monitoring function must silence the audible signal and keep the data consistent after a power cycle.,medical,Alarms
+MD-0857,The radar processing unit will output the free space grid and store the user profile and shall remain functional in degraded mode.,automotive,ADAS Perception
+MD-0858,"When a platform is blocked, the timetable planner shall generate the train schedule.",rail,Timetable
+MD-0859,"When the maintenance interval expires, the communication manager shall record the operating hours with a worst-case latency of 63 ms.",rail,Rail Maintenance
+MD-0860,The end of authority extended up to a distance of 4477 m.,rail,Movement Authority
+MD-0861,"When the device is connected to the charger, the backup battery must monitor the mains supply in accordance with IEC 62304.",medical,Power Management
+MD-0862,"The radar processing unit shall reject ghost targets if the radar reports a low confidence target, to meet the ASIL target.",automotive,ADAS Perception
+MD-0863,"When the driver depresses the brake pedal and a brake circuit failure is detected, the brake pedal sensor interface shall modulate the rear axle brake force, release the brake caliper pressure, and, where applicable, also flag the result, so that hazardous events are avoided and set the corresponding diagnostic flag.",automotive,Braking
+MD-0864,The braking curve shall take the gradient and train length into account.,rail,Speed Supervision
+MD-0865,If the installation fails the ECU shall revert to the last known good image.,automotive,OTA Update
+MD-0866,"When the target speed changes, the braking curve calculator will supervise the train speed.",rail,Speed Supervision
+MD-0867,"When an occlusion is detected, the infusion controller shall calibrate the flow rate.",medical,Infusion Dosing
+MD-0868,The traffic management system will resolve scheduling conflicts for up to 140 trains and keep the data consistent after a restart.,rail,Timetable
+MD-0869,"The onboard ETCS unit shall calculate the permitted distance within 3.5 s, as required by EN 50129.",rail,Movement Authority
+MD-0870,Radar and camera object lists shall be fused by the camera perception module in accordance with ISO 14229.,automotive,ADAS Perception
+MD-0871,The patient record service shall mask the patient name on the display within 20 minutes and log any detected fault with a timestamp.,medical,Patient Data Privacy
+MD-0872,The pressure transducer interface shall monitor the mains supply for at least 6.6 hours.,medical,Power Management
+MD-0873,"The log storage will protect the log against modification for at least 6 years, as required by IEC 62304.",medical,Audit Logging
+MD-0874,The door controller shall monitor the door closed and locked status.,rail,Door Control
+MD-0875,The anonymisation function will validate the signal quality and sample the analogue signal.,medical,Sensor Acquisition
+MD-0876,"When a handover is performed, the radio block centre will buffer the messages within 291 ms.",rail,Rail Communications
+MD-0877,The body control module shall activate the turn indicators.,automotive,Body Control
+MD-0878,The battery charger will shut down the device safely at 15 V and shall remain functional in degraded mode.,medical,Power Management
+MD-0879,"The lighting controller shall switch the headlamps within 316 ms, as required by ISO 14229.",automotive,Body Control
+MD-0880,The drug library shall limit the maximum bolus and compute the infusion rate and log any detected fault with a timestamp.,medical,Infusion Dosing
+MD-0881,Every log entry shall be time stamped by the event recorder within 457 ms with a worst-case latency of 179 ms.,medical,Audit Logging
+MD-0882,The flow rate shall be calibrated by the drug library with an accuracy of +/-3.6 %.,medical,Infusion Dosing
+MD-0883,Track circuit: detect track occupancy.,rail,Train Detection
+MD-0884,Every log entry shall be time stamped by the event recorder and shall remain functional in degraded mode.,medical,Audit Logging
+MD-0885,"When the network latency exceeds the limit, the communication manager will monitor the link quality.",rail,Rail Communications
+MD-0886,The GSM-R radio shall monitor the link quality.,rail,Rail Communications
+MD-0887,UDS server: store diagnostic trouble codes.,automotive,Diagnostics OBD
+MD-0888,The door controller shall inhibit traction.,rail,Door Control
+MD-0889,"When the electrode impedance exceeds the limit, the ECG front end shall time stamp every log entry and record the event in the audit log.",medical,Sensor Acquisition
+MD-0890,Maintenance actions shall be logged by the radio block centre within 12 s.,rail,Rail Maintenance
+MD-0891,"The dose calculation module shall store the event history at a rate of 289 mL/h, as required by IEC 62366.",medical,Infusion Dosing
+MD-0892,The train detection system shall report the section status and evaluate the wheel sensor pulses.,rail,Train Detection
+MD-0893,The camera perception module will output the free space grid and track the lead vehicle and shall remain functional in degraded mode.,automotive,ADAS Perception
+MD-0894,The pressure transducer interface shall stop the infusion with an accuracy of +/-3.1 % and keep the data consistent after a power cycle.,medical,Infusion Dosing
+MD-0895,The battery management system shall estimate the state of charge and log any detected fault with a timestamp.,automotive,Battery Management
+MD-0896,The head unit shall operate the windshield wipers and control the interior lighting within 137 ms and set the corresponding diagnostic flag.,automotive,Body Control
+MD-0897,Unintended steering torque above 3 Nm shall be classified ASIL D.,automotive,Steering
+MD-0898,"When a fault is detected during operation and the maintenance interval expires, the asset manager shall schedule the inspection, download the diagnostic data, and, where applicable, also record the outcome, to ensure the required SIL every 2100 operating hours and keep the data consistent after a restart.",rail,Rail Maintenance
+MD-0899,"The radar processing unit shall estimate the time to collision unless the camera is blinded by direct sunlight, to meet the ASIL target.",automotive,ADAS Perception
+MD-0900,The data protection layer shall encrypt patient identifiable data.,medical,Patient Data Privacy
+MD-0901,"The asset manager shall record the operating hours unless a fault is detected during operation, to ensure the required SIL.",rail,Rail Maintenance
+MD-0902,The steering torque overlay function must fuse radar and camera object lists and set the corresponding diagnostic flag.,automotive,ADAS Perception
+MD-0903,"When the component reaches its service life, the asset manager shall schedule the inspection.",rail,Rail Maintenance
+MD-0904,The ECG front end shall convert the raw measurement with a resolution of 18 bit.,medical,Sensor Acquisition
+MD-0905,"The brake controller must limit the wheel slip ratio with a tolerance of +/-1.8 %, as required by ISO 26262-6.",automotive,Braking
+MD-0906,The pump motor driver must stop the infusion with an accuracy of +/-4.4 %.,medical,Infusion Dosing
+MD-0907,"When an object enters the monitored corridor, the steering angle sensor shall track the lead vehicle at a range of up to 35 m in accordance with ISO 14229.",automotive,ADAS Perception
+MD-0908,"When a user logs out, the time service shall export the audit trail within 160 ms.",medical,Audit Logging
+MD-0909,Brake torque blending between regenerative and friction braking shall be transparent to the driver.,automotive,Braking
+MD-0910,"When the alarm silence period expires, the alarm escalation logic shall silence the audible signal at a sound level of 76 dB.",medical,Alarms
+MD-0911,"When the user selects a drug from the list, the touchscreen will require a confirmation.",medical,Medical UI
+MD-0912,The power supply unit shall rotate the log files for at least 4.1 hours.,medical,Power Management
+MD-0913,The connectivity module shall report link status to the supervisor.,medical,Connectivity
+MD-0914,User interface: highlight the changed parameter.,medical,Medical UI
+MD-0915,"When an isolation fault is detected, the thermal management function must clear the fault memory with a tolerance of +/-10 mV and keep the data consistent after a reset.",automotive,Battery Management
+MD-0916,The drug library shall verify the entered dose against the drug library at a rate of 803 mL/h and keep the data consistent after a power cycle.,medical,Infusion Dosing
+MD-0917,Exported logs shall contain a checksum.,medical,Audit Logging
+MD-0918,The DTC memory shall illuminate the malfunction indicator lamp within 91 ms.,automotive,Diagnostics OBD
+MD-0919,"When the user confirms a bolus, the dose calculation module will calibrate the flow rate and keep the data consistent after a power cycle.",medical,Infusion Dosing
+MD-0920,"When the ignition is switched off and the vehicle speed exceeds 10 km/h, the wiper control function will lock all vehicle doors, calculate the torque overlay request, and, where applicable, additionally record the outcome, to meet the ASIL target.",automotive,Body Control
+MD-0921,The touchscreen must convert the raw measurement and keep the data consistent after a power cycle.,medical,Sensor Acquisition
+MD-0922,A bolus above the soft limit must require a second confirmation.,medical,Infusion Dosing
+MD-0923,"When an overvoltage is detected, the power supply unit must charge the battery at 23 V in accordance with IEC 60601-1.",medical,Power Management
+MD-0924,"When the network latency exceeds the limit, the communication manager will transmit safety messages and log any detected fault with a timestamp.",rail,Rail Communications
+MD-0925,The UDS server shall calculate the torque overlay request and reject ghost targets and log any detected fault with a timestamp.,automotive,ADAS Perception
+MD-0926,The trackside network shall transmit safety messages and buffer the messages for at most 27 s.,rail,Rail Communications
+MD-0927,"The navigation application must store diagnostic trouble codes if an incoming call is received, to maintain the safe state.",automotive,Infotainment
+MD-0928,The authentication module shall compute the infusion rate within 3.7 s.,medical,Medical UI
+MD-0929,"The odometer shall measure the travelled distance with an error below 4.0 %, as required by EN 50126.",rail,Speed Supervision
+MD-0930,The end of authority shall be shortened immediately on route cancellation.,rail,Movement Authority
+MD-0931,"The infusion controller will stop the infusion at a rate of 244 mL/h, as required by IEC 62366.",medical,Infusion Dosing
+MD-0932,"When the vehicle speed exceeds 10 km/h, the navigation application will store the user profile in accordance with ISO 26262-5.",automotive,Body Control
+MD-0933,"The navigation application shall store the user profile unless the driver selects a new media source, to maintain the safe state.",automotive,Infotainment
+MD-0934,A hands-off condition shall be detected within 5 s of torque drop below 0.3 Nm.,automotive,Steering
+MD-0935,"The monitoring function shall display the alarm message if the battery is critically low, to reduce the residual risk.",medical,Alarms
+MD-0936,Infusion controller: stop the infusion.,medical,Infusion Dosing
+MD-0937,"When a wheel sensor fails and the section is reset by the operator, the evaluator unit will detect track occupancy, evaluate the wheel sensor pulses, and, where applicable, also record the outcome, to ensure the required SIL with a worst-case latency of 186 ms.",rail,Train Detection
+MD-0938,The braking curve calculator shall calculate the emergency braking curve.,rail,Speed Supervision
+MD-0939,The dose calculation module will limit the maximum bolus and verify the entered dose against the drug library at a rate of 934 mL/h.,medical,Infusion Dosing
+MD-0940,The onboard ETCS unit must calculate the permitted distance and extend the end of authority up to a distance of 1413 m.,rail,Movement Authority
+MD-0941,The flow rate shall be calibrated by the pump motor driver with a worst-case latency of 95 ms.,medical,Infusion Dosing
+MD-0942,The audit trail exported with a capacity of 43849 entries.,medical,Audit Logging
+MD-0943,The infusion controller will stop the infusion.,medical,Infusion Dosing
+MD-0944,"When an axle count mismatch occurs, the track circuit shall detect track occupancy in accordance with IEEE 1474.1.",rail,Train Detection
+MD-0945,The battery charger will report the remaining runtime and notify the supervisor of any fault.,medical,Power Management
+MD-0946,The odometer shall calculate the emergency braking curve and shall remain functional in degraded mode.,rail,Speed Supervision
+MD-0947,HL7 messages exchanged with a latency below 240 ms.,medical,Connectivity
+MD-0948,On loss of point detection the signal shall revert to danger.,rail,Interlocking
+MD-0949,The track circuit must evaluate the wheel sensor pulses at speeds up to 298 km/h and log any detected fault with a timestamp.,rail,Train Detection
+MD-0950,Record each user action within 19 ms.,medical,Audit Logging
+MD-0951,When the camera is blocked the function shall be flagged as degraded.,automotive,ADAS Perception
+MD-0952,The audit logger must record each user action within 405 ms.,medical,Audit Logging
+MD-0953,The anonymisation function must lock the keypad with a font size of at least 17 pt with a worst-case latency of 7 ms.,medical,Medical UI
+MD-0954,The HL7 gateway shall pair the device with the server at a throughput of 618 kbit/s in accordance with IEC 60601-1.,medical,Connectivity
+MD-0955,Communication manager: monitor the link quality.,rail,Rail Communications
+MD-0956,"When the screen is touched with gloves and the user selects a drug from the list, the user interface shall display the current infusion status, lock the keypad, and, where applicable, also flag the result, to avoid harm to the patient after 30 s and log any detected fault with a timestamp.",medical,Medical UI
+MD-0957,The UDS server shall report the freeze frame data within 41 ms.,automotive,Diagnostics OBD
+MD-0958,The cell voltages shall be balanced by the charge controller at 42 degC in accordance with ISO 26262-6.,automotive,Battery Management
+MD-0959,"When the mains supply is interrupted and the battery capacity falls below 10 %, the power manager shall report the remaining runtime, protect the circuit against overcurrent, and, where applicable, also record the outcome, to reduce the residual risk.",medical,Power Management
+MD-0960,"When the maintenance interval expires, the asset manager shall log maintenance actions every 1613 operating hours in accordance with EN 50159.",rail,Rail Maintenance
+MD-0961,The pump shall deliver the programmed volume with an accuracy of +/- 5 %.,medical,Infusion Dosing
+MD-0962,The route guidance shall be displayed by the smartphone integration service.,automotive,Infotainment
+MD-0963,The odometer shall supervise the sensor health at speeds up to 203 km/h.,rail,Train Detection
+MD-0964,The communication manager shall switch to the redundant channel and log any detected fault with a timestamp.,rail,Rail Communications
+MD-0965,The perception stack shall detect pedestrians at 60 m with a recall of at least 95 %.,automotive,ADAS Perception
+MD-0966,"When a diagnostic session is opened, the steering torque overlay function must store diagnostic trouble codes.",automotive,Diagnostics OBD
+MD-0967,High voltage contactors shall open within 100 ms of a short circuit detection.,automotive,Battery Management
+MD-0968,The wireless module must reconnect automatically within 30 s.,medical,Connectivity
+MD-0969,"When the programmed rate exceeds the hard limit, the pump motor driver will lock the keypad within 3.8 s in accordance with ISO 14971.",medical,Infusion Dosing
+MD-0970,The pump motor driver shall compute the infusion rate and verify the entered dose against the drug library at a rate of 58 mL/h in accordance with ISO 14971.,medical,Infusion Dosing
+MD-0971,The movement authority generator shall revoke the authority and transmit the track description in accordance with EN 50159.,rail,Movement Authority
+MD-0972,"When the user enters a value outside the allowed range, the touchscreen will highlight the changed parameter with a font size of at least 12 pt and keep the data consistent after a power cycle.",medical,Medical UI
+MD-0973,The catalyst efficiency shall be monitored by the thermal management function over a period of 40 driving cycles and report the fault status on the CAN bus.,automotive,Diagnostics OBD
+MD-0974,The door interlock must detect an obstacle.,rail,Door Control
+MD-0975,The points locked with a safety integrity level of SIL 2.1.,rail,Interlocking
+MD-0976,"When the driver releases the steering wheel, the EPS controller shall limit the discharge current with a worst-case latency of 190 ms.",automotive,Steering
+MD-0977,The smartphone integration service will render the user interface.,automotive,Infotainment
+MD-0978,The drug library shall latch the technical alarm within 8 s and notify the supervisor of any fault.,medical,Alarms
+MD-0979,"When the patient parameter violates the alarm limit, the data protection layer shall report the remaining runtime and log any detected fault with a timestamp.",medical,Alarms
+MD-0980,Onboard ETCS unit: extend the end of authority.,rail,Movement Authority
+MD-0981,"When the syringe is empty, the infusion controller shall limit the maximum bolus with an accuracy of +/-2.2 %.",medical,Infusion Dosing
+MD-0982,"When a user logs out, the pump motor driver shall rotate the log files.",medical,Audit Logging
+MD-0983,The patient record service shall expire the user session within 63 ms and shall remain functional in degraded mode.,medical,Power Management
+MD-0984,Component wear predicted within 9 s.,rail,Timetable
+MD-0985,The electronic stability control will modulate the rear axle brake force.,automotive,Braking
+MD-0986,"When the vehicle is stopped on a gradient, the smartphone integration service shall detect a wheel speed sensor plausibility error at a deceleration of 8 m/s2 with a worst-case latency of 102 ms.",automotive,Braking
+MD-0987,"The gateway ECU shall notify the user if the download is interrupted, to maintain the safe state.",automotive,OTA Update
+MD-0988,"When the train passes the counting point, the track circuit shall transmit the track description and shall remain functional in degraded mode.",rail,Train Detection
+MD-0989,The time service shall rotate the log files for at least 6 years.,medical,Audit Logging
+MD-0990,The alarm manager must latch the technical alarm and notify the supervisor of any fault.,medical,Alarms
+MD-0991,The timetable planner shall update the planned arrival times and supervise the sensor health for up to 396 trains.,rail,Timetable
+MD-0992,"When the download is interrupted, the gateway ECU shall notify the user and set the corresponding diagnostic flag.",automotive,OTA Update
+MD-0993,The braking curve calculator must calculate the emergency braking curve and measure the travelled distance in accordance with EN 50159.,rail,Speed Supervision
+MD-0994,The door closed and locked status monitored with a force of less than 122 N.,rail,Door Control
+MD-0995,The door interlock shall release the door enable and open the doors and keep the data consistent after a restart.,rail,Door Control
+MD-0996,The object tracker shall estimate the time to collision within 60 ms.,automotive,ADAS Perception
+MD-0997,"The safety communication shall detect corrupted, delayed and re-sequenced messages.",rail,Rail Communications
+MD-0998,"When a wheel sensor fails, the evaluator unit shall clear the occupied section and shall remain functional in degraded mode.",rail,Train Detection
+MD-0999,"The alarm escalation logic will display the alarm message while the alarm silence period expires, to avoid harm to the patient.",medical,Alarms
+MD-1000,The head unit will display the route guidance with 104 ms of audio latency in accordance with ISO 14229.,automotive,Infotainment
+MD-1001,The interlocking shall not clear a signal unless all points in the route are locked and detected.,rail,Interlocking
+MD-1002,Modulate the rear axle brake force within 61 ms.,automotive,Braking
+MD-1003,The infusion stopped within 54 ms.,medical,Power Management
+MD-1004,Accept numeric input after 16 s.,medical,Medical UI
+MD-1005,Classify detected pedestrians.,automotive,ADAS Perception
+MD-1006,The track circuit must switch to the redundant channel and shall remain functional in degraded mode.,rail,Train Detection
+MD-1007,The UDS server shall respond the UDS service requests over a period of 14 driving cycles and set the corresponding diagnostic flag.,automotive,Diagnostics OBD
+MD-1008,The trackside network will monitor the door closed and locked status.,rail,Rail Communications
+MD-1009,The patient name on the display shall be masked by the authentication module for at most 64 days in accordance with IEC 60601-1.,medical,Patient Data Privacy
+MD-1010,"When the download is interrupted, the gateway ECU shall resume an interrupted download within 48 minutes and log any detected fault with a timestamp.",automotive,OTA Update
+MD-1011,The movement authority shall include the gradient profile.,rail,Movement Authority
+MD-1012,"The monitoring function shall raise a high priority alarm while the patient parameter violates the alarm limit, to reduce the residual risk.",medical,Alarms
+MD-1013,The device server must reconnect the hospital network and pair the device with the server and keep the data consistent after a power cycle.,medical,Connectivity
+MD-1014,The wiper control function shall activate the turn indicators.,automotive,Body Control
+MD-1015,The sensor fusion function shall derate the charging power at 59 degC and log any detected fault with a timestamp.,automotive,Battery Management
+MD-1016,"The radar processing unit must track the lead vehicle with a false positive rate below 4.8 per hour, as required by AUTOSAR R20-11.",automotive,ADAS Perception
+MD-1017,The gateway ECU shall notify the user.,automotive,OTA Update
+MD-1018,The radio block centre shall report the equipment fault.,rail,Movement Authority
+MD-1019,"When a route request is received, the interlocking shall prevent conflicting routes with a safety integrity level of SIL 3.7 and keep the data consistent after a restart.",rail,Interlocking
+MD-1020,The SpO2 sensor driver must lock the keypad.,medical,Sensor Acquisition
+MD-1021,The settings menu shall highlight the changed parameter with a font size of at least 13 pt with a worst-case latency of 29 ms.,medical,Medical UI
+MD-1022,Door interlock: monitor the door closed and locked status.,rail,Door Control
+MD-1023,Disable the central locking at 2.4 Hz.,automotive,Body Control
+MD-1024,The braking curve calculator shall measure the travelled distance and apply the service brake.,rail,Speed Supervision
+MD-1025,The diagnostic data will be downloaded by the trackside RBC.,rail,Movement Authority
+MD-1026,"When the alarm silence period expires, the alarm annunciator shall silence the audible signal within 9 s and notify the supervisor of any fault.",medical,Alarms
+MD-1027,"The alarm escalation logic must silence the audible signal after 115 s, as required by IEC 62304.",medical,Alarms
+MD-1028,The trackside RBC shall issue a movement authority.,rail,Movement Authority
+MD-1029,Diagnostic data shall be downloadable via the service interface.,rail,Rail Maintenance
+MD-1030,The alarm annunciator must latch the technical alarm and keep the data consistent after a power cycle.,medical,Alarms
+MD-1031,The remaining volume will be shown by the on-screen keyboard after 59 s.,medical,Medical UI
+MD-1032,The anonymisation function shall encrypt patient identifiable data and restrict access to the records for at most 182 days and notify the supervisor of any fault.,medical,Patient Data Privacy
+MD-1033,"The lighting controller will lock all vehicle doors at 2.9 Hz, as required by ISO 14229.",automotive,Body Control
+MD-1034,The point controller will establish the radio link and notify the supervisor of any fault.,rail,Interlocking
+MD-1035,"The settings menu shall detect a lead-off condition unless the signal quality index falls below the threshold, to maintain basic safety.",medical,Sensor Acquisition
+MD-1036,The brake pedal sensor interface shall detect a wheel speed sensor plausibility error at a deceleration of 7 m/s2 and set the corresponding diagnostic flag.,automotive,Braking
+MD-1037,"The GSM-R radio shall monitor the link quality within 164 ms, as required by EN 50128.",rail,Rail Communications
+MD-1038,"When the user changes the display language, the smartphone integration service will pair a Bluetooth device in accordance with ISO 26262-5.",automotive,Infotainment
+MD-1039,The gateway ECU shall track the lead vehicle and respond the UDS service requests at a range of up to 145 m and shall remain functional in degraded mode.,automotive,ADAS Perception
+MD-1040,The diagnostic manager shall illuminate the malfunction indicator lamp for up to 191 DTCs.,automotive,Diagnostics OBD
+MD-1041,Traction must be inhibited unless all doors are closed and locked.,rail,Door Control
+MD-1042,The patient record service will encrypt patient identifiable data and log any detected fault with a timestamp.,medical,Patient Data Privacy
+MD-1043,"The train detection system shall monitor the link quality with a shunt sensitivity of 0.9 ohm, as required by EN 50159.",rail,Train Detection
+MD-1044,The UI must follow the usability engineering process of IEC 62366.,medical,Medical UI
+MD-1045,The ABS function shall modulate the rear axle brake force in accordance with ISO 14229.,automotive,Braking
+MD-1046,"The UDS server shall store diagnostic trouble codes over a period of 21 driving cycles, as required by ISO 21434.",automotive,Diagnostics OBD
+MD-1047,The electronic stability control must monitor the brake fluid level at a deceleration of 8 m/s2 in accordance with ISO 26262-6.,automotive,Braking
+MD-1048,"When the train is stopped at the platform, the asset manager shall monitor the door closed and locked status.",rail,Door Control
+MD-1049,"The GSM-R radio must authenticate the peer while the radio link is interrupted, to ensure the required SIL.",rail,Rail Communications
+MD-1050,The on-screen keyboard shall lock the keypad.,medical,Medical UI
+MD-1051,Therapy shall continue unaffected when network connectivity is lost.,medical,Connectivity
+MD-1052,The patient record service shall authenticate each clinician in accordance with IEC 60601-1.,medical,Patient Data Privacy
+MD-1053,The touchscreen shall filter mains interference after 17 s and shall remain functional in degraded mode.,medical,Medical UI
+MD-1054,Patient record service: mask the patient name on the display.,medical,Patient Data Privacy
+MD-1055,The diagnostic manager shall respond the UDS service requests and set the corresponding diagnostic flag.,automotive,Diagnostics OBD
+MD-1056,"The signal controller must set the requested route unless a route request is received, to maintain a safe state.",rail,Interlocking
+MD-1057,The dwell time shall be adjusted by the dispatcher interface for up to 110 trains.,rail,Timetable
+MD-1058,The brake controller will limit the wheel slip ratio with a tolerance of +/-1.2 %.,automotive,Braking
+MD-1059,The device server shall encrypt the link and log any detected fault with a timestamp.,medical,Connectivity
+MD-1060,Reset of a section shall require operator confirmation.,rail,Train Detection
+MD-1061,"When the train speed exceeds 3 km/h, the door controller shall release the door enable.",rail,Door Control
+MD-1062,Settings menu: lock the keypad.,medical,Medical UI
+MD-1063,Handover between RBC areas shall be seamless.,rail,Movement Authority
+MD-1064,The train speed will be supervised by the odometer.,rail,Speed Supervision
+MD-1065,The pressure transducer interface shall convert the raw measurement and shall remain functional in degraded mode.,medical,Sensor Acquisition
+MD-1066,Dwell times shall be adjustable in steps of 5 s.,rail,Timetable
+MD-1067,The brake fluid level monitored within 181 ms.,automotive,Braking
+MD-1068,"The event recorder shall exchange HL7 messages at a throughput of 667 kbit/s, as required by IEC 60601-1.",medical,Connectivity
+MD-1069,The permitted speed displayed with an error below 3.0 %.,rail,Speed Supervision
+MD-1070,ABS function: provide the steering wheel angle signal.,automotive,Steering
+MD-1071,The charge controller shall monitor the cell temperature.,automotive,Battery Management
+MD-1072,"When the battery capacity falls below 10 %, the network interface shall switch to battery operation.",medical,Power Management
+MD-1073,The door interlock shall clear the occupied section within 298 ms with a worst-case latency of 190 ms.,rail,Train Detection
+MD-1074,To battery operation switched at 14 V.,medical,Power Management
+MD-1075,The signal controller will establish the radio link and set the requested route after 142 s of time delay with a worst-case latency of 109 ms.,rail,Interlocking
+MD-1076,"When a platform is blocked, the traffic management system must update the planned arrival times within 26 s in accordance with IEEE 1474.1.",rail,Timetable
+MD-1077,The SpO2 sensor driver will protect the log against modification and filter mains interference at a rate of 131 Hz and notify the supervisor of any fault.,medical,Sensor Acquisition
+MD-1078,The network interface will detect a lead-off condition with a worst-case latency of 195 ms.,medical,Connectivity
+MD-1079,The drug library shall convert the raw measurement with a resolution of 13 bit and record the event in the audit log.,medical,Sensor Acquisition
+MD-1080,Each user action must be recorded by the event recorder for at least 4 years.,medical,Audit Logging
+MD-1081,The OTA client will operate the windshield wipers and log any detected fault with a timestamp.,automotive,OTA Update
+MD-1082,The point controller shall release the route after 94 s of time delay and report the fault status over the data bus.,rail,Interlocking
+MD-1083,"The steering angle sensor will reduce the steering assistance while a torque sensor fault is detected, to maintain the safe state.",automotive,Steering
+MD-1084,The timetable import shall validate all headways.,rail,Timetable
+MD-1085,Report the equipment fault.,rail,Rail Maintenance
+MD-1086,Wheel speed signals shall be validated against vehicle reference speed every 10 ms.,automotive,Braking
+MD-1087,Radar and camera object lists shall be fused by the object tracker within 31 ms and set the corresponding diagnostic flag.,automotive,ADAS Perception
+MD-1088,The timetable planner shall display the train graph.,rail,Timetable
+MD-1089,Availability of the system shall be demonstrated according to EN 50126.,rail,Rail Maintenance
+MD-1090,"The cell monitoring unit shall classify detected pedestrians at 53 degC, as required by ISO 26262-5.",automotive,Battery Management
+MD-1091,"The OBD-II interface shall respond the UDS service requests while an emission relevant fault becomes active, to maintain the safe state.",automotive,Diagnostics OBD
+MD-1092,The route shall be released by the signal controller with a safety integrity level of SIL 4.0 and report the fault status over the data bus.,rail,Interlocking
+MD-1093,The brake controller shall limit the wheel slip ratio.,automotive,Braking
+MD-1094,Anonymisation function: mask the patient name on the display.,medical,Patient Data Privacy
+MD-1095,The touchscreen shall display the current infusion status and highlight the changed parameter with a font size of at least 16 pt and log any detected fault with a timestamp.,medical,Medical UI
+MD-1096,The lane keeping assist shall fuse radar and camera object lists in accordance with ISO 26262-5.,automotive,Steering
+MD-1097,The brake fluid level shall be monitored by the ABS function with a tolerance of +/-4.2 %.,automotive,Braking
+MD-1098,"When the route is no longer required, the point controller shall set the requested route after 139 s of time delay and keep the data consistent after a restart.",rail,Interlocking
+MD-1099,The evaluator shall comply with SIL 4 of EN 50129.,rail,Train Detection
+MD-1100,The onboard ETCS unit shall transmit the track description and revoke the authority and report the fault status over the data bus.,rail,Movement Authority
+MD-1101,"When the maintenance interval expires, the maintenance system shall download the diagnostic data for at least 6 years.",rail,Rail Maintenance
+MD-1102,"When the train passes the counting point and the section is reset by the operator, the train detection system shall reset the axle counting section, supervise the sensor health, and, where applicable, also record the outcome, to ensure the required SIL.",rail,Train Detection
+MD-1103,"When an emission relevant fault becomes active, the UDS server shall store diagnostic trouble codes within 46 ms and log any detected fault with a timestamp.",automotive,Diagnostics OBD
+MD-1104,The radar processing unit will estimate the time to collision in accordance with AUTOSAR R20-11.,automotive,ADAS Perception
+MD-1105,The point detection shall be verified by the door interlock with a force of less than 111 N.,rail,Door Control
+MD-1106,The regulation function shall generate the train schedule and shall remain functional in degraded mode.,rail,Timetable
+MD-1107,The diagnostic recorder must switch to the redundant channel for at least 8 years in accordance with EN 50126.,rail,Rail Maintenance
+MD-1108,The maintenance system shall download the diagnostic data.,rail,Rail Maintenance
+MD-1109,Faults shall be reported to the maintenance centre within 60 s.,rail,Rail Maintenance
+MD-1110,The battery charger shall accept numeric input and display the current infusion status with a worst-case latency of 190 ms.,medical,Medical UI
+MD-1111,Derate the charging power at 56 degC.,automotive,Battery Management
+MD-1112,"When an obstacle is detected between the doors, the movement authority generator shall release the door enable within 2 s with a worst-case latency of 56 ms.",rail,Door Control
+MD-1113,"The condition monitoring unit must prevent conflicting routes while the track section ahead is occupied, to avoid conflicting movements.",rail,Interlocking
+MD-1114,The ABS function shall limit the wheel slip ratio and log any detected fault with a timestamp.,automotive,Braking
+MD-1115,"The data protection layer will encrypt patient identifiable data unless a user logs in from an unknown terminal, to reduce the residual risk.",medical,Patient Data Privacy
+MD-1116,The headlamps shall be switched on automatically below 1000 lux.,automotive,Body Control
+MD-1117,The sensor health supervised at speeds up to 150 km/h.,rail,Train Detection
+MD-1118,The malfunction indicator lamp must be illuminated after two consecutive failed monitoring cycles.,automotive,Diagnostics OBD
+MD-1119,The log storage shall time stamp every log entry and notify the supervisor of any fault.,medical,Audit Logging
+MD-1120,The cell monitoring unit shall limit the discharge current.,automotive,Battery Management
+MD-1121,The audit logger shall anonymise exported data sets with a capacity of 28212 entries in accordance with IEC 62304.,medical,Audit Logging
+MD-1122,"When the vehicle is stopped on a gradient, the brake pedal sensor interface shall apply the hydraulic brake pressure demand.",automotive,Braking
+MD-1123,The lighting controller shall provide the steering wheel angle signal and hold the road wheel angle below 7.3 Nm in accordance with ISO 26262-5.,automotive,Steering
+MD-1124,"When visibility is reduced by rain or fog, the lighting controller shall output the free space grid within 113 ms in accordance with ISO 21434.",automotive,ADAS Perception
+MD-1125,The route manager will verify the point detection within 10 s and log any detected fault with a timestamp.,rail,Interlocking
+MD-1126,The wireless module must buffer the outgoing data within 59 s and notify the supervisor of any fault.,medical,Connectivity
+MD-1127,"The head unit shall display the route guidance within 4.6 s, as required by ISO 26262-5.",automotive,Infotainment
+MD-1128,The battery management system shall estimate the state of charge at 56 degC in accordance with ISO 14229.,automotive,Battery Management
+MD-1129,Detected pedestrians classified at a range of up to 62 m.,automotive,ADAS Perception
+MD-1130,"When the wireless signal strength is low, the alarm annunciator shall buffer the outgoing data with a latency below 396 ms.",medical,Connectivity
+MD-1131,The route manager shall set the requested route and shall remain functional in degraded mode.,rail,Interlocking
+MD-1132,"The brake pedal sensor interface shall detect a wheel speed sensor plausibility error if wheel slip exceeds the ABS threshold, so that hazardous events are avoided.",automotive,Braking
+MD-1133,The brake controller shall balance the cell voltages and report the fault status on the CAN bus.,automotive,Braking
+MD-1134,The time service shall verify the entered dose against the drug library for at least 6 years.,medical,Audit Logging
+MD-1135,"The head unit must mute the media playback at a minimum frame rate of 44 fps, as required by ISO 14229.",automotive,Infotainment
+MD-1136,"When the patient parameter violates the alarm limit, the time service will escalate the unacknowledged alarm at a sound level of 52 dB.",medical,Alarms
+MD-1137,"When the driver depresses the brake pedal, the ABS function shall monitor the brake fluid level with a worst-case latency of 113 ms.",automotive,Braking
+MD-1138,The UDS server will respond the UDS service requests for up to 122 DTCs.,automotive,Diagnostics OBD
+MD-1139,The train detection system shall clear the occupied section.,rail,Train Detection
+MD-1140,The smartphone integration service shall render the user interface and log any detected fault with a timestamp.,automotive,Infotainment
+MD-1141,"The camera perception module shall reject ghost targets with a false positive rate below 1.8 per hour, as required by AUTOSAR R20-11.",automotive,ADAS Perception
+MD-1142,The trackside RBC shall issue a movement authority within 2.9 s in accordance with EN 50126.,rail,Movement Authority
+MD-1143,The dose calculation module shall rotate the log files with a capacity of 47512 entries and record the event in the audit log.,medical,Audit Logging
+MD-1144,The dispatcher shall be able to hold a train at a station.,rail,Timetable
+MD-1145,An invalid position report rejected above 39 km/h.,rail,Speed Supervision
+MD-1146,An unacknowledged alarm shall escalate to a higher priority after 60 s.,medical,Alarms
+MD-1147,The movement authority generator shall reject an invalid position report and transmit the track description within 4.5 s and shall remain functional in degraded mode.,rail,Movement Authority
+MD-1148,Dispatcher interface: close the doors.,rail,Speed Supervision
+MD-1149,HL7 messages exchanged within 35 s.,medical,Connectivity
+MD-1150,"When the ignition is switched off, the body control module shall lock all vehicle doors at 1.4 Hz.",automotive,Body Control
+MD-1151,"When the network connection is lost and the server rejects the message, the signal acquisition unit shall anonymise exported data sets, exchange HL7 messages, and, where applicable, additionally flag the result, to reduce the residual risk with a latency below 164 ms and keep the data consistent after a power cycle.",medical,Connectivity
+MD-1152,The onboard ETCS unit shall extend the end of authority in accordance with IEEE 1474.1.,rail,Movement Authority
+MD-1153,"When the radio link is interrupted, the onboard modem must transmit safety messages within 62 ms.",rail,Rail Communications
+MD-1154,The high voltage contactors opened at 52 degC.,automotive,Battery Management
+MD-1155,"When the user changes the display language and an incoming call is received, the audio manager shall stream the audio content, output the free space grid, and, where applicable, additionally record the outcome, so that hazardous events are avoided within 1.4 s and log any detected fault with a timestamp.",automotive,Infotainment
+MD-1156,"When a route request is received, the route manager shall lock the points in accordance with EN 50159.",rail,Interlocking
+MD-1157,Smartphone integration service: clear the fault memory.,automotive,Diagnostics OBD
+MD-1158,"The battery management system will open the high voltage contactors with a tolerance of +/-6 mV, as required by ISO 14229.",automotive,Battery Management
+MD-1159,The power manager shall shut down the device safely and report the remaining runtime.,medical,Power Management
+MD-1160,"When a fault is confirmed in three consecutive driving cycles, the UDS server shall report the freeze frame data.",automotive,Diagnostics OBD
+MD-1161,The nuisance alarms must be inhibited by the alarm escalation logic after 91 s and log any detected fault with a timestamp.,medical,Alarms
+MD-1162,A lead-off condition shall be detected by the pressure transducer interface within 455 ms in accordance with IEC 62366.,medical,Sensor Acquisition
+MD-1163,The link quality shall be monitored by the GSM-R radio for at most 17 s.,rail,Rail Communications
+MD-1164,"When an obstacle is detected between the doors, the platform screen door system shall close the doors.",rail,Door Control
+MD-1165,The diagnostic recorder shall record the operating hours for at least 14 years and keep the data consistent after a restart.,rail,Rail Maintenance
+MD-1166,The service brake shall be applied by the braking curve calculator.,rail,Speed Supervision
+MD-1167,Doors shall only be released when the train is stationary and aligned with the platform.,rail,Door Control
+MD-1168,The trackside RBC shall revoke the authority up to a distance of 2871 m in accordance with EN 50159.,rail,Movement Authority
+MD-1169,The braking curve calculator shall calculate the emergency braking curve in accordance with EN 50129.,rail,Speed Supervision
+MD-1170,Derate the charging power at 55 degC.,automotive,Battery Management
+MD-1171,The interlocking must set the requested route.,rail,Interlocking
+MD-1172,"When the pack temperature drops below 0 degC, the cell monitoring unit shall balance the cell voltages.",automotive,Battery Management
+MD-1173,The alarm escalation logic shall silence the audible signal and record the event in the audit log.,medical,Alarms
+MD-1174,The messages must be buffered by the GSM-R radio.,rail,Rail Communications
+MD-1175,Authentication module: restrict access to the records.,medical,Patient Data Privacy
+MD-1176,The user shall be notified by the update orchestrator using a 232 bit key.,automotive,OTA Update
+MD-1177,The braking curve calculator must measure the travelled distance with an error below 2.8 % with a worst-case latency of 176 ms.,rail,Speed Supervision
+MD-1178,Calibrate the flow rate.,medical,Infusion Dosing
+MD-1179,The condition monitoring unit shall record wheel wear data for each axle.,rail,Rail Maintenance
+MD-1180,The condition monitoring unit shall monitor the link quality in accordance with EN 50159.,rail,Rail Maintenance
+MD-1181,A wheel speed sensor plausibility error will be detected by the door lock actuator with a tolerance of +/-4.2 % and set the corresponding diagnostic flag.,automotive,Braking
+MD-1182,"When the supply voltage drops below the operating range, the EPS controller will hold the road wheel angle with an accuracy of +/-1.2 degrees.",automotive,Steering
+MD-1183,"The thermal management function shall derate the charging power if the pack temperature drops below 0 degC, to meet the ASIL target.",automotive,Battery Management
+MD-1184,The mains supply shall be monitored by the alarm manager within 25 ms and keep the data consistent after a power cycle.,medical,Power Management
+MD-1185,"When the route ahead is cleared, the onboard ETCS unit shall issue a movement authority within 2.1 s with a worst-case latency of 139 ms.",rail,Movement Authority
+MD-1186,The navigation application must stream the audio content.,automotive,Infotainment
+MD-1187,The battery shall provide at least 4 hours of operation at the nominal rate.,medical,Power Management
+MD-1188,"The condition monitoring unit shall revoke the authority if the train sends a position report, to ensure the required SIL.",rail,Movement Authority
+MD-1189,The sensor fusion function shall balance the cell voltages and derate the charging power.,automotive,Battery Management
+MD-1190,"The log storage shall rotate the log files unless the log storage is 90 % full, to maintain basic safety.",medical,Audit Logging
+MD-1191,The monitoring function shall display the alarm message and silence the audible signal in accordance with IEC 62304.,medical,Alarms
+MD-1192,"When the track section ahead is occupied, the trackside RBC must transmit the track description with a safety integrity level of SIL 3.9.",rail,Interlocking
+MD-1193,The fusion module must report the ego vehicle speed together with its covariance.,automotive,ADAS Perception
+MD-1194,"The wiper control function will control the interior lighting with a delay of at most 9 s, as required by ISO 21434.",automotive,Body Control
+MD-1195,"When a route request is received, the train detection system shall command the signal to red after 46 s of time delay and report the fault status over the data bus.",rail,Interlocking
+MD-1196,User interface: encrypt the link.,medical,Connectivity
+MD-1197,The route manager shall transmit safety messages within 249 ms.,rail,Rail Communications
+MD-1198,"When the battery capacity falls below 10 %, the battery charger will charge the battery with a worst-case latency of 194 ms.",medical,Power Management
+MD-1199,The log storage shall record each user action with a capacity of 15287 entries.,medical,Audit Logging
+MD-1200,The device with the server shall be paired by the event recorder within 21 s in accordance with IEC 62304.,medical,Connectivity
+MD-1201,Train presence shall be detected within 500 ms of entering the section.,rail,Train Detection
+MD-1202,"When a brake circuit failure is detected, the ABS function shall monitor the brake fluid level at a deceleration of 9 m/s2.",automotive,Braking
+MD-1203,"The alarm escalation logic shall silence the audible signal if the battery is critically low, to reduce the residual risk.",medical,Alarms
+MD-1204,"The brake pedal sensor interface will monitor the brake fluid level within 140 ms, as required by ISO 26262-5.",automotive,Braking

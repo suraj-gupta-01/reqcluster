@@ -26,3 +26,13 @@ sources.
 To use one: export the requirements to a CSV with at least a `text` column
 (optionally `id`, `module`, `section`) and upload it. The preprocessor
 auto-detects common column-name variants (`requirement`, `description`, etc.).
+
+## Hard evaluation sets (`generate_eval_datasets.py`)
+
+Deterministic (seeded, stdlib + numpy) generator; `uv run python data/generate_eval_datasets.py` regenerates and self-checks all three. Mixed sentence structures, shared cross-module vocabulary, ~10% terse and ~5% long requirements, ~18% cross-module borrowing so classes overlap lexically (MiniLM + KMeans k=24 gives ARI about 0.5, not 0.94).
+
+| File | Rows | Columns |
+|------|------|---------|
+| `multidomain_requirements.csv` | ~1200 | `id,text,domain,module` - automotive / medical / rail, 24 unbalanced modules (35-69 rows) |
+| `dependency_gold_requirements.csv` + `dependency_gold_edges.csv` | ~400 reqs, ~214 edges | `id,text,module,section`; edges `source_id,target_id,relation` with relation in data/reference/refines/sequence (source = producer/referenced/parent/predecessor). Includes ~30% no-dependency distractors and artifact synonyms. `module` here is the dependency kind, not a topic label. |
+| `adversarial_requirements.csv` | 600 | `id,text,module,perturbation,source_id,contradicts_id`; perturbation in paraphrase/near_duplicate/typo/contradiction/noise; noise rows have module `__noise__` |

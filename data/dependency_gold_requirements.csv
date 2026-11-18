@@ -1,0 +1,398 @@
+id,text,module,section
+DEP-001,The arbiter shall take as input the annunciation status to determine the next action.,Data,Producer-Consumer
+DEP-002,The safety monitor shall take as input the login credential handle during each control cycle.,Data,Producer-Consumer
+DEP-003,The communication stack shall consume the steering angle when computing its output.,Data,Producer-Consumer
+DEP-004,The safety monitor shall rely on the MA message to determine the next action.,Data,Producer-Consumer
+DEP-005,The validation component shall provide the fault status word at 10 Hz.,Data,Producer-Consumer
+DEP-006,The radio signal metric sensor housing shall withstand a vibration of 10 g.,Distractor,Unrelated
+DEP-007,The system shall start the calibration after completion of the sensor warm-up.,Sequence,Triggers
+DEP-008,The documentation for the wheel speed function shall be reviewed annually.,Distractor,Unrelated
+DEP-009,The validation component shall read the link quality index for plausibility checking.,Data,Producer-Consumer
+DEP-010,Invalid values of the yaw rate shall be flagged and excluded.,Refinement,Parent-Child
+DEP-011,Invalid values of the cell temperature shall be flagged and excluded. (refines DEP-185),Refinement,Parent-Child
+DEP-012,The angular rotation rate sensor housing shall withstand a vibration of 10 g.,Distractor,Unrelated
+DEP-013,The actuator driver shall enforce the constraint as specified in DEP-150.,Reference,Explicit Reference
+DEP-014,The communication stack shall take as input the braking curve for plausibility checking.,Data,Producer-Consumer
+DEP-015,The supplier shall demonstrate maturity of the brake pressure process at each audit.,Distractor,Unrelated
+DEP-016,The validation component shall subscribe to the stopping trajectory for plausibility checking.,Data,Producer-Consumer
+DEP-017,The system shall start the traction release after completion of the door closing.,Sequence,Triggers
+DEP-018,The gateway shall enforce the constraint as specified in DEP-277.,Reference,Explicit Reference
+DEP-019,The diagnostic service shall read the braking curve for plausibility checking.,Data,Producer-Consumer
+DEP-020,Invalid values of the software image hash shall be flagged and excluded.,Refinement,Parent-Child
+DEP-021,The supplier shall demonstrate maturity of the subject ID process at each audit.,Distractor,Unrelated
+DEP-022,The documentation for the timetable arrival slot function shall be reviewed annually.,Distractor,Unrelated
+DEP-023,The scheduler shall maintain the battery state of charge within the specified range.,Reference,Explicit Reference
+DEP-024,The data manager shall report violations as specified in DEP-228.,Reference,Explicit Reference
+DEP-025,The safety monitor shall rely on the annunciation status for plausibility checking.,Data,Producer-Consumer
+DEP-026,Each change of the alarm state shall be logged with a timestamp.,Refinement,Parent-Child
+DEP-027,The HMI task shall derive the session token within 100 ms of each cycle.,Data,Producer-Consumer
+DEP-028,Test equipment for the longitudinal velocity estimate shall be calibrated every 12 months.,Distractor,Unrelated
+DEP-029,Each change of the session token shall be logged with a timestamp.,Refinement,Parent-Child
+DEP-030,The system shall start the self-test after completion of the initialisation.,Sequence,Triggers
+DEP-031,The estimator shall verify the limits as specified in DEP-176.,Reference,Explicit Reference
+DEP-032,The system shall start the pressure test after completion of the authentication.,Sequence,Triggers
+DEP-033,Test equipment for the speed ceiling shall be calibrated every 12 months.,Distractor,Unrelated
+DEP-034,The estimator shall subscribe to the path allocation state to determine the next action.,Data,Producer-Consumer
+DEP-035,The data manager shall take as input the fault status word to determine the next action.,Data,Producer-Consumer
+DEP-036,The scheduler shall apply the same tolerance as specified in DEP-160.,Reference,Explicit Reference
+DEP-037,The supplier shall demonstrate maturity of the leaf closed indication process at each audit.,Distractor,Unrelated
+DEP-038,The system shall provide session token monitoring with fault handling.,Refinement,Parent-Child
+DEP-039,The health summary sensor housing shall withstand a vibration of 10 g.,Distractor,Unrelated
+DEP-040,The supplier shall demonstrate maturity of the downstream pressure process at each audit.,Distractor,Unrelated
+DEP-041,Each change of the route status shall be logged with a timestamp. (refines DEP-046),Refinement,Parent-Child
+DEP-042,Training material covering the delivery rate command shall be provided to operators.,Distractor,Unrelated
+DEP-043,The system shall provide yaw rate monitoring with fault handling.,Refinement,Parent-Child
+DEP-044,The ego velocity sensor housing shall withstand a vibration of 10 g.,Distractor,Unrelated
+DEP-045,The module temperature value sensor housing shall withstand a vibration of 10 g.,Distractor,Unrelated
+DEP-046,The system shall provide route status monitoring with fault handling.,Refinement,Parent-Child
+DEP-047,The safety monitor shall report violations as specified in DEP-228.,Reference,Explicit Reference
+DEP-048,The recorder shall use the brake pressure during each control cycle.,Data,Producer-Consumer
+DEP-049,The alarm state sensor housing shall withstand a vibration of 10 g.,Distractor,Unrelated
+DEP-050,The logger shall verify the limits as specified in DEP-108.,Reference,Explicit Reference
+DEP-051,The diagnostic service shall take as input the subject ID for plausibility checking.,Data,Producer-Consumer
+DEP-052,Each change of the cell temperature shall be logged with a timestamp.,Refinement,Parent-Child
+DEP-053,The logger shall enforce the constraint as specified in DEP-214.,Reference,Explicit Reference
+DEP-054,The HMI task shall apply the same tolerance as specified in DEP-170.,Reference,Explicit Reference
+DEP-055,The system shall start the sensor warm-up after completion of the prime cycle.,Sequence,Triggers
+DEP-056,The system shall start the handshake after completion of the pre-charge.,Sequence,Triggers
+DEP-057,The unit that handles the battery state of charge shall have a mass below 2 kg.,Distractor,Unrelated
+DEP-058,The scheduler shall use the front wheel deflection for plausibility checking.,Data,Producer-Consumer
+DEP-059,The sampling period of the software image hash shall not exceed 50 ms.,Refinement,Parent-Child
+DEP-060,Test equipment for the tracked target list shall be calibrated every 12 months.,Distractor,Unrelated
+DEP-061,The supervisor shall maintain the caliper pressure value within the specified range.,Reference,Explicit Reference
+DEP-062,The turnout detection value sensor housing shall withstand a vibration of 10 g.,Distractor,Unrelated
+DEP-063,The supervisor shall consume the switch blade state during each control cycle.,Data,Producer-Consumer
+DEP-064,Loss of the door closed status shall raise a fault within 200 ms.,Refinement,Parent-Child
+DEP-065,The validation component shall consume the caliper pressure value to determine the next action.,Data,Producer-Consumer
+DEP-066,The door closed status shall be validated against its plausible range. (refines DEP-296),Refinement,Parent-Child
+DEP-067,Training material covering the section occupied flag shall be provided to operators.,Distractor,Unrelated
+DEP-068,Test equipment for the permission to proceed shall be calibrated every 12 months.,Distractor,Unrelated
+DEP-069,The unit that handles the point position shall have a mass below 2 kg.,Distractor,Unrelated
+DEP-070,The diagnostic service shall take as input the tracked target list during each control cycle.,Data,Producer-Consumer
+DEP-071,Test equipment for the tyre rotation rate shall be calibrated every 12 months.,Distractor,Unrelated
+DEP-072,The sampling period of the battery state of charge shall not exceed 50 ms. (refines DEP-304),Refinement,Parent-Child
+DEP-073,The HMI task shall generate the link quality index every 20 ms.,Data,Producer-Consumer
+DEP-074,The actuator driver shall use the pack thermal reading to determine the next action.,Data,Producer-Consumer
+DEP-075,The diagnostic service shall compute the patient identifier within 100 ms of each cycle.,Data,Producer-Consumer
+DEP-076,The arbiter shall subscribe to the heart rate for plausibility checking.,Data,Producer-Consumer
+DEP-077,The control unit shall use the pack thermal reading for plausibility checking.,Data,Producer-Consumer
+DEP-078,The sampling period of the software image hash shall not exceed 50 ms. (refines DEP-208),Refinement,Parent-Child
+DEP-079,The alarm state shall be validated against its plausible range.,Refinement,Parent-Child
+DEP-080,Invalid values of the alarm state shall be flagged and excluded.,Refinement,Parent-Child
+DEP-081,The supplier shall demonstrate maturity of the patient identifier process at each audit.,Distractor,Unrelated
+DEP-082,The supplier shall demonstrate maturity of the remaining operating time process at each audit.,Distractor,Unrelated
+DEP-083,The gateway shall maintain the link quality index within the specified range.,Reference,Explicit Reference
+DEP-084,The diagnostic service shall subscribe to the remaining charge level to determine the next action.,Data,Producer-Consumer
+DEP-085,Test equipment for the caliper pressure value shall be calibrated every 12 months.,Distractor,Unrelated
+DEP-086,The system shall start the door closing after completion of the prime cycle.,Sequence,Triggers
+DEP-087,The unit that handles the alarm state shall have a mass below 2 kg.,Distractor,Unrelated
+DEP-088,The system shall perform the authentication sequence at startup.,Sequence,Triggers
+DEP-089,The system shall start the pressure test after completion of the authentication.,Sequence,Triggers
+DEP-090,The supervisor shall read the annunciation status during each control cycle.,Data,Producer-Consumer
+DEP-091,The control unit shall report violations as specified in DEP-297.,Reference,Explicit Reference
+DEP-092,Training material covering the longitudinal velocity estimate shall be provided to operators.,Distractor,Unrelated
+DEP-093,The actuator driver shall take as input the fused obstacle table during each control cycle.,Data,Producer-Consumer
+DEP-094,The HMI task shall subscribe to the speed ceiling during each control cycle.,Data,Producer-Consumer
+DEP-095,The gateway shall consume the delivery rate command to determine the next action.,Data,Producer-Consumer
+DEP-096,The supplier shall demonstrate maturity of the tracked target list process at each audit.,Distractor,Unrelated
+DEP-097,The planning function shall read the rotational wheel velocity during each control cycle.,Data,Producer-Consumer
+DEP-098,The diagnostic service shall consume the train presence indication for plausibility checking.,Data,Producer-Consumer
+DEP-099,Training material covering the channel quality figure shall be provided to operators.,Distractor,Unrelated
+DEP-100,The supplier shall demonstrate maturity of the switch blade state process at each audit.,Distractor,Unrelated
+DEP-101,The sampling period of the alarm state shall not exceed 50 ms.,Refinement,Parent-Child
+DEP-102,The supervisor shall report violations as specified in DEP-222.,Reference,Explicit Reference
+DEP-103,The HMI task shall apply the same tolerance as specified in DEP-297.,Reference,Explicit Reference
+DEP-104,The supplier shall demonstrate maturity of the session token process at each audit.,Distractor,Unrelated
+DEP-105,The system shall start the download after completion of the door closing.,Sequence,Triggers
+DEP-106,The control unit shall publish the alarm state on every update.,Data,Producer-Consumer
+DEP-107,The planning function shall consume the subject ID when computing its output.,Data,Producer-Consumer
+DEP-108,The communication stack shall maintain the pack thermal reading within the specified range.,Reference,Explicit Reference
+DEP-109,The estimator shall use the route guidance instruction when computing its output.,Data,Producer-Consumer
+DEP-110,The estimator shall take as input the line blockage reading for plausibility checking.,Data,Producer-Consumer
+DEP-111,Invalid values of the alarm state shall be flagged and excluded.,Refinement,Parent-Child
+DEP-112,The supplier shall demonstrate maturity of the diagnostic status flags process at each audit.,Distractor,Unrelated
+DEP-113,The gateway shall generate the route status every 20 ms.,Data,Producer-Consumer
+DEP-114,The diagnostic service shall consume the itinerary lock state for plausibility checking.,Data,Producer-Consumer
+DEP-115,The unit that handles the flow setpoint shall have a mass below 2 kg.,Distractor,Unrelated
+DEP-116,The supervisor shall derive the route guidance instruction every 20 ms.,Data,Producer-Consumer
+DEP-117,The system shall start the route locking after completion of the boot.,Sequence,Triggers
+DEP-118,The estimator shall use the longitudinal velocity estimate for plausibility checking.,Data,Producer-Consumer
+DEP-119,The vehicle dynamics module shall take as input the scheduled ETA to determine the next action.,Data,Producer-Consumer
+DEP-120,Test equipment for the downstream pressure shall be calibrated every 12 months.,Distractor,Unrelated
+DEP-121,The system shall provide software image hash monitoring with fault handling.,Refinement,Parent-Child
+DEP-122,Invalid values of the software image hash shall be flagged and excluded.,Refinement,Parent-Child
+DEP-123,The steering angle shall be described in the user manual.,Distractor,Unrelated
+DEP-124,The unit that handles the fault status word shall have a mass below 2 kg.,Distractor,Unrelated
+DEP-125,The supervisor shall take as input the permission to proceed when computing its output.,Data,Producer-Consumer
+DEP-126,The route guidance instruction shall be described in the user manual.,Distractor,Unrelated
+DEP-127,The yaw rate shall be validated against its plausible range. (refines DEP-043),Refinement,Parent-Child
+DEP-128,Training material covering the object list shall be provided to operators.,Distractor,Unrelated
+DEP-129,The safety monitor shall read the turnout detection value during each control cycle.,Data,Producer-Consumer
+DEP-130,The diagnostic service shall enforce the constraint as specified in DEP-277.,Reference,Explicit Reference
+DEP-131,The remaining operating time shall be described in the user manual.,Distractor,Unrelated
+DEP-132,The system shall start the signal clearing after completion of the route locking.,Sequence,Triggers
+DEP-133,The HMI task shall generate the wheel speed on every update.,Data,Producer-Consumer
+DEP-134,Training material covering the patient reference key shall be provided to operators.,Distractor,Unrelated
+DEP-135,The data manager shall verify the limits as specified in DEP-248.,Reference,Explicit Reference
+DEP-136,The SoC estimate shall be described in the user manual.,Distractor,Unrelated
+DEP-137,The system shall start the boot after completion of the prime cycle.,Sequence,Triggers
+DEP-138,The supplier shall demonstrate maturity of the steering angle process at each audit.,Distractor,Unrelated
+DEP-139,The planning function shall provide the door closed status on every update.,Data,Producer-Consumer
+DEP-140,The supplier shall demonstrate maturity of the delivery rate command process at each audit.,Distractor,Unrelated
+DEP-141,The HMI task shall apply the same tolerance as specified in DEP-150.,Reference,Explicit Reference
+DEP-142,The data manager shall rely on the link quality index for plausibility checking.,Data,Producer-Consumer
+DEP-143,Training material covering the planned arrival time shall be provided to operators.,Distractor,Unrelated
+DEP-144,The documentation for the battery runtime estimate function shall be reviewed annually.,Distractor,Unrelated
+DEP-145,The vehicle dynamics module shall provide the software image hash every 20 ms.,Data,Producer-Consumer
+DEP-146,The switch blade state sensor housing shall withstand a vibration of 10 g.,Distractor,Unrelated
+DEP-147,Loss of the software image hash shall raise a fault within 200 ms. (refines DEP-121),Refinement,Parent-Child
+DEP-148,The unit that handles the software image hash shall have a mass below 2 kg.,Distractor,Unrelated
+DEP-149,Test equipment for the longitudinal velocity estimate shall be calibrated every 12 months.,Distractor,Unrelated
+DEP-150,The estimator shall maintain the longitudinal velocity estimate within the specified range.,Reference,Explicit Reference
+DEP-151,The diagnostic service shall compute the heart rate every 20 ms.,Data,Producer-Consumer
+DEP-152,The battery state of charge shall be validated against its plausible range.,Refinement,Parent-Child
+DEP-153,The system shall start the installation after completion of the download.,Sequence,Triggers
+DEP-154,The navigation maneuver shall be described in the user manual.,Distractor,Unrelated
+DEP-155,The actuator driver shall use the delivery rate command for plausibility checking.,Data,Producer-Consumer
+DEP-156,The documentation for the fault status word function shall be reviewed annually.,Distractor,Unrelated
+DEP-157,The system shall start the initialisation after completion of the pre-charge.,Sequence,Triggers
+DEP-158,The system shall start the pre-charge after completion of the door closing.,Sequence,Triggers
+DEP-159,The system shall start the door closing after completion of the handshake.,Sequence,Triggers
+DEP-160,The arbiter shall maintain the fused obstacle table within the specified range.,Reference,Explicit Reference
+DEP-161,The estimator shall rely on the steering angle for plausibility checking.,Data,Producer-Consumer
+DEP-162,Test equipment for the angular rotation rate shall be calibrated every 12 months.,Distractor,Unrelated
+DEP-163,The estimator shall apply the same tolerance as specified in DEP-176.,Reference,Explicit Reference
+DEP-164,The HMI task shall rely on the scheduled ETA for plausibility checking.,Data,Producer-Consumer
+DEP-165,The occlusion pressure sensor housing shall withstand a vibration of 10 g.,Distractor,Unrelated
+DEP-166,The sampling period of the route status shall not exceed 50 ms.,Refinement,Parent-Child
+DEP-167,Loss of the route status shall raise a fault within 200 ms.,Refinement,Parent-Child
+DEP-168,The recorder shall consume the navigation maneuver when computing its output.,Data,Producer-Consumer
+DEP-169,The system shall start the download after completion of the pressure test.,Sequence,Triggers
+DEP-170,The recorder shall maintain the turnout detection value within the specified range.,Reference,Explicit Reference
+DEP-171,The scheduler shall take as input the remaining charge level when computing its output.,Data,Producer-Consumer
+DEP-172,Invalid values of the battery state of charge shall be flagged and excluded. (refines DEP-304),Refinement,Parent-Child
+DEP-173,The system shall perform the pre-charge sequence at startup.,Sequence,Triggers
+DEP-174,Training material covering the battery runtime estimate shall be provided to operators.,Distractor,Unrelated
+DEP-175,The validation component shall verify the limits as specified in DEP-108.,Reference,Explicit Reference
+DEP-176,The planning function shall maintain the scheduled ETA within the specified range.,Reference,Explicit Reference
+DEP-177,The HMI task shall use the odometer-based position when computing its output.,Data,Producer-Consumer
+DEP-178,The diagnostic service shall rely on the train presence indication during each control cycle.,Data,Producer-Consumer
+DEP-179,Training material covering the rotational wheel velocity shall be provided to operators.,Distractor,Unrelated
+DEP-180,The scheduler shall consume the speed ceiling when computing its output.,Data,Producer-Consumer
+DEP-181,Each change of the door closed status shall be logged with a timestamp. (refines DEP-296),Refinement,Parent-Child
+DEP-182,The scheduler shall take as input the remaining operating time when computing its output.,Data,Producer-Consumer
+DEP-183,The logger shall apply the same tolerance as specified in DEP-293.,Reference,Explicit Reference
+DEP-184,The logger shall compute the track occupancy status on every update.,Data,Producer-Consumer
+DEP-185,The system shall provide cell temperature monitoring with fault handling.,Refinement,Parent-Child
+DEP-186,The software image hash shall be validated against its plausible range.,Refinement,Parent-Child
+DEP-187,The vehicle dynamics module shall compute the occlusion pressure within 100 ms of each cycle.,Data,Producer-Consumer
+DEP-188,The communication stack shall subscribe to the SoC estimate when computing its output.,Data,Producer-Consumer
+DEP-189,The scheduler shall take as input the brake pressure for plausibility checking.,Data,Producer-Consumer
+DEP-190,The validation component shall take as input the longitudinal velocity estimate to determine the next action.,Data,Producer-Consumer
+DEP-191,The data manager shall consume the odometer-based position to determine the next action.,Data,Producer-Consumer
+DEP-192,The vehicle dynamics module shall subscribe to the wheel speed to determine the next action.,Data,Producer-Consumer
+DEP-193,The actuator driver shall generate the permitted speed within 100 ms of each cycle.,Data,Producer-Consumer
+DEP-194,Test equipment for the wheel speed shall be calibrated every 12 months.,Distractor,Unrelated
+DEP-195,The documentation for the rotational wheel velocity function shall be reviewed annually.,Distractor,Unrelated
+DEP-196,The diagnostic service shall use the radio signal metric for plausibility checking.,Data,Producer-Consumer
+DEP-197,The gateway shall take as input the object list when computing its output.,Data,Producer-Consumer
+DEP-198,Training material covering the SoC estimate shall be provided to operators.,Distractor,Unrelated
+DEP-199,The recorder shall take as input the health summary to determine the next action.,Data,Producer-Consumer
+DEP-200,The documentation for the flow setpoint function shall be reviewed annually.,Distractor,Unrelated
+DEP-201,The recorder shall subscribe to the MA message when computing its output.,Data,Producer-Consumer
+DEP-202,The supplier shall demonstrate maturity of the object list process at each audit.,Distractor,Unrelated
+DEP-203,The diagnostic service shall generate the object list at 10 Hz.,Data,Producer-Consumer
+DEP-204,The diagnostic service shall apply the same tolerance as specified in DEP-160.,Reference,Explicit Reference
+DEP-205,Training material covering the heart rate shall be provided to operators.,Distractor,Unrelated
+DEP-206,The HMI task shall rely on the permitted speed when computing its output.,Data,Producer-Consumer
+DEP-207,The safety monitor shall report violations as specified in DEP-061.,Reference,Explicit Reference
+DEP-208,The system shall provide software image hash monitoring with fault handling.,Refinement,Parent-Child
+DEP-209,The session token shall be validated against its plausible range.,Refinement,Parent-Child
+DEP-210,The system shall perform the prime cycle sequence at startup.,Sequence,Triggers
+DEP-211,The recorder shall take as input the front wheel deflection when computing its output.,Data,Producer-Consumer
+DEP-212,Test equipment for the section occupied flag shall be calibrated every 12 months.,Distractor,Unrelated
+DEP-213,The safety monitor shall report violations as specified in DEP-023.,Reference,Explicit Reference
+DEP-214,The diagnostic service shall maintain the point position within the specified range.,Reference,Explicit Reference
+DEP-215,The system shall perform the prime cycle sequence at startup.,Sequence,Triggers
+DEP-216,The infusion rate sensor housing shall withstand a vibration of 10 g.,Distractor,Unrelated
+DEP-217,The cell temperature shall be validated against its plausible range.,Refinement,Parent-Child
+DEP-218,The actuator driver shall consume the MA message for plausibility checking.,Data,Producer-Consumer
+DEP-219,The system shall start the infusion start after completion of the pressure test.,Sequence,Triggers
+DEP-220,The fused obstacle table shall be described in the user manual.,Distractor,Unrelated
+DEP-221,Invalid values of the door closed status shall be flagged and excluded.,Refinement,Parent-Child
+DEP-222,The arbiter shall maintain the delivery rate command within the specified range.,Reference,Explicit Reference
+DEP-223,The communication stack shall take as input the navigation maneuver to determine the next action.,Data,Producer-Consumer
+DEP-224,Test equipment for the front wheel deflection shall be calibrated every 12 months.,Distractor,Unrelated
+DEP-225,Test equipment for the location report shall be calibrated every 12 months.,Distractor,Unrelated
+DEP-226,The diagnostic service shall consume the leaf closed indication during each control cycle.,Data,Producer-Consumer
+DEP-227,The HMI task shall use the switch blade state during each control cycle.,Data,Producer-Consumer
+DEP-228,The planning function shall maintain the timetable arrival slot within the specified range.,Reference,Explicit Reference
+DEP-229,The scheduler shall subscribe to the module temperature value for plausibility checking.,Data,Producer-Consumer
+DEP-230,The documentation for the SoC estimate function shall be reviewed annually.,Distractor,Unrelated
+DEP-231,The documentation for the rotational wheel velocity function shall be reviewed annually.,Distractor,Unrelated
+DEP-232,The safety monitor shall consume the pulse rate value for plausibility checking.,Data,Producer-Consumer
+DEP-233,The system shall perform the prime cycle sequence at startup.,Sequence,Triggers
+DEP-234,The unit that handles the health summary shall have a mass below 2 kg.,Distractor,Unrelated
+DEP-235,The communication stack shall report violations as specified in DEP-023.,Reference,Explicit Reference
+DEP-236,Each change of the software image hash shall be logged with a timestamp.,Refinement,Parent-Child
+DEP-237,The supervisor shall read the train position report during each control cycle.,Data,Producer-Consumer
+DEP-238,The permitted speed sensor housing shall withstand a vibration of 10 g.,Distractor,Unrelated
+DEP-239,Test equipment for the longitudinal velocity estimate shall be calibrated every 12 months.,Distractor,Unrelated
+DEP-240,Each change of the yaw rate shall be logged with a timestamp.,Refinement,Parent-Child
+DEP-241,The safety monitor shall subscribe to the ego velocity for plausibility checking.,Data,Producer-Consumer
+DEP-242,Loss of the software image hash shall raise a fault within 200 ms.,Refinement,Parent-Child
+DEP-243,The unit that handles the door lock confirmation shall have a mass below 2 kg.,Distractor,Unrelated
+DEP-244,The recorder shall apply the same tolerance as specified in DEP-083.,Reference,Explicit Reference
+DEP-245,The actuator driver shall read the odometer-based position during each control cycle.,Data,Producer-Consumer
+DEP-246,The gateway shall publish the cell temperature on every update.,Data,Producer-Consumer
+DEP-247,The system shall start the calibration after completion of the pressure test.,Sequence,Triggers
+DEP-248,The actuator driver shall maintain the remaining operating time within the specified range.,Reference,Explicit Reference
+DEP-249,The safety monitor shall take as input the diagnostic status flags during each control cycle.,Data,Producer-Consumer
+DEP-250,The logger shall read the scheduled ETA during each control cycle.,Data,Producer-Consumer
+DEP-251,Training material covering the remaining operating time shall be provided to operators.,Distractor,Unrelated
+DEP-252,The actuator driver shall use the tracked target list during each control cycle.,Data,Producer-Consumer
+DEP-253,The diagnostic service shall verify the limits as specified in DEP-281.,Reference,Explicit Reference
+DEP-254,The documentation for the timetable arrival slot function shall be reviewed annually.,Distractor,Unrelated
+DEP-255,The speed ceiling shall be described in the user manual.,Distractor,Unrelated
+DEP-256,The diagnostic service shall take as input the rotational wheel velocity when computing its output.,Data,Producer-Consumer
+DEP-257,The supplier shall demonstrate maturity of the train presence indication process at each audit.,Distractor,Unrelated
+DEP-258,The estimator shall read the angular rotation rate for plausibility checking.,Data,Producer-Consumer
+DEP-259,The logger shall verify the limits as specified in DEP-061.,Reference,Explicit Reference
+DEP-260,The documentation for the SoC estimate function shall be reviewed annually.,Distractor,Unrelated
+DEP-261,Training material covering the pack thermal reading shall be provided to operators.,Distractor,Unrelated
+DEP-262,The supplier shall demonstrate maturity of the caliper pressure value process at each audit.,Distractor,Unrelated
+DEP-263,The recorder shall take as input the train presence indication to determine the next action.,Data,Producer-Consumer
+DEP-264,Test equipment for the path allocation state shall be calibrated every 12 months.,Distractor,Unrelated
+DEP-265,The validation component shall derive the steering angle on every update.,Data,Producer-Consumer
+DEP-266,The object list sensor housing shall withstand a vibration of 10 g.,Distractor,Unrelated
+DEP-267,The data manager shall subscribe to the battery state of charge to determine the next action.,Data,Producer-Consumer
+DEP-268,The gateway shall subscribe to the battery runtime estimate during each control cycle.,Data,Producer-Consumer
+DEP-269,The gateway shall read the line blockage reading when computing its output.,Data,Producer-Consumer
+DEP-270,Training material covering the switch blade state shall be provided to operators.,Distractor,Unrelated
+DEP-271,The system shall start the authentication after completion of the download.,Sequence,Triggers
+DEP-272,The diagnostic service shall subscribe to the permitted speed during each control cycle.,Data,Producer-Consumer
+DEP-273,The logger shall consume the firmware digest to determine the next action.,Data,Producer-Consumer
+DEP-274,The alarm state shall be validated against its plausible range.,Refinement,Parent-Child
+DEP-275,Test equipment for the leaf closed indication shall be calibrated every 12 months.,Distractor,Unrelated
+DEP-276,The system shall provide alarm state monitoring with fault handling.,Refinement,Parent-Child
+DEP-277,The scheduler shall maintain the rotational wheel velocity within the specified range.,Reference,Explicit Reference
+DEP-278,Training material covering the leaf closed indication shall be provided to operators.,Distractor,Unrelated
+DEP-279,Loss of the session token shall raise a fault within 200 ms.,Refinement,Parent-Child
+DEP-280,The scheduler shall take as input the heading rate when computing its output.,Data,Producer-Consumer
+DEP-281,The estimator shall maintain the route status within the specified range.,Reference,Explicit Reference
+DEP-282,The recorder shall consume the cardiac frequency for plausibility checking.,Data,Producer-Consumer
+DEP-283,Test equipment for the maximum allowed velocity shall be calibrated every 12 months.,Distractor,Unrelated
+DEP-284,The vehicle dynamics module shall use the occlusion pressure to determine the next action.,Data,Producer-Consumer
+DEP-285,The unit that handles the delivery rate command shall have a mass below 2 kg.,Distractor,Unrelated
+DEP-286,Test equipment for the cell temperature shall be calibrated every 12 months.,Distractor,Unrelated
+DEP-287,Test equipment for the remaining charge level shall be calibrated every 12 months.,Distractor,Unrelated
+DEP-288,The HMI task shall enforce the constraint as specified in DEP-281.,Reference,Explicit Reference
+DEP-289,The actuator driver shall provide the planned arrival time at 10 Hz.,Data,Producer-Consumer
+DEP-290,The logger shall enforce the constraint as specified in DEP-248.,Reference,Explicit Reference
+DEP-291,The sampling period of the cell temperature shall not exceed 50 ms. (refines DEP-185),Refinement,Parent-Child
+DEP-292,Test equipment for the remaining charge level shall be calibrated every 12 months.,Distractor,Unrelated
+DEP-293,The recorder shall maintain the patient identifier within the specified range.,Reference,Explicit Reference
+DEP-294,The scheduler shall report violations as specified in DEP-222.,Reference,Explicit Reference
+DEP-295,The safety monitor shall consume the login credential handle for plausibility checking.,Data,Producer-Consumer
+DEP-296,The system shall provide door closed status monitoring with fault handling.,Refinement,Parent-Child
+DEP-297,The validation component shall maintain the itinerary lock state within the specified range.,Reference,Explicit Reference
+DEP-298,The vehicle dynamics module shall use the patient reference key when computing its output.,Data,Producer-Consumer
+DEP-299,Training material covering the door closed status shall be provided to operators.,Distractor,Unrelated
+DEP-300,The system shall start the installation after completion of the download.,Sequence,Triggers
+DEP-301,The system shall start the measurement after completion of the calibration.,Sequence,Triggers
+DEP-302,The diagnostic service shall read the angular rotation rate when computing its output.,Data,Producer-Consumer
+DEP-303,Training material covering the software image hash shall be provided to operators.,Distractor,Unrelated
+DEP-304,The system shall provide battery state of charge monitoring with fault handling.,Refinement,Parent-Child
+DEP-305,The documentation for the section occupied flag function shall be reviewed annually.,Distractor,Unrelated
+DEP-306,The actuator driver shall read the pulse rate value during each control cycle.,Data,Producer-Consumer
+DEP-307,The HMI task shall subscribe to the flow setpoint for plausibility checking.,Data,Producer-Consumer
+DEP-308,The estimator shall read the flow setpoint for plausibility checking.,Data,Producer-Consumer
+DEP-309,The system shall start the pressure test after completion of the authentication.,Sequence,Triggers
+DEP-310,The communication stack shall subscribe to the diagnostic status flags to determine the next action.,Data,Producer-Consumer
+DEP-311,The gateway shall compute the battery state of charge within 100 ms of each cycle.,Data,Producer-Consumer
+DEP-312,The diagnostic service shall publish the vehicle speed on every update.,Data,Producer-Consumer
+DEP-313,Training material covering the train position report shall be provided to operators.,Distractor,Unrelated
+DEP-314,The HMI task shall use the track occupancy status to determine the next action.,Data,Producer-Consumer
+DEP-315,The supplier shall demonstrate maturity of the ego velocity process at each audit.,Distractor,Unrelated
+DEP-316,The planning function shall rely on the door lock confirmation to determine the next action.,Data,Producer-Consumer
+DEP-317,The supplier shall demonstrate maturity of the planned arrival time process at each audit.,Distractor,Unrelated
+DEP-318,Training material covering the battery state of charge shall be provided to operators.,Distractor,Unrelated
+DEP-319,The system shall start the route locking after completion of the authentication.,Sequence,Triggers
+DEP-320,The logger shall take as input the angular rotation rate during each control cycle.,Data,Producer-Consumer
+DEP-321,The sampling period of the yaw rate shall not exceed 50 ms. (refines DEP-043),Refinement,Parent-Child
+DEP-322,The diagnostic service shall subscribe to the itinerary lock state when computing its output.,Data,Producer-Consumer
+DEP-323,The actuator driver shall enforce the constraint as specified in DEP-170.,Reference,Explicit Reference
+DEP-324,The system shall perform the download sequence at startup.,Sequence,Triggers
+DEP-325,The system shall start the pressure test after completion of the calibration.,Sequence,Triggers
+DEP-326,The arbiter shall read the turnout detection value to determine the next action.,Data,Producer-Consumer
+DEP-327,Training material covering the SoC estimate shall be provided to operators.,Distractor,Unrelated
+DEP-328,The supplier shall demonstrate maturity of the authentication ticket process at each audit.,Distractor,Unrelated
+DEP-329,The estimator shall rely on the patient reference key for plausibility checking.,Data,Producer-Consumer
+DEP-330,The system shall perform the calibration sequence at startup.,Sequence,Triggers
+DEP-331,The system shall start the infusion start after completion of the pressure test.,Sequence,Triggers
+DEP-332,The documentation for the heading rate function shall be reviewed annually.,Distractor,Unrelated
+DEP-333,The safety monitor shall subscribe to the downstream pressure for plausibility checking.,Data,Producer-Consumer
+DEP-334,The unit that handles the route guidance instruction shall have a mass below 2 kg.,Distractor,Unrelated
+DEP-335,Invalid values of the session token shall be flagged and excluded.,Refinement,Parent-Child
+DEP-336,The software image hash shall be described in the user manual.,Distractor,Unrelated
+DEP-337,The logger shall verify the limits as specified in DEP-293.,Reference,Explicit Reference
+DEP-338,Training material covering the object list shall be provided to operators.,Distractor,Unrelated
+DEP-339,The planning function shall rely on the time-to-empty when computing its output.,Data,Producer-Consumer
+DEP-340,The supplier shall demonstrate maturity of the tyre rotation rate process at each audit.,Distractor,Unrelated
+DEP-341,The documentation for the line blockage reading function shall be reviewed annually.,Distractor,Unrelated
+DEP-342,The system shall start the calibration after completion of the pre-charge.,Sequence,Triggers
+DEP-343,The data manager shall use the path allocation state for plausibility checking.,Data,Producer-Consumer
+DEP-344,The turn command sensor housing shall withstand a vibration of 10 g.,Distractor,Unrelated
+DEP-345,The HMI task shall derive the train position report within 100 ms of each cycle.,Data,Producer-Consumer
+DEP-346,The control unit shall read the planned arrival time during each control cycle.,Data,Producer-Consumer
+DEP-347,The scheduler shall use the package checksum when computing its output.,Data,Producer-Consumer
+DEP-348,The supplier shall demonstrate maturity of the hydraulic line pressure process at each audit.,Distractor,Unrelated
+DEP-349,The unit that handles the tracked target list shall have a mass below 2 kg.,Distractor,Unrelated
+DEP-350,The planning function shall provide the yaw rate on every update.,Data,Producer-Consumer
+DEP-351,The switch blade state shall be described in the user manual.,Distractor,Unrelated
+DEP-352,Loss of the alarm state shall raise a fault within 200 ms.,Refinement,Parent-Child
+DEP-353,The scheduler shall consume the navigation maneuver during each control cycle.,Data,Producer-Consumer
+DEP-354,The supervisor shall generate the movement authority every 20 ms.,Data,Producer-Consumer
+DEP-355,The switch blade state shall be described in the user manual.,Distractor,Unrelated
+DEP-356,The diagnostic service shall subscribe to the channel quality figure when computing its output.,Data,Producer-Consumer
+DEP-357,The unit that handles the permission to proceed shall have a mass below 2 kg.,Distractor,Unrelated
+DEP-358,The remaining operating time sensor housing shall withstand a vibration of 10 g.,Distractor,Unrelated
+DEP-359,The system shall start the authentication after completion of the calibration.,Sequence,Triggers
+DEP-360,The system shall start the signal clearing after completion of the route locking.,Sequence,Triggers
+DEP-361,Invalid values of the route status shall be flagged and excluded.,Refinement,Parent-Child
+DEP-362,The location report shall be described in the user manual.,Distractor,Unrelated
+DEP-363,Test equipment for the path allocation state shall be calibrated every 12 months.,Distractor,Unrelated
+DEP-364,The gateway shall generate the point position at 10 Hz.,Data,Producer-Consumer
+DEP-365,Training material covering the infusion rate shall be provided to operators.,Distractor,Unrelated
+DEP-366,The vehicle dynamics module shall report violations as specified in DEP-083.,Reference,Explicit Reference
+DEP-367,The actuator driver shall generate the infusion rate within 100 ms of each cycle.,Data,Producer-Consumer
+DEP-368,The system shall perform the door closing sequence at startup.,Sequence,Triggers
+DEP-369,The logger shall subscribe to the login credential handle when computing its output.,Data,Producer-Consumer
+DEP-370,Test equipment for the navigation maneuver shall be calibrated every 12 months.,Distractor,Unrelated
+DEP-371,The diagnostic service shall produce the battery runtime estimate every 20 ms.,Data,Producer-Consumer
+DEP-372,The documentation for the route guidance instruction function shall be reviewed annually.,Distractor,Unrelated
+DEP-373,The system shall start the measurement after completion of the calibration.,Sequence,Triggers
+DEP-374,Training material covering the flow setpoint shall be provided to operators.,Distractor,Unrelated
+DEP-375,The arbiter shall use the ego velocity for plausibility checking.,Data,Producer-Consumer
+DEP-376,The diagnostic service shall read the tyre rotation rate for plausibility checking.,Data,Producer-Consumer
+DEP-377,The HMI task shall consume the braking curve when computing its output.,Data,Producer-Consumer
+DEP-378,Each change of the alarm state shall be logged with a timestamp.,Refinement,Parent-Child
+DEP-379,The data manager shall use the door lock confirmation when computing its output.,Data,Producer-Consumer
+DEP-380,The actuator driver shall rely on the package checksum to determine the next action.,Data,Producer-Consumer
+DEP-381,The documentation for the ego velocity function shall be reviewed annually.,Distractor,Unrelated
+DEP-382,The scheduler shall compute the brake pressure within 100 ms of each cycle.,Data,Producer-Consumer
+DEP-383,The communication stack shall publish the braking curve within 100 ms of each cycle.,Data,Producer-Consumer
+DEP-384,The system shall perform the pre-charge sequence at startup.,Sequence,Triggers
+DEP-385,The HMI task shall take as input the login credential handle for plausibility checking.,Data,Producer-Consumer
+DEP-386,The data manager shall apply the same tolerance as specified in DEP-214.,Reference,Explicit Reference
+DEP-387,The supervisor shall take as input the time-to-empty during each control cycle.,Data,Producer-Consumer
+DEP-388,The supervisor shall subscribe to the hydraulic line pressure during each control cycle.,Data,Producer-Consumer
+DEP-389,The diagnostic service shall consume the leaf closed indication for plausibility checking.,Data,Producer-Consumer
+DEP-390,The supervisor shall consume the alarm state to determine the next action.,Data,Producer-Consumer
+DEP-391,The system shall provide alarm state monitoring with fault handling.,Refinement,Parent-Child
+DEP-392,Loss of the battery state of charge shall raise a fault within 200 ms.,Refinement,Parent-Child
+DEP-393,Test equipment for the stopping trajectory shall be calibrated every 12 months.,Distractor,Unrelated
+DEP-394,The vehicle dynamics module shall consume the firmware digest when computing its output.,Data,Producer-Consumer
+DEP-395,The documentation for the caliper pressure value function shall be reviewed annually.,Distractor,Unrelated
+DEP-396,The system shall perform the authentication sequence at startup.,Sequence,Triggers
+DEP-397,The validation component shall rely on the pack thermal reading during each control cycle.,Data,Producer-Consumer

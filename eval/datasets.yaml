@@ -93,3 +93,36 @@ datasets:
         floor: 15.0
         delta: 4.0
         lower_is_better: true
+
+  multidomain:
+    path: data/multidomain_requirements.csv
+    suite: fast
+    ground_truth: module
+    tolerances:
+      ari:
+        floor: 0.20
+        delta: -0.10
+      parse_success_rate:
+        floor: 0.90
+        delta: -0.05
+
+  dependency_gold:
+    path: data/dependency_gold_requirements.csv
+    suite: fast
+    ground_truth: module
+    tolerances:
+      reference_recall:
+        floor: 0.30
+        delta: -0.15
+      parse_success_rate:
+        floor: 0.90
+        delta: -0.05
+
+  adversarial:
+    path: data/adversarial_requirements.csv
+    suite: stress
+    ground_truth: module
+    tolerances:
+      parse_success_rate:
+        floor: 0.80
+        delta: -0.05
