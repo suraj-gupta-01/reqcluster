@@ -1,0 +1,46 @@
+# ReqCluster
+
+FastAPI + React app: upload requirements -> embed (SBERT) -> UMAP -> HDBSCAN clusters -> labels, dependency tree, LLM enrichment/refinement, exports (ReqIF, SysML XMI, Jama, PDF).
+
+## Commands
+
+```bash
+uv sync --extra all                 # Python 3.12 env (.venv); CPU torch by default
+uv run pytest -q                    # backend tests
+uv run ruff check backend tests     # lint
+cd frontend && npm install && npm run build && npm run lint
+./start.sh                          # dev: backend :8000 + frontend :5173
+uv run python -m eval --help        # evaluation harness
+```
+
+GPU: `./run-gpu.sh` installs CUDA torch into the venv.
+Optional extras (all lazily imported with fallbacks): `fast` hnswlib, `nlp` spaCy, `charts` matplotlib, `postgres`, `redis`, `eval`.
+
+## Code navigation: CodeGraph
+
+`.codegraph/` index exists. Use it before grep/Read:
+- `codegraph explore "<symbols or question>"`: source + call paths + blast radius in one call. Treat output as read.
+- `codegraph query <name>`: locate a symbol. `codegraph node <name|file>`: one symbol/file with callers.
+- After edits: `codegraph sync`. Fresh clone: `codegraph init`.
+
+## Subagent routing
+
+Delegate by job, cheapest capable model first. Agents live in `.claude/agents/`.
+
+| Job | Agent | Model |
+|---|---|---|
+| search, locate, read, summarize files | `scout` | haiku |
+| write/fix code from a spec, run tests | `builder` | sonnet |
+| architecture, planning, hard root-cause, design review | `architect` | opus |
+
+Rules:
+- Plan first (architect or main thread), then hand builders self-contained specs: exact files, change, callers, accept command. A builder must not need to explore.
+- Parallel builders only on disjoint files.
+- Builders return a <=15-line receipt, not diffs. Verify with `git diff --stat` + tests, not by re-reading.
+
+## Engineering rules
+
+Karpathy guidelines are installed (`andrej-karpathy-skills` plugin): think before coding, simplicity first, surgical changes, goal-driven verification.
+- Every bug fix ships with a test that failed before the fix.
+- Keep the HTTP API contract in `backend/` in sync with `frontend/src/utils/api.js`.
+- Never commit `.env`, `*.db`, model caches, or `.codegraph/`.

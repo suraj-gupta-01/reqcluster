@@ -20,10 +20,8 @@ backend/cache/
 *.pkl
 .pytest_cache/
 
-# Transient graphify artifacts (graph.html / graph.json / GRAPH_REPORT.md are kept)
-.graphify_*.json
-**/graphify-out/cache/
-graphify-out/cost.json
+# CodeGraph local index (rebuild: codegraph init)
+.codegraph/
 
 # Node
 node_modules/
