@@ -20,7 +20,7 @@ function metricValue(report, key) {
   return typeof value === 'number' ? value.toFixed(3) : String(value)
 }
 
-export default function EnrichmentResultsTable({ results, requirements = [] }) {
+export default function EnrichmentResultsTable({ results }) {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [lowConfidenceOnly, setLowConfidenceOnly] = useState(false)
@@ -28,24 +28,17 @@ export default function EnrichmentResultsTable({ results, requirements = [] }) {
   const [page, setPage] = useState(1)
   const [expanded, setExpanded] = useState({})
 
-  const requirementMap = useMemo(() => {
-    const map = {}
-    requirements.forEach(req => { map[req.id] = req })
-    return map
-  }, [requirements])
-
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
     return (results || []).filter((row) => {
-      const req = requirementMap[row.requirement_id]
-      const text = `${row.req_id || ''} ${row.expanded_text || ''} ${req?.text || ''}`.toLowerCase()
+      const text = `${row.req_id || ''} ${row.expanded_text || ''} ${row.text || ''}`.toLowerCase()
       if (q && !text.includes(q)) return false
       if (statusFilter !== 'all' && row.status !== statusFilter) return false
       if (lowConfidenceOnly && !((row.confidence ?? 1) < 0.7)) return false
       if (warningsOnly && !(row.warnings?.length > 0)) return false
       return true
     })
-  }, [results, requirementMap, search, statusFilter, lowConfidenceOnly, warningsOnly])
+  }, [results, search, statusFilter, lowConfidenceOnly, warningsOnly])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const safePage = Math.min(page, totalPages)
@@ -102,8 +95,7 @@ export default function EnrichmentResultsTable({ results, requirements = [] }) {
         ) : visible.map((row, index) => {
           const key = row.requirement_id || `${safePage}-${index}`
           const isOpen = !!expanded[key]
-          const req = requirementMap[row.requirement_id]
-          const warningCount = row.warnings?.length || 0
+              const warningCount = row.warnings?.length || 0
           return (
             <div key={key} className="hover:bg-gray-800/30">
               <button
@@ -132,7 +124,7 @@ export default function EnrichmentResultsTable({ results, requirements = [] }) {
                   <div className="space-y-4">
                     <div>
                       <div className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Original Requirement</div>
-                      <p className="text-sm text-gray-300 leading-relaxed">{req?.text || 'Original text is unavailable in this view.'}</p>
+                      <p className="text-sm text-gray-300 leading-relaxed">{row.text || 'Original text is unavailable in this view.'}</p>
                     </div>
                     <div>
                       <div className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Expanded Requirement</div>

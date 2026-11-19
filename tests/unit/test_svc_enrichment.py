@@ -31,6 +31,8 @@ def test_enrich_upserts_not_duplicates():
     assert count() == 4
     out = enrichment.results(sid)
     assert [o.req_id for o in out] == ["R0", "R1", "R2", "R3"] and out[0].status == "succeeded"
+    assert out[0].text == "The brake system shall report status 0"
+    assert enrichment.summary(sid).provider == out[0].provider
 
 
 def test_texts_for_mode():

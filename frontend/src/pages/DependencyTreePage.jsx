@@ -542,6 +542,19 @@ export default function DependencyTreePage() {
         </div>
       )}
 
+      {data?.stale && (
+        <div className="card p-3 mb-4 border-amber-900/30 flex items-center gap-2">
+          <AlertTriangle size={14} className="text-amber-400 flex-shrink-0" />
+          <p className="text-sm text-amber-300/80 flex-1">Clusters changed since this tree was built.</p>
+          <button onClick={handleGenerate} disabled={generating} className="btn-primary text-sm">Rebuild</button>
+        </div>
+      )}
+      {data?.warnings?.length > 0 && (
+        <div className="card p-3 mb-4 border-amber-900/30 text-sm text-amber-300/80">
+          {data.warnings.map((w, i) => <p key={i}>{w}</p>)}
+        </div>
+      )}
+
       {!data ? (
         <div className="card p-12 text-center text-gray-500 text-sm">
           <GitBranch size={28} className="mx-auto mb-3 text-gray-600" />

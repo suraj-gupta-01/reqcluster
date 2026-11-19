@@ -37,6 +37,8 @@ def test_move_creates_feedback_and_constraints():
     pairs = feedback.constraints(sid).constraint_pairs
     assert pairs and all(p.a < p.b for p in pairs)
     assert feedback.queue(sid, "approved") == []
+    q = feedback.queue(sid, "pending")[0]
+    assert q.text and q.req_id
 
 
 def test_noop_null_and_minus_one():
@@ -136,3 +138,22 @@ def test_recluster_reports_moved():
     feedback.submit(sid, rid, dst)
     job = feedback.recluster(sid)
     assert job.result["moved"] >= 0
+
+
+def test_list_sessions_batches_job_lookup(monkeypatch):
+    sid = clustered()
+    monkeypatch.setattr(sessions.get_runner(), "latest",
+                        lambda *a: pytest.fail("per-session latest() query"))
+    out = [s for s in sessions.list_sessions() if s.id == sid][0]
+    assert out.status == "done" and out.last_job.status == "succeeded"
+
+
+def test_graph_cache_invalidated_by_edit():
+    sid = clustered()
+    g = sessions.graph(sid)
+    assert sessions.graph(sid) is g and len(g.nodes.id) == 30 and g.nodes.label[0]
+    rid, _, dst = two_clusters(sid)
+    feedback.submit(sid, rid, dst, "x", "me")
+    g2 = sessions.graph(sid)
+    assert g2 is not g and g2.edit_seq == g.edit_seq + 1
+    assert g2.nodes.cluster_id[g2.nodes.id.index(rid)] == dst

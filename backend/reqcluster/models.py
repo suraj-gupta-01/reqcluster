@@ -101,12 +101,6 @@ class ClusterRow(Base):
     keywords: Mapped[list] = mapped_column(JSON, default=list)
 
 
-class GraphRow(Base):
-    __tablename__ = "graphs"
-    run_id: Mapped[int] = mapped_column(ForeignKey("runs.id", ondelete="CASCADE"), primary_key=True)
-    edges: Mapped[list] = mapped_column(JSON, default=list)  # [[req_pk_i, req_pk_j, sim], ...]
-
-
 def _run_fk():
     return mapped_column(ForeignKey("runs.id", ondelete="CASCADE"), index=True)
 

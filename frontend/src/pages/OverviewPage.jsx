@@ -1,6 +1,6 @@
 import { useNavigate, Link } from 'react-router-dom'
 import { Layers, Hash, AlertTriangle, ChevronRight, Loader, Tag, Sparkles, Wrench } from 'lucide-react'
-import { getClusters, getEnrichment, getSuggestions } from '../api/endpoints.js'
+import { getClusters, getEnrichmentSummary, getSuggestions } from '../api/endpoints.js'
 import { useApi } from '../hooks/useApi.js'
 import { useSession } from '../state/SessionContext.jsx'
 import { getErrorMessage } from '../utils/format.js'
@@ -80,17 +80,17 @@ export default function OverviewPage() {
 function Overview() {
   const { sessionId, session } = useSession()
   const clustersQ = useApi((o) => getClusters(sessionId, o), [sessionId])
-  const enrichQ = useApi((o) => getEnrichment(sessionId, o), [sessionId])
+  const enrichQ = useApi((o) => getEnrichmentSummary(sessionId, o).catch(() => null), [sessionId])
   const sugsQ = useApi((o) => getSuggestions(sessionId, undefined, o), [sessionId])
   const clusters = clustersQ.data || []
   const refinementSuggestions = sugsQ.data || []
-  const enr = enrichQ.data || []
-  const enrichmentStatus = enr.length
+  const qr = enrichQ.data?.quality_report
+  const enrichmentStatus = qr?.total
     ? {
-        total: enr.length,
-        succeeded: enr.filter(e => e.status === 'succeeded').length,
-        warnings: enr.flatMap(e => e.warnings || []),
-        provider: enr[0].provider,
+        total: qr.total,
+        succeeded: qr.succeeded,
+        warnings: qr.warnings || [],
+        provider: enrichQ.data.provider,
         status: 'available',
       }
     : null

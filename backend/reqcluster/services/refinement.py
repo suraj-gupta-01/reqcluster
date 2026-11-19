@@ -22,7 +22,7 @@ from reqcluster.models import (
     SuggestionRow,
 )
 from reqcluster.services.assignments import reassign
-from reqcluster.services.clustering import next_cluster_id, run_embeddings
+from reqcluster.services.clustering import load_run_arrays, next_cluster_id, run_embeddings
 from reqcluster.services.sessions import _current_run
 
 
@@ -97,8 +97,7 @@ def _run(ctx: JobContext, sid: int, p: SuggestParams) -> SuggestSummary:
     ctx.progress(0.1, "embedding")
     warnings: list[str] = []
     emb = run_embeddings(sid, run, warnings)
-    with np.load(get_settings().runs_dir / f"{rid}.npz") as z:
-        x10 = z["x10"]
+    x10 = load_run_arrays(rid)["x10"]
     ctx.check_cancel()
     merges = refine.suggest_merges(emb, x10, labels, p.top_n_merges, p.sim_threshold, seed,
                                   p.min_silhouette_delta)

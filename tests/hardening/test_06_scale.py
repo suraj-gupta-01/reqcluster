@@ -62,8 +62,6 @@ def test_reads_under_2s(scale):
     assert not slow, slow
 
 
-@pytest.mark.xfail(strict=True, reason="FLAW: GET /graph at 35k rows takes ~2.5 s and returns 9.4 MB "
-                   "(services/sessions.py graph(): per-node ORM tuples + full text[:200] + every edge "
-                   "pydantic-validated). Fix: serialise from raw rows / drop text from nodes / cache per revision")
-def test_graph_under_2s(scale):
-    assert scale["graph"]["s"] < 2, scale["graph"]
+def test_graph_fast_and_compact(scale):
+    # columnar, text-free (24-char labels), cached per (run, edit_seq), served pre-serialized
+    assert scale["graph"]["s"] < 0.5 and scale["graph"]["bytes"] < 3_500_000, scale["graph"]

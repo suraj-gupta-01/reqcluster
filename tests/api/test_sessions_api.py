@@ -28,7 +28,11 @@ def test_flow(client):
     r = client.get(f"/api/sessions/{sid}/requirements", params={"page_size": 10})
     assert len(r.json()) == 10 and r.headers["x-total-count"] == "30"
     g = client.get(f"/api/sessions/{sid}/graph").json()
-    assert len(g["nodes"]) == 30
+    n = g["nodes"]
+    assert len(n["id"]) == 30 and all(len(v) == 30 for v in n.values())
+    assert set(g["edges"]) == {"source", "target", "weight"} and "text" not in n
+    assert g["edit_seq"] == 0 and g["revision"] == 1
+    assert client.get(f"/api/sessions/{sid}/graph").json() == g  # cached path
     assert "metrics" in client.get(f"/api/sessions/{sid}/metrics").json()
     assert client.delete(f"/api/sessions/{sid}").status_code == 204
 

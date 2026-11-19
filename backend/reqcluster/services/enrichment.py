@@ -38,6 +38,7 @@ class EnrichmentSummary(BaseModel):
 class EnrichmentOut(BaseModel):
     requirement_id: int
     req_id: str
+    text: str
     expanded_text: str
     domain_terms: list
     functional_intent: str
@@ -54,6 +55,7 @@ class EnrichmentOut(BaseModel):
 class EnrichmentOverview(BaseModel):
     quality_report: dict
     domain_vocabulary: list[dict]
+    provider: str
 
 
 def _hash(text: str) -> str:
@@ -123,7 +125,7 @@ def results(sid: int) -> list[EnrichmentOut]:
                            .order_by(EnrichmentRow.created_at, EnrichmentRow.id)):
             latest[e.requirement_id] = e
         return [EnrichmentOut(
-            requirement_id=rid, req_id=reqs[rid].req_id, expanded_text=e.expanded_text,
+            requirement_id=rid, req_id=reqs[rid].req_id, text=reqs[rid].text, expanded_text=e.expanded_text,
             domain_terms=e.domain_terms, functional_intent=e.functional_intent,
             mentioned_components=e.mentioned_components, assumptions=e.assumptions,
             confidence=e.confidence, warnings=e.warnings, status=e.status, source=e.source,
@@ -167,10 +169,12 @@ def summary(sid: int) -> EnrichmentOverview:
         if not latest:
             raise Conflict("no enrichment yet; run enrichment first")
         items = sorted(latest.items(), key=lambda kv: reqs[kv[0]].ordinal)
+        provider = items[0][1].provider
         pairs = [(rid, reqs[rid].text) for rid, _ in items]
         exps = [Expansion(rid, e.expanded_text, e.domain_terms, e.functional_intent,
                           e.mentioned_components, e.assumptions, e.confidence or 0.0,
                           e.warnings, "succeeded", e.source) for rid, e in items]
     return EnrichmentOverview(
         quality_report=build_quality_report(pairs, exps),
-        domain_vocabulary=extract_domain_vocabulary_details([x.expanded_text for x in exps]))
+        domain_vocabulary=extract_domain_vocabulary_details([x.expanded_text for x in exps]),
+        provider=provider)

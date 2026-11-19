@@ -24,7 +24,7 @@ function Graph() {
   const [selected, setSelected] = useState(null)
   const [minWeight, setMinWeight] = useState(0.65)
   const [showLabels, setShowLabels] = useState(false)
-  const nodeById = useMemo(() => new Map((graphData?.nodes || []).map(n => [n.id, n])), [graphData])
+  const nodeIdx = useMemo(() => new Map((graphData?.nodes?.id || []).map((id, i) => [id, i])), [graphData])
 
   useEffect(() => {
     if (!graphData || !plotRef.current) return
@@ -37,17 +37,16 @@ function Graph() {
       const clusterLabelMap = {}
       clusters.forEach(c => { clusterLabelMap[c.cluster_id] = c.label })
 
-      const filteredEdges = edges.filter(e => e.weight >= minWeight)
-
       // Edge traces
       const edgeX = [], edgeY = []
-      filteredEdges.forEach(edge => {
-        const src = nodeById.get(edge.source)
-        const tgt = nodeById.get(edge.target)
-        if (!src || !tgt || src.x == null || tgt.x == null) return
-        edgeX.push(src.x, tgt.x, null)
-        edgeY.push(src.y, tgt.y, null)
-      })
+      for (let k = 0; k < edges.weight.length; k++) {
+        if (edges.weight[k] < minWeight) continue
+        const si = nodeIdx.get(edges.source[k])
+        const ti = nodeIdx.get(edges.target[k])
+        if (si === undefined || ti === undefined || nodes.x[si] == null || nodes.x[ti] == null) continue
+        edgeX.push(nodes.x[si], nodes.x[ti], null)
+        edgeY.push(nodes.y[si], nodes.y[ti], null)
+      }
 
       const edgeTrace = {
         type: 'scattergl', mode: 'lines',
@@ -58,13 +57,13 @@ function Graph() {
 
       // Node traces grouped by cluster
       const clusterMap = {}
-      nodes.forEach(node => {
-        const cid = node.cluster_id ?? -1
+      nodes.id.forEach((_, i) => {
+        const cid = nodes.cluster_id[i] ?? -1
         if (!clusterMap[cid]) clusterMap[cid] = []
-        clusterMap[cid].push(node)
+        clusterMap[cid].push(i)
       })
 
-      const nodeTraces = Object.entries(clusterMap).map(([cidStr, nodeList]) => {
+      const nodeTraces = Object.entries(clusterMap).map(([cidStr, idxs]) => {
         const cid = parseInt(cidStr)
         const color = getClusterColor(cid)
         const label = cid === -1 ? 'Noise' : (clusterLabelMap[cid] || `Cluster ${cid}`)
@@ -72,15 +71,15 @@ function Graph() {
           type: 'scattergl',
           mode: showLabels ? 'markers+text' : 'markers',
           name: label,
-          x: nodeList.map(n => n.x),
-          y: nodeList.map(n => n.y),
-          text: showLabels ? nodeList.map(n => n.req_id) : [],
+          x: idxs.map(i => nodes.x[i]),
+          y: idxs.map(i => nodes.y[i]),
+          text: showLabels ? idxs.map(i => nodes.req_id[i]) : [],
           textposition: 'top center',
           textfont: { size: 8, color: '#9ca3af' },
-          customdata: nodeList.map(n => ({
-            req_id: n.req_id,
-            text: n.text,
-            cluster_id: n.cluster_id ?? -1,
+          customdata: idxs.map(i => ({
+            req_id: nodes.req_id[i],
+            text: nodes.label[i],
+            cluster_id: nodes.cluster_id[i] ?? -1,
           })),
           hovertemplate:
             '<b>%{customdata.req_id}</b><br>' +
@@ -129,7 +128,7 @@ function Graph() {
     }
     draw()
     return () => { disposed = true }
-  }, [graphData, clusters, nodeById, minWeight, showLabels])
+  }, [graphData, clusters, nodeIdx, minWeight, showLabels])
 
   // Purge Plotly (frees the WebGL context + listeners) only on unmount.
   useEffect(() => {
@@ -149,15 +148,15 @@ function Graph() {
     </div>
   )
   if (error) return <div className="p-8 text-red-400">{getErrorMessage(error, 'Failed to load graph data.')}</div>
-  if (!graphData?.nodes?.length) return <div className="p-8 text-gray-400 text-sm">No graph nodes. All requirements may be noise or clustering produced no data.</div>
+  if (!graphData?.nodes?.id?.length) return <div className="p-8 text-gray-400 text-sm">No graph nodes. All requirements may be noise or clustering produced no data.</div>
 
-  const nodeCount = graphData?.nodes?.length || 0
-  const allEdges = graphData?.edges || []
-  const edgeCount = allEdges.filter(e => e.weight >= minWeight).length
+  const nodeCount = graphData.nodes.id.length
+  const weights = graphData.edges.weight
+  const edgeCount = weights.filter(w => w >= minWeight).length
 
   // The backend only computed edges above the clustering threshold, so the
   // slider can't reveal anything below the lowest stored edge weight.
-  const minEdgeWeight = allEdges.length ? Math.min(...allEdges.map(e => e.weight)) : 0.5
+  const minEdgeWeight = weights.length ? weights.reduce((a, b) => Math.min(a, b)) : 0.5
   const weightFloor = Math.max(0.5, Math.floor(minEdgeWeight * 20) / 20)
 
   return (

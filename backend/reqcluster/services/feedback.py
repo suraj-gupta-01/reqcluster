@@ -21,13 +21,13 @@ from reqcluster.models import (
     ClusterRow,
     ConstraintRow,
     FeedbackRow,
-    GraphRow,
     RequirementRow,
     SessionRow,
 )
 from reqcluster.services.assignments import reassign
 from reqcluster.services.clustering import (
     ClusteringSummary,
+    load_run_arrays,
     next_cluster_id,
     persist_run,
     run_embeddings,
@@ -52,6 +52,7 @@ class FeedbackOut(BaseModel):
     id: int
     requirement_id: int
     req_id: str
+    text: str
     old_cluster_id: int
     new_cluster_id: int
     status: str
@@ -100,10 +101,6 @@ def _ordered(s, run_id: int, sid: int):
             np.array([r[2] for r in rows], dtype=np.int64))
 
 
-def load_npz(run_id: int):
-    return np.load(get_settings().runs_dir / f"{run_id}.npz")
-
-
 def _check_idle(sid: int) -> None:
     job = get_runner().latest(sid, ("cluster", "recluster"))
     if job is not None and job.status in ("queued", "running"):
@@ -138,7 +135,7 @@ def submit(sid: int, requirement_id: int, new_cluster_id: int | None, comments: 
         added = 0
         npz = get_settings().runs_dir / f"{run.id}.npz"
         if npz.exists():
-            x10 = load_npz(run.id)["x10"]
+            x10 = load_run_arrays(run.id)["x10"]
             must, cannot = C.from_correction(labels, pks.index(requirement_id), new, old, X=x10)
             want = {(min(pks[i], pks[j]), max(pks[i], pks[j]), kind)
                     for kind, pairs in (("must", must), ("cannot", cannot)) for i, j in pairs}
@@ -154,10 +151,10 @@ def submit(sid: int, requirement_id: int, new_cluster_id: int | None, comments: 
                          new_cluster_id=new, status=fb.status, constraints_added=added)
 
 
-def _out(s, fb: FeedbackRow, req_id: str) -> FeedbackOut:
+def _out(s, fb: FeedbackRow, req_id: str, text: str) -> FeedbackOut:
     c = s.get(ClusterRow, (fb.run_id, fb.new_cluster_id))
     conf = confidence(fb.comments, c.label, c.keywords) if c else 1.0
-    return FeedbackOut(id=fb.id, requirement_id=fb.requirement_id, req_id=req_id,
+    return FeedbackOut(id=fb.id, requirement_id=fb.requirement_id, req_id=req_id, text=text,
                        old_cluster_id=fb.old_cluster_id, new_cluster_id=fb.new_cluster_id,
                        status=fb.status, comments=fb.comments, applied_by=fb.applied_by,
                        created_at=fb.created_at, reviewed_at=fb.reviewed_at, confidence=conf)
@@ -183,18 +180,19 @@ def review(sid: int, feedback_id: int, approve: bool) -> FeedbackOut:
                 reassign(s, run, {fb.requirement_id: back}, action="feedback_reject",
                          actor=fb.applied_by, details={"feedback_id": fb.id})
             s.execute(delete(ConstraintRow).where(ConstraintRow.feedback_id == fb.id))
-        return _out(s, fb, s.get(RequirementRow, fb.requirement_id).req_id)
+        r = s.get(RequirementRow, fb.requirement_id)
+        return _out(s, fb, r.req_id, r.text)
 
 
 def _rows(sid: int, status: str | None):
     with session_scope() as s:
         run = _current_run(s, sid)
-        q = (select(FeedbackRow, RequirementRow.req_id)
+        q = (select(FeedbackRow, RequirementRow.req_id, RequirementRow.text)
              .join(RequirementRow, RequirementRow.id == FeedbackRow.requirement_id)
              .where(FeedbackRow.run_id == run.id).order_by(FeedbackRow.id))
         if status:
             q = q.where(FeedbackRow.status == status)
-        return [_out(s, fb, rid) for fb, rid in s.execute(q)]
+        return [_out(s, fb, rid, txt) for fb, rid, txt in s.execute(q)]
 
 
 def queue(sid: int, status: str | None = None) -> list[FeedbackOut]:
@@ -213,6 +211,13 @@ def constraints(sid: int) -> ConstraintsOut:
         kinds.setdefault((p.a, p.b), set()).add(p.kind)
     # shortcut: only direct must/cannot clashes, not transitive ones (apply() still rejects those)
     conflicts = [{"a": a, "b": b, "kinds": sorted(k)} for (a, b), k in kinds.items() if len(k) > 1]
+    if conflicts:
+        ids = {i for c in conflicts for i in (c["a"], c["b"])}
+        with session_scope() as s:
+            rid = dict(s.execute(select(RequirementRow.id, RequirementRow.req_id)
+                                 .where(RequirementRow.id.in_(ids))))
+        for c in conflicts:
+            c["a_req_id"], c["b_req_id"] = rid.get(c["a"]), rid.get(c["b"])
     return ConstraintsOut(constraint_pairs=pairs, conflicts=conflicts)
 
 
@@ -245,10 +250,9 @@ def _recluster(ctx: JobContext, sid: int) -> ReclusterSummary:
         cons = s.execute(select(ConstraintRow.a_id, ConstraintRow.b_id, ConstraintRow.kind,
                                 ConstraintRow.feedback_id)
                          .where(ConstraintRow.run_id == rid)).all()
-        g = s.scalar(select(GraphRow.edges).where(GraphRow.run_id == rid))
         db_probs = dict(s.execute(select(AssignmentRow.requirement_id, AssignmentRow.probability)
                                   .where(AssignmentRow.run_id == rid)).all())
-    npz = load_npz(rid)
+    npz = load_run_arrays(rid)
     x10, xy = npz["x10"], npz["xy"]
     probs = np.array([1.0 if db_probs[pk] is None else db_probs[pk] for pk in pks])
     pos = {pk: i for i, pk in enumerate(pks)}
@@ -266,7 +270,8 @@ def _recluster(ctx: JobContext, sid: int) -> ReclusterSummary:
     clusters = keywords.label_clusters(texts, new)
     ctx.check_cancel()
     new_rid, revision = persist_run(sid, "constrained", params, pks, new, probs, x10, xy,
-                                    clusters, g or [], m, warnings, {}, constraints=cons)
+                                    clusters, npz.get("edges", np.zeros((0, 3))).tolist(), m, warnings, {},
+                                    constraints=cons)
     return ReclusterSummary(run_id=new_rid, revision=revision, n_clusters=len(clusters),
                              noise_count=int((new == -1).sum()), warnings=warnings, durations={},
                              metrics=m, moved=int(moved))

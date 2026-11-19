@@ -1,7 +1,9 @@
 """Session read models and queries. Every function opens its own short DB scope."""
 import contextlib
+import functools
 from datetime import datetime
 
+import numpy as np
 from pydantic import BaseModel
 from sqlalchemy import delete as sa_delete, func, insert, select
 
@@ -14,11 +16,11 @@ from reqcluster.jobs import get_runner
 from reqcluster.models import (
     AssignmentRow,
     ClusterRow,
-    GraphRow,
     JobRow,
     RequirementRow,
     RunRow,
     SessionRow,
+    to_job,
 )
 
 
@@ -55,25 +57,27 @@ class ClusterDetail(ClusterOut):
     requirements: list[RequirementOut]
 
 
-class GraphNode(BaseModel):
-    id: int
-    req_id: str
-    cluster_id: int | None
-    is_noise: bool | None
-    x: float | None
-    y: float | None
-    text: str
+class GraphNodes(BaseModel):
+    id: list[int]
+    req_id: list[str]
+    cluster_id: list[int | None]
+    x: list[float | None]
+    y: list[float | None]
+    probability: list[float | None]
+    label: list[str]  # first LABEL_CHARS of the text, for hover; full text is fetched on demand
 
 
-class GraphEdge(BaseModel):
-    source: int
-    target: int
-    weight: float
+class GraphEdges(BaseModel):
+    source: list[int]
+    target: list[int]
+    weight: list[float]
 
 
 class GraphOut(BaseModel):
-    nodes: list[GraphNode]
-    edges: list[GraphEdge]
+    revision: int
+    edit_seq: int
+    nodes: GraphNodes
+    edges: GraphEdges
 
 
 class MetricsOut(BaseModel):
@@ -102,9 +106,13 @@ def _current_run(s, sid: int) -> RunRow:
     return run
 
 
-def _out(s, row: SessionRow) -> SessionOut:
-    run = s.get(RunRow, row.current_run_id) if row.current_run_id is not None else None
-    job = get_runner().latest(row.id, ("cluster", "recluster"))
+_CLUSTER_KINDS = ("cluster", "recluster")
+
+
+def _out(s, row: SessionRow, run=None, job=None, preloaded: bool = False) -> SessionOut:
+    if not preloaded:
+        run = s.get(RunRow, row.current_run_id) if row.current_run_id is not None else None
+        job = get_runner().latest(row.id, _CLUSTER_KINDS)
     if job is not None and job.status in ("queued", "running"):
         status = job.status
     elif job is not None and job.status in ("failed", "cancelled"):
@@ -138,7 +146,15 @@ def create(ingest_result: IngestResult, name: str) -> SessionOut:
 def list_sessions() -> list[SessionOut]:
     with session_scope() as s:
         rows = s.scalars(select(SessionRow).order_by(SessionRow.id.desc())).all()
-        return [_out(s, r) for r in rows]
+        runs = {r.id: r for r in s.scalars(select(RunRow).where(
+            RunRow.id.in_([r.current_run_id for r in rows if r.current_run_id is not None])))}
+        latest: dict[int, JobRow] = {}  # newest first, so the first row seen per session wins
+        for j in s.scalars(select(JobRow).where(JobRow.kind.in_(_CLUSTER_KINDS))
+                           .order_by(JobRow.created_at.desc())):
+            latest.setdefault(j.session_id, j)
+        return [_out(s, r, runs.get(r.current_run_id),
+                     to_job(latest[r.id]) if r.id in latest else None, preloaded=True)
+                for r in rows]
 
 
 def get(sid: int) -> SessionOut:
@@ -207,19 +223,52 @@ def cluster_detail(sid: int, cid: int) -> ClusterDetail:
                              keywords=c.keywords, requirements=reqs)
 
 
-def graph(sid: int) -> GraphOut:
+LABEL_CHARS = 24
+
+
+@functools.lru_cache(maxsize=8)
+def _graph(db_url: str, sid: int, run_id: int, edit_seq: int) -> GraphOut:
+    """Columnar, text-free payload built from raw rows; cached until the run is edited."""
+    a = AssignmentRow
+    with session_scope() as s:
+        run = s.get(RunRow, run_id)
+        q = (select(RequirementRow.id, RequirementRow.req_id,
+                    func.substr(RequirementRow.text, 1, LABEL_CHARS),
+                    a.cluster_id, func.round(a.x, 3), func.round(a.y, 3),
+                    func.round(a.probability, 3))
+             .select_from(RequirementRow)
+             .outerjoin(a, (a.requirement_id == RequirementRow.id) & (a.run_id == run_id))
+             .where(RequirementRow.session_id == sid).order_by(RequirementRow.ordinal))
+        cols = list(zip(*s.execute(q).all(), strict=False)) or [()] * 7
+        from reqcluster.services.clustering import load_run_arrays  # (clustering imports sessions)
+        e = load_run_arrays(run_id).get("edges", np.zeros((0, 3)))
+        return GraphOut.model_construct(
+            revision=run.revision, edit_seq=edit_seq,
+            nodes=GraphNodes.model_construct(**dict(zip(
+                ("id", "req_id", "label", "cluster_id", "x", "y", "probability"), map(list, cols), strict=False))),
+            edges=GraphEdges.model_construct(  # weights were rounded when the graph was built
+                source=e[:, 0].astype(np.int64).tolist(), target=e[:, 1].astype(np.int64).tolist(),
+                weight=e[:, 2].tolist()))
+
+
+def _graph_key(sid: int) -> tuple:
     with session_scope() as s:
         run = _current_run(s, sid)
-        q = _req_query(run.id).where(RequirementRow.session_id == sid).order_by(
-            RequirementRow.ordinal)
-        nodes = []
-        for r, cid, _p, x, y in s.execute(q):
-            t = r.text if len(r.text) <= 200 else r.text[:200] + "…"
-            nodes.append(GraphNode(id=r.id, req_id=r.req_id, cluster_id=cid,
-                                   is_noise=None if cid is None else cid == -1, x=x, y=y, text=t))
-        g = s.get(GraphRow, run.id)
-        edges = [GraphEdge(source=a, target=b, weight=w) for a, b, w in (g.edges if g else [])]
-        return GraphOut(nodes=nodes, edges=edges)
+        return get_settings().database_url, sid, run.id, run.edit_seq
+
+
+def graph(sid: int) -> GraphOut:
+    return _graph(*_graph_key(sid))
+
+
+@functools.lru_cache(maxsize=8)
+def _graph_bytes(*key) -> bytes:
+    return _graph(*key).model_dump_json().encode()
+
+
+def graph_json(sid: int) -> bytes:
+    """Serialized graph, cached per (run, edit_seq); a route can return it as a raw Response."""
+    return _graph_bytes(*_graph_key(sid))
 
 
 def metrics(sid: int) -> MetricsOut:

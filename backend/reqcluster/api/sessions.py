@@ -52,9 +52,10 @@ def cluster_detail(sid: PathId, cid: PathClusterId) -> sessions.ClusterDetail:
     return sessions.cluster_detail(sid, cid)
 
 
-@router.get("/sessions/{sid}/graph")
-def graph(sid: PathId) -> sessions.GraphOut:
-    return sessions.graph(sid)
+@router.get("/sessions/{sid}/graph", response_model=sessions.GraphOut)
+def graph(sid: PathId) -> Response:
+    # pre-serialized and cached per (run, edit_seq): skips re-validating ~35k columnar values
+    return Response(sessions.graph_json(sid), media_type="application/json")
 
 
 @router.get("/sessions/{sid}/metrics")

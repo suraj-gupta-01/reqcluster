@@ -16,7 +16,6 @@ import {
   getConstraints,
   feedbackExportUrl,
   getClusters,
-  getRequirements,
 } from '../api/endpoints.js'
 import { useApi } from '../hooks/useApi.js'
 import { useSession } from '../state/SessionContext.jsx'
@@ -37,19 +36,17 @@ export default function ReviewQueuePage() {
 
   const { data, error: loadError, reload } = useApi(async (o) => {
     if (!sessionId) return null
-    const [queue, constraints, clusters, reqs] = await Promise.all([
+    const [queue, constraints, clusters] = await Promise.all([
       getFeedback(sessionId, undefined, o),
       getConstraints(sessionId, o),
       getClusters(sessionId, o),
-      getRequirements(sessionId, { page_size: 1000 }, o),
     ])
-    return { queue, constraints, clusters, reqs: reqs.items }
+    return { queue, constraints, clusters }
   }, [sessionId])
 
   const queue = data?.queue || []
   const constraintsInfo = data?.constraints || { constraint_pairs: [], conflicts: [] }
   const clusterInfo = Object.fromEntries((data?.clusters || []).map((c) => [c.cluster_id, c.label]))
-  const reqMap = Object.fromEntries((data?.reqs || []).map((r) => [r.id, r]))
   const error = actionError || (loadError && getErrorMessage(loadError, 'Failed to load queue details.'))
 
   const refresh = () => { setConflict(false); setActionError(null); reload() }
@@ -187,7 +184,7 @@ export default function ReviewQueuePage() {
                 key={index}
                 className="p-3 text-xs bg-slate-950/50 rounded border border-red-900/20 text-red-200/80 space-y-1.5"
               >
-                <div>Requirements {reqMap[cf.a]?.req_id ?? cf.a} and {reqMap[cf.b]?.req_id ?? cf.b} have both {cf.kinds.join(' and ')} constraints.</div>
+                <div>Requirements {cf.a_req_id ?? cf.a} and {cf.b_req_id ?? cf.b} have both {cf.kinds.join(' and ')} constraints.</div>
               </div>
             ))}
           </div>
@@ -248,7 +245,7 @@ export default function ReviewQueuePage() {
               </thead>
               <tbody className="divide-y divide-gray-800/60 bg-slate-900/10">
                 {currentItems.map((item) => {
-                  const req = reqMap[item.requirement_id] || {}
+                  const req = item
                   const isExpanded = expandedId === item.id
                   return (
                     <React.Fragment key={item.id}>

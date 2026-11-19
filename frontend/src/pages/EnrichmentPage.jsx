@@ -13,7 +13,7 @@ import {
   Sparkles,
 } from 'lucide-react'
 
-import { startEnrichment, getEnrichment, getEnrichmentSummary, getMetrics, getRequirements, startClustering } from '../api/endpoints.js'
+import { startEnrichment, getEnrichment, getEnrichmentSummary, getMetrics, startClustering } from '../api/endpoints.js'
 import { useApi } from '../hooks/useApi.js'
 import { useJob } from '../hooks/useJob.js'
 import { useSession } from '../state/SessionContext.jsx'
@@ -60,17 +60,8 @@ function Enrichment({ sessionId, reloadSession }) {
   // 409 until enrichment exists: show nothing
   const summaryQ = useApi((o) => getEnrichmentSummary(sessionId, o).catch(() => null), [sessionId, resultsQ.data])
   const qualityReport = summaryQ.data?.quality_report
-  const reqQ = useApi(async (o) => {
-    const items = []
-    for (let page = 1; ; page++) {
-      const r = await getRequirements(sessionId, { page, page_size: 1000 }, o)
-      items.push(...r.items)
-      if (items.length >= r.total || r.items.length === 0) return items
-    }
-  }, [sessionId])
   const metricsQ = useApi((o) => getMetrics(sessionId, o).catch(() => null), [sessionId, clusterResult])
   const results = useMemo(() => resultsQ.data || [], [resultsQ.data])
-  const requirements = reqQ.data || []
 
   const enrichJob = useJob(enrichJobId, (j) => {
     setEnrichJobId(null)
@@ -280,7 +271,7 @@ function Enrichment({ sessionId, reloadSession }) {
               Load Results
             </button>
           </div>
-          <EnrichmentResultsTable results={results} requirements={requirements} />
+          <EnrichmentResultsTable results={results} />
 
           {qualityReport?.aggregate && (
             <div className="card p-4">

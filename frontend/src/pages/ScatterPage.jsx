@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Loader, Info } from 'lucide-react'
-import { getRequirements, getClusters, getFeedback } from '../api/endpoints.js'
+import { getGraph, getClusters, getFeedback } from '../api/endpoints.js'
 import { useApi } from '../hooks/useApi.js'
 import { useSession } from '../state/SessionContext.jsx'
 import { getErrorMessage } from '../utils/format.js'
@@ -17,17 +17,20 @@ function Scatter() {
   const navigate = useNavigate()
   const plotRef = useRef(null)
 
-  const reqQ = useApi(async (o) => {
-    const items = []
-    for (let page = 1; ; page++) {
-      const r = await getRequirements(sessionId, { page, page_size: 1000 }, o)
-      items.push(...r.items)
-      if (items.length >= r.total || r.items.length === 0) return { items }
-    }
-  }, [sessionId])
+  const reqQ = useApi((o) => getGraph(sessionId, o), [sessionId])
   const clustersQ = useApi((o) => getClusters(sessionId, o), [sessionId])
   const fbQ = useApi((o) => getFeedback(sessionId, undefined, o), [sessionId])
-  const requirements = useMemo(() => (reqQ.data?.items || []).filter(r => r.x != null), [reqQ.data])
+  const requirements = useMemo(() => {
+    const n = reqQ.data?.nodes
+    if (!n) return []
+    const out = []
+    n.id.forEach((id, i) => {
+      if (n.x[i] == null) return
+      out.push({ id, req_id: n.req_id[i], text: n.label[i], cluster_id: n.cluster_id[i],
+        probability: n.probability[i], x: n.x[i], y: n.y[i] })
+    })
+    return out
+  }, [reqQ.data])
   const clusters = useMemo(() => clustersQ.data || [], [clustersQ.data])
   const corrections = useMemo(() => fbQ.data || [], [fbQ.data])
   const loading = reqQ.loading || clustersQ.loading
@@ -58,7 +61,7 @@ function Scatter() {
       // Group by cluster
       const clusterMap = {}
       requirements.forEach(r => {
-        const cid = r.is_noise ? -1 : (r.cluster_id ?? -1)
+        const cid = r.cluster_id ?? -1
         if (!clusterMap[cid]) clusterMap[cid] = []
         clusterMap[cid].push(r)
       })
@@ -110,12 +113,10 @@ function Scatter() {
             cluster_id: r.cluster_id,
             prob: r.probability,
             correction: correctionMap[r.id] || null,
-            attrs: Object.entries(r.attributes || {}).map(([k, v]) => `${k}: ${v}`).join(' | '),
           })),
           hovertemplate:
             '<b>%{customdata.req_id}</b><br>' +
             '%{customdata.text}<br>' +
-            '<i>%{customdata.attrs}</i><br>' +
             '<i>Cluster: %{customdata.cluster_id}</i><br>' +
             '<i>Membership: %{customdata.prob:.2f}</i>' +
             '<extra></extra>',

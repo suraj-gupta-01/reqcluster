@@ -70,8 +70,9 @@ def build(sid: int) -> ExportBundle:
                                     .where(AssignmentRow.run_id == run_id)).all())
         reqs = []
         pk_ids: dict[int, str] = {}
-        for r in s.scalars(select(RequirementRow).where(RequirementRow.session_id == sid)
-                           .order_by(RequirementRow.ordinal)):
+        R = RequirementRow  # plain column rows: 35k ORM objects cost ~2 s of identity-map work
+        for r in s.execute(select(R.id, R.req_id, R.text, R.ordinal, R.attributes)
+                           .where(R.session_id == sid).order_by(R.ordinal)):
             cid = assign.get(r.id)
             if cid is None:
                 label = "Unclustered"

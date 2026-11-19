@@ -21,7 +21,6 @@ from reqcluster.models import (
     AssignmentRow,
     ClusterRow,
     ConstraintRow,
-    GraphRow,
     RequirementRow,
     RunRow,
     SessionRow,
@@ -158,12 +157,12 @@ def persist_run(sid, kind, params, req_ids, labels, probabilities, x10, xy, clus
             s.execute(insert(ClusterRow), [
                 {"run_id": rid, "cluster_id": c.cluster_id, "size": c.size, "label": c.label,
                  "keywords": c.keywords} for c in clusters])
-        s.add(GraphRow(run_id=rid, edges=edges))
         if constraints:
             s.execute(insert(ConstraintRow), [
                 {"run_id": rid, "a_id": a, "b_id": b, "kind": k, "feedback_id": f}
                 for a, b, k, f in constraints])
-        _write_npz(rid, x10=x10, xy=xy, probabilities=probabilities)
+        _write_npz(rid, x10=x10, xy=xy, probabilities=probabilities,
+                   edges=np.asarray(edges, dtype=np.float64).reshape(-1, 3))
         s.get(SessionRow, sid).current_run_id = rid
         old = list(s.scalars(select(RunRow.id).where(RunRow.session_id == sid)
                              .order_by(RunRow.revision.desc()).offset(KEEP_RUNS)))
@@ -171,6 +170,14 @@ def persist_run(sid, kind, params, req_ids, labels, probabilities, x10, xy, clus
             s.execute(delete(RunRow).where(RunRow.id.in_(old)))
     unlink_runs(old)
     return rid, revision
+
+
+def load_run_arrays(run_id: int) -> dict[str, np.ndarray]:
+    """Per-run arrays: x10, xy, probabilities, edges ([src_pk, dst_pk, weight] rows).
+
+    Read fully and closed at once (an open npz blocks deletion on Windows)."""
+    with np.load(get_settings().runs_dir / f"{run_id}.npz") as z:
+        return {k: z[k] for k in z.files}
 
 
 def _write_npz(run_id: int, **arrays) -> None:
