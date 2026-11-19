@@ -182,3 +182,21 @@ def test_representatives_ranked_by_centroid_similarity():
     sims = [x.similarity_to_centroid for x in r[1]]
     assert sims == sorted(sims, reverse=True)
     assert all(labels[x.index] == 1 and x.text == texts[x.index] for x in r[1])
+
+
+def test_suggest_splits_drops_non_improving(monkeypatch):
+    emb, labels = _uniform(20)
+    sub = [int(v) for v in np.random.default_rng(1).integers(0, 2, 20)]
+    monkeypatch.setattr(R, "bimodality", lambda *a, **k: R.BimodalityResult(
+        0, True, 0.0, 0.0, 50.0, [sub.count(0), sub.count(1)], sub, 0.3))
+    assert R.suggest_splits(emb, _10d(labels), labels) == []
+
+
+def test_coherence_assessment_calibrated_for_minilm():
+    rng = np.random.default_rng(0)
+    c = rng.standard_normal(384)
+    c /= np.linalg.norm(c)
+    emb = (c + rng.standard_normal((40, 384)) * np.sqrt(1.083 / 384)).astype(np.float32)
+    r = R.score_coherence(emb, np.zeros(40, dtype=np.int32), 0, [])
+    assert 0.42 < r["coherence_score"] < 0.54
+    assert not r["assessment"].startswith(("Low", "Very low"))

@@ -80,11 +80,12 @@ def score_coherence(X: np.ndarray, labels: np.ndarray, cluster_id: int,
                     keywords: list[str]) -> dict:
     n = int((labels == cluster_id).sum())
     score = round(min(max(coherence(X, labels, cluster_id, seed=42), 0.0), 1.0), 6)
-    if score >= 0.8:
+    # MiniLM calibration (refine_calibration.py): gold median .39-.48, merged pairs .28-.36, random .20-.24
+    if score >= 0.45:
         text = "Highly coherent cluster with strong semantic consistency."
-    elif score >= 0.6:
+    elif score >= 0.38:
         text = "Moderately coherent cluster. Some requirements may be loosely related."
-    elif score >= 0.4:
+    elif score >= 0.28:
         text = "Low coherence. Consider splitting into more focused sub-clusters."
     else:
         text = "Very low coherence. This cluster likely contains unrelated requirements."
@@ -128,10 +129,12 @@ def suggest_merges(embeddings: np.ndarray, x10: np.ndarray, labels: np.ndarray,
     out = []
     for c in cands:
         ms = evaluate_merge(x10, labels, c.cluster_a, c.cluster_b, seed)
+        if ms is None or ms.silhouette_delta <= 0:
+            continue
         out.append(MergeSuggestion(
             c.cluster_a, c.cluster_b,
             int((labels == c.cluster_a).sum()), int((labels == c.cluster_b).sum()),
-            round(c.centroid_similarity, 6), round(ms.silhouette_delta if ms else 0.0, 6),
+            round(c.centroid_similarity, 6), round(ms.silhouette_delta, 6),
             round(coherence(embeddings, labels, c.cluster_a, seed), 6),
             round(coherence(embeddings, labels, c.cluster_b, seed), 6), 0))
     out.sort(key=lambda s: (s.silhouette_delta, s.centroid_similarity), reverse=True)
@@ -230,19 +233,19 @@ def suggest_splits(embeddings: np.ndarray, x10: np.ndarray, labels: np.ndarray,
     labels = np.asarray(labels)
     out = []
     for cid, idx in L.groups(labels).items():
-        spread = cluster_spread(embeddings, labels, cid)
+        spread = cluster_spread(embeddings, labels, cid)  # spread_threshold is informational only
         size = len(idx)
-        if spread < spread_threshold and size < 10:
-            continue
         bm = bimodality(x10, labels, cid, seed=seed)
         if bm is None or not bm.is_bimodal:
             continue
         sc = evaluate_split(x10, labels, cid, bm.sub_labels, seed)
+        if sc is None or sc.silhouette_delta <= 0:
+            continue
         out.append(SplitSuggestion(
             cid, size, round(spread, 6), bm.bimodality_score, bm.bic_improvement,
-            round(sc.silhouette_delta if sc else 0.0, 6),
+            round(sc.silhouette_delta, 6),
             bm.sub_cluster_sizes, bm.sub_labels, 0))
-    out.sort(key=lambda s: (s.bimodality_score, s.silhouette_delta), reverse=True)
+    out.sort(key=lambda s: (s.silhouette_delta, s.bimodality_score), reverse=True)
     return [SplitSuggestion(**{**s.__dict__, "rank": i + 1}) for i, s in enumerate(out[:top_n])]
 
 
