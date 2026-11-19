@@ -42,3 +42,7 @@ class Cancelled(AppError):
     """Used by the job runner only."""
 
     status, code = 499, "cancelled"
+
+
+class Unauthorized(AppError):
+    status, code = 401, "unauthorized"

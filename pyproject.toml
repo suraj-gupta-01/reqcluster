@@ -19,6 +19,9 @@ dependencies = [
     "reportlab>=4.2",             # PDF export (imported at module load)
 ]
 
+[project.scripts]
+reqcluster-api = "reqcluster.app:main"
+
 [project.optional-dependencies]
 # Each extra is lazily imported with a fallback, so the app runs without it.
 fast = ["hnswlib>=0.8.0"]                 # ANN similarity graph; falls back to exact kNN

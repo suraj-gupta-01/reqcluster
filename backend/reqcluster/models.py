@@ -101,7 +101,7 @@ class ClusterRow(Base):
 class GraphRow(Base):
     __tablename__ = "graphs"
     run_id: Mapped[int] = mapped_column(ForeignKey("runs.id", ondelete="CASCADE"), primary_key=True)
-    edges: Mapped[list] = mapped_column(JSON, default=list)  # [i, j, sim] by ordinal
+    edges: Mapped[list] = mapped_column(JSON, default=list)  # [[req_pk_i, req_pk_j, sim], ...]
 
 
 class JobRow(Base):

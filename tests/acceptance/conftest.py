@@ -20,6 +20,7 @@ for _p in (str(_ROOT / "backend"), str(_ROOT)):
 import hashlib
 import io
 import json
+import os
 import threading
 import time
 import zlib
@@ -173,6 +174,17 @@ def embedder(monkeypatch):
         except ImportError:
             pass
     monkeypatch.delenv("REDIS_URL", raising=False)
+
+    class _FakeEmbedderAdapter:
+        name, revision, is_mock, dim = "fake", "1", True, 384
+
+        def __init__(self, fn):
+            self._fn = fn
+
+        def encode(self, texts, batch_size=64):
+            return self._fn(list(texts))
+
+    monkeypatch.setattr("reqcluster.embeddings.get_embedder", lambda: _FakeEmbedderAdapter(e))
     return e
 
 
@@ -451,9 +463,148 @@ class LegacyApi:
         return r.status_code, r.content, r.headers
 
 
+class NewRun:
+    """A started cluster job (POST returns 202 immediately)."""
+
+    def __init__(self, api, sid, params):
+        self.sid = sid
+        r = api.c.post(f"/api/sessions/{sid}/cluster", json=params)
+        self.start_status, self.start_body = r.status_code, _body(r)
+
+    @property
+    def job_id(self):
+        b = self.start_body
+        return b.get("id") if isinstance(b, dict) else None
+
+
+def _prov(kw):
+    kw = dict(kw)
+    if "provider_name" in kw:
+        kw["provider"] = kw.pop("provider_name")
+    return kw
+
+
+class NewApi(LegacyApi):
+    GETS = {
+        "session": "/api/sessions/{sid}",
+        "clusters": "/api/sessions/{sid}/clusters",
+        "requirements": "/api/sessions/{sid}/requirements",
+        "graph": "/api/sessions/{sid}/graph",
+        "metrics": "/api/sessions/{sid}/metrics",
+        "suggestions": "/api/sessions/{sid}/suggestions",
+        "audit": "/api/sessions/{sid}/audit",
+        "feedback_queue": "/api/sessions/{sid}/feedback",
+        "constraints": "/api/sessions/{sid}/constraints",
+        "feedback_export": "/api/sessions/{sid}/feedback/export?format=csv",
+        "dependencies": "/api/sessions/{sid}/dependencies",
+        "active_learning_queue": "/api/sessions/{sid}/uncertainty",
+        "quality_history": "/api/sessions/{sid}/quality",
+        "enrich_status": "/api/sessions/{sid}/enrichment",
+        "enrich_results": "/api/sessions/{sid}/enrichment",
+    }
+
+    @staticmethod
+    def error_message(body):
+        if isinstance(body, dict) and isinstance(body.get("message"), str) and body["message"]:
+            return body["message"]
+        return LegacyApi.error_message(body)
+
+    def upload(self, filename, content):
+        st, b = self._r(self.c.post("/api/sessions", files={"file": (filename, content)}))
+        if st == 200 and isinstance(b, dict):
+            b = {**b, "session_id": b["session"]["id"]}
+        return st, b
+
+    def get(self, name, sid):
+        if name == "progress":
+            return self.session(sid)
+        return super().get(name, sid)
+
+    def cluster_start(self, sid, **params):
+        return NewRun(self, sid, params)
+
+    def progress(self, sid):
+        st, b = self.session(sid)
+        job = b.get("last_job") if isinstance(b, dict) else None
+        if not job:
+            return {"http": st, "state": "idle", "message": None, "raw": b}
+        state = {"queued": "running", "running": "running", "succeeded": "done"}.get(
+            job["status"], "error")
+        return {"http": st, "state": state, "message": job.get("message") or job.get("error"),
+                "raw": b}
+
+    def wait(self, run, timeout=90):
+        if run.start_status is None or not 200 <= run.start_status < 300:
+            return {"http": run.start_status, "state": "rejected",
+                    "message": self.error_message(run.start_body), "body": run.start_body}
+        end = time.time() + timeout
+        while time.time() < end:
+            st, j = self.job(run.job_id)
+            if isinstance(j, dict) and j.get("status") in ("succeeded", "failed", "cancelled"):
+                _, s = self.session(run.sid)
+                return {"http": run.start_status,
+                        "state": "done" if j["status"] == "succeeded" else "error",
+                        "message": j.get("message") or j.get("error"), "body": s}
+            time.sleep(0.05)
+        return {"http": run.start_status, "state": "timeout", "message": None, "body": None}
+
+    def job(self, job_id):
+        return self._r(self.c.get(f"/api/jobs/{job_id}"))
+
+    def cluster_detail(self, sid, cluster_id):
+        return self._r(self.c.get(f"/api/sessions/{sid}/clusters/{cluster_id}"))
+
+    def requirements(self, sid, **q):
+        ren = {"sort_field": "sort", "sort_dir": "dir"}
+        q = {ren.get(k, k): v for k, v in q.items()}
+        r = self.c.get(f"/api/sessions/{sid}/requirements", params=q)
+        t = r.headers.get("x-total-count")
+        return r.status_code, _body(r), int(t) if t else None
+
+    def all_requirements(self, sid):
+        st, body, _ = self.requirements(sid, page=1, page_size=1000)
+        assert st == 200, (st, body)
+        return sorted(body, key=lambda r: r["id"])
+
+    def recluster_constrained(self, sid):
+        return self._r(self.c.post(f"/api/sessions/{sid}/recluster"))
+
+    def move(self, sid, requirement_id, new_cluster_id, **kw):
+        return self._r(self.c.post(f"/api/sessions/{sid}/feedback", json={
+            "requirement_id": requirement_id, "new_cluster_id": new_cluster_id, **kw}))
+
+    def review_feedback(self, sid, feedback_id, status="approved"):
+        act = "approve" if status == "approved" else "reject"
+        return self._r(self.c.post(f"/api/sessions/{sid}/feedback/{feedback_id}/{act}"))
+
+    def suggest(self, sid, **kw):
+        return self._r(self.c.post(f"/api/sessions/{sid}/suggestions", json=_prov(kw)))
+
+    def suggestions(self, sid, status=None):
+        return self._r(self.c.get(f"/api/sessions/{sid}/suggestions",
+                                  params={"status": status} if status else {}))
+
+    def apply_suggestion(self, sid, suggestion_id, action="accept"):
+        return self._r(self.c.post(f"/api/sessions/{sid}/suggestions/{suggestion_id}/{action}"))
+
+    def dependencies_generate(self, sid, **kw):
+        return self._r(self.c.post(f"/api/sessions/{sid}/dependencies", json=_prov(kw)))
+
+    def explain(self, sid, source, target, **kw):
+        return self._r(self.c.post(f"/api/sessions/{sid}/dependencies/explain", json={
+            "source": source, "target": target, **_prov(kw)}))
+
+    def enrich(self, sid, **kw):
+        return self._r(self.c.post(f"/api/sessions/{sid}/enrich", json=_prov(kw)))
+
+    def export(self, sid, fmt):
+        r = self.c.get(f"/api/sessions/{sid}/export/{fmt}")
+        return r.status_code, r.content, r.headers
+
+
 @pytest.fixture
-def api(tmp_path, embedder, monkeypatch):
-    """Swap point: build the app under test against a temp DB, return an adapter."""
+def legacy_api(tmp_path, embedder, monkeypatch):
+    """Legacy backend. Swap point: build the app under test against a temp DB, return an adapter."""
     from api import routes
     from models.database import Base, get_db
 
@@ -480,6 +631,34 @@ def api(tmp_path, embedder, monkeypatch):
     with TestClient(app, raise_server_exceptions=False) as client:
         yield LegacyApi(client)
     engine.dispose()
+
+
+@pytest.fixture
+def api(request):
+    """Swap point: REQCLUSTER_ACCEPTANCE_API = new (default) | legacy."""
+    if os.environ.get("REQCLUSTER_ACCEPTANCE_API", "new") == "legacy":
+        yield request.getfixturevalue("legacy_api")
+        return
+    tmp_path = request.getfixturevalue("tmp_path")
+    request.getfixturevalue("embedder")
+    mp = request.getfixturevalue("monkeypatch")
+    from reqcluster import db, jobs
+    from reqcluster.app import create_app
+    from reqcluster.config import get_settings
+
+    mp.setenv("REQCLUSTER_HOME", str(tmp_path))
+    mp.delenv("DATABASE_URL", raising=False)
+    mp.setenv("REQCLUSTER_JOB_WORKERS", "1")
+    mp.setenv("REQCLUSTER_EMBEDDING_BACKEND", "mock")
+    mp.setenv("REQCLUSTER_LLM_PROVIDER", "mock")
+    get_settings.cache_clear()
+    db.reset()
+    jobs.reset_runner()
+    with TestClient(create_app(), raise_server_exceptions=False) as c:
+        yield NewApi(c)
+    jobs.reset_runner()
+    db.reset()
+    get_settings.cache_clear()
 
 
 @pytest.fixture
