@@ -1,5 +1,12 @@
+import threading
+
 import numpy as np
 from sklearn.decomposition import PCA
+
+
+# numba's default "workqueue" threading layer aborts the whole process when two threads run
+# parallel kernels at once (startup warm-up + a job, or job_workers > 1). Serialize UMAP.
+_UMAP_LOCK = threading.Lock()
 
 
 def reduce(X: np.ndarray, seed: int) -> tuple[np.ndarray, np.ndarray]:
@@ -14,6 +21,11 @@ def reduce(X: np.ndarray, seed: int) -> tuple[np.ndarray, np.ndarray]:
         xy[:, :c] = P[:, :c]
         return P.astype(np.float32), xy
 
+    with _UMAP_LOCK:
+        return _umap(X, seed, n)
+
+
+def _umap(X: np.ndarray, seed: int, n: int) -> tuple[np.ndarray, np.ndarray]:
     import umap  # lazy: slow import, caller sets NUMBA_CACHE_DIR first
 
     # No PCA50 before UMAP: on raw cosine embeddings ARI rises uav2k .934->.987, uav10k .908->.958,

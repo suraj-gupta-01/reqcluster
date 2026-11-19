@@ -61,3 +61,37 @@ def test_length_mismatch():
         pipeline.run(X, t[:5], P(), seed=0)
     with pytest.raises(Invalid):
         pipeline.run(X[:0], [], P(), seed=0)
+
+
+def test_reduce_never_runs_umap_concurrently(monkeypatch):
+    # numba's default workqueue threading layer aborts the process on concurrent use (seen in Docker)
+    import threading
+    import time
+
+    import umap
+
+    from reqcluster.ml import reduce
+
+    active, peak, lock = [0], [0], threading.Lock()
+
+    class FakeUMAP:
+        def __init__(self, n_components=2, **kw):
+            self.k = n_components
+
+        def fit_transform(self, X):
+            with lock:
+                active[0] += 1
+                peak[0] = max(peak[0], active[0])
+            time.sleep(0.05)
+            with lock:
+                active[0] -= 1
+            return np.zeros((len(X), self.k), np.float32)
+
+    monkeypatch.setattr(umap, "UMAP", FakeUMAP)
+    X = rand(40)[0]
+    ts = [threading.Thread(target=reduce.reduce, args=(X, 0)) for _ in range(3)]
+    for t in ts:
+        t.start()
+    for t in ts:
+        t.join()
+    assert peak[0] == 1

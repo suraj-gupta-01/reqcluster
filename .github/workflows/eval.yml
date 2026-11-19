@@ -11,9 +11,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
+      - uses: astral-sh/setup-uv@v6
         with:
-          python-version: "3.11"
+          enable-cache: true
+          python-version: "3.12"
 
       - name: Cache HuggingFace models
         uses: actions/cache@v4
@@ -21,16 +22,16 @@ jobs:
           path: ~/.cache/huggingface
           key: ${{ runner.os }}-hf-all-minilm-v1
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r backend/requirements.txt pytest pytest-cov pyyaml
+      - run: uv sync --extra all --extra cpu
 
       - name: Run Harness Self-Tests
-        run: pytest tests/test_eval_harness.py -v
+        run: uv run pytest tests/eval -q
 
       - name: Run Evaluation Harness (Fast Suite)
-        run: python -m eval run --suite fast --model real --provider mock
+        # baselines were produced on CPU
+        env:
+          REQCLUSTER_EMBEDDING_DEVICE: cpu
+        run: uv run python -m eval run --suite fast --model real
 
       - name: Upload Evaluation Report
         if: always()
