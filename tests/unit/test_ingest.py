@@ -119,3 +119,12 @@ def test_suffixed_ids_stay_unique():
     data = csv_bytes(f"id,text\nR1,{A}\nR1,{B}\nR1-2,{C}\n")
     ids = [r.req_id for r in parse(data, "a.csv").requirements]
     assert len(set(ids)) == 3
+
+
+def test_ids_headers_and_attribute_values_are_cleaned_like_text():
+    # NUL/control bytes anywhere in the file must not reach the DB (Postgres rejects NUL in text)
+    data = "id,text,mod\x00ule\nR\x001,The pump shall start within 5 seconds,The\x07rmal\n".encode()
+    r = parse(data, "a.csv").requirements[0]
+    blob = r.req_id + "".join(k + v for k, v in r.attributes.items())
+    assert "\x00" not in blob and "\x07" not in blob
+    assert r.req_id == "R1" and r.attributes == {"module": "Thermal"}

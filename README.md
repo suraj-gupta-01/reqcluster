@@ -233,14 +233,6 @@ Learning -> Export** (download the **PDF report**).
 
 ## How to test
 
-Walk through the dependency-engine hardening end to end (offline, ~20 s, every
-number computed live):
-
-```bash
-uv run python -m scripts.demo_dependency_hardening            # all five sections
-uv run python -m scripts.demo_dependency_hardening --section 3   # just the scores
-```
-
 Score the engine against the hand-labeled gold edge sets:
 
 ```bash

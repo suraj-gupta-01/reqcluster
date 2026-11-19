@@ -36,6 +36,11 @@ def read_capped(fileobj, max_bytes: int) -> bytes:
     return bytes(buf)
 
 
+def _cell(value) -> str:
+    """Ids, header names and attribute values: no control bytes (NUL breaks Postgres text)."""
+    return _WS.sub(" ", _CTRL.sub("", str(value))).strip()
+
+
 def _clean(text: str) -> str:
     text = _CTRL.sub("", _TAGS.sub(" ", text))
     return _WS.sub(" ", text).strip().strip("\"'").strip()
@@ -116,7 +121,7 @@ def parse(data: bytes, filename: str, max_rows: int = 50000) -> IngestResult:
             f"Name one of: {', '.join(TEXT_NAMES[:4])}."
         )
     id_col = next((cols[n] for n in ID_NAMES if n in cols), None)
-    extra = {i: str(c).replace("\ufeff", "").strip() for i, c in enumerate(header) if i not in (text_col, id_col)}
+    extra = {i: _cell(str(c).replace("\ufeff", "")) for i, c in enumerate(header) if i not in (text_col, id_col)}
     extra = {i: n for i, n in extra.items() if n}
 
     stats = {"rows_read": len(body), "rows_kept": 0, "duplicates": 0, "empty_dropped": 0,
@@ -148,7 +153,7 @@ def parse(data: bytes, filename: str, max_rows: int = 50000) -> IngestResult:
         if len(out) >= max_rows:
             raise TooLarge(f"Too many requirements; the limit is {max_rows} rows.")
         ordinal = len(out) + 1
-        rid = _WS.sub(" ", str(raw_id)).strip() or f"REQ-{ordinal:05d}"
+        rid = _cell(raw_id) or f"REQ-{ordinal:05d}"
         n = seen_ids.get(rid, 0)
         cand = rid
         while cand in used_ids:
@@ -156,7 +161,7 @@ def parse(data: bytes, filename: str, max_rows: int = 50000) -> IngestResult:
             cand = f"{rid}-{n + 1}"
         seen_ids[rid] = n
         used_ids.add(cand)
-        attrs = {extra[c]: v for c, v in ((c, _WS.sub(" ", str(v)).strip()) for c, v in ex.items()) if v}
+        attrs = {extra[c]: v for c, v in ((c, _cell(v)) for c, v in ex.items()) if v}
         out.append(RequirementIn(req_id=cand, text=text, ordinal=ordinal, attributes=attrs))
 
     if not out:

@@ -28,7 +28,13 @@ def sess(tmp_path_factory):
 
 
 def rewrite(sid, texts, label):
+    import os
+
     from reqcluster.db import session_scope
+    if os.environ.get("REQCLUSTER_TEST_DATABASE_URL", "").startswith("postgresql"):
+        # Postgres cannot store NUL at all (ingest strips it); test what the DB can actually hold
+        texts = [t.replace("\x00", "") or "x" for t in texts]
+        label = label.replace("\x00", "") or "x"
     from reqcluster.models import ClusterRow, RequirementRow, SessionRow
     with session_scope() as s:
         rows = list(s.scalars(select(RequirementRow).where(RequirementRow.session_id == sid)
