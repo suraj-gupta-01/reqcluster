@@ -1,3 +1,16 @@
 from fastapi import APIRouter
 
+from reqcluster.domain import Job
+from reqcluster.services import enrichment
+
 router = APIRouter()
+
+
+@router.post("/sessions/{sid}/enrich", status_code=202)
+def enrich(sid: int, body: enrichment.EnrichRequest | None = None) -> Job:
+    return enrichment.start(sid, body.provider if body else None)
+
+
+@router.get("/sessions/{sid}/enrichment")
+def get_enrichment(sid: int) -> list[enrichment.EnrichmentOut]:
+    return enrichment.results(sid)

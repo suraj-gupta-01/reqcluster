@@ -12,7 +12,9 @@ from sqlalchemy import select
 from reqcluster.db import session_scope
 from reqcluster.domain import NOISE
 from reqcluster.errors import NotFound
-from reqcluster.models import AssignmentRow, ClusterRow, RequirementRow, SessionRow
+from reqcluster.models import (
+    AssignmentRow, ClusterRow, DependencyTreeRow, RequirementRow, SessionRow,
+)
 
 _XML_BAD = re.compile("[\x00-\x08\x0b\x0c\x0e-\x1f\ud800-\udfff￾￿]")
 _NCNAME_BAD = re.compile(r"[^A-Za-z0-9_.\-]")
@@ -66,6 +68,7 @@ def build(sid: int) -> ExportBundle:
             assign = dict(s.execute(select(AssignmentRow.requirement_id, AssignmentRow.cluster_id)
                                     .where(AssignmentRow.run_id == run_id)).all())
         reqs = []
+        pk_ids: dict[int, str] = {}
         for r in s.scalars(select(RequirementRow).where(RequirementRow.session_id == sid)
                            .order_by(RequirementRow.ordinal)):
             cid = assign.get(r.id)
@@ -77,8 +80,14 @@ def build(sid: int) -> ExportBundle:
                 label = labels.get(cid, f"Cluster {cid}")
             reqs.append(ExportReq((r.req_id or "").strip() or f"REQ-{r.ordinal:05d}", r.text,
                                   cid, label, cid == NOISE, r.ordinal))
+            pk_ids[r.id] = reqs[-1].req_id
+        edges = []
+        tree = s.get(DependencyTreeRow, run_id) if run_id is not None else None
+        if tree is not None:
+            edges = [(pk_ids[e["source"]], pk_ids[e["target"]], e["relation"], e["weight"])
+                     for e in tree.edges]
         return ExportBundle(sid, row.name, reqs, clusters,
-                            datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"))
+                            datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"), edges)
 
 
 def xml_safe(s) -> str:

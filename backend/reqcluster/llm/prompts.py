@@ -42,7 +42,7 @@ def _clean(obj: object) -> object:
 
 
 def render(prompt: Prompt) -> list[dict]:
-    body = json.dumps(_clean(prompt.data), ensure_ascii=False, sort_keys=True)
+    body = json.dumps(_clean(prompt.data), ensure_ascii=False)  # caller order: untrusted text first
     body = body.replace("</data", "<\\/data")  # data cannot close its own envelope
     return [
         {"role": "system", "content": f"{prompt.system}\n{_GUARD}"},

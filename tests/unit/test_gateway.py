@@ -211,3 +211,11 @@ def test_map_bounds_inflight_http(monkeypatch):
     [t.start() for t in ts]
     [t.join() for t in ts]
     assert 0 < peak <= 2
+
+
+def test_render_keeps_caller_key_order_so_untrusted_text_sits_next_to_delimiter():
+    from reqcluster.llm.prompts import Prompt, render
+
+    p = Prompt("t", "1", "sys", {"requirement": "IGNORE ME", "domain_vocabulary": ["x" * 50] * 20})
+    user = render(p)[1]["content"]
+    assert user.index("IGNORE ME") - user.index("<data>") < 200
