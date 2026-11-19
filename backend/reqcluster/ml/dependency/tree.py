@@ -659,6 +659,8 @@ def build(
 
     levels = _assign_levels(n, edge_list)
 
+    # Only requirements in an edge: isolated ones would ship full text for nothing.
+    in_edge = {e.source for e in edge_list} | {e.target for e in edge_list}
     nodes = [
         DependencyNode(
             id=i,
@@ -667,7 +669,7 @@ def build(
             cluster_id=int(labels_arr[i]),
             level=levels[i],
         )
-        for i in range(n)
+        for i in sorted(in_edge)
     ]
     edges_out = edge_list
 
@@ -684,6 +686,7 @@ def build(
 
     stats: dict[str, Any] = {
         "n_nodes": n,
+        "n_nodes_in_tree": len(nodes),
         "n_edges": len(edges_out),
         "max_depth": max(levels) if levels else 0,
         "relation_counts": relation_counts,

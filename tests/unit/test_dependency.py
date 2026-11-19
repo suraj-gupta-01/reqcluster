@@ -438,7 +438,7 @@ def test_empty_and_single_requirement():
     emb = np.zeros((1, 384), dtype=np.float32)
     tree = build(emb, ["only one requirement here"], ["REQ-001"], np.array([0]))
     assert tree.edges == []
-    assert len(tree.nodes) == 1
+    assert tree.nodes == [] and tree.stats["n_nodes"] == 1  # isolated reqs are not nodes
     assert tree.stats["n_edges"] == 0
 
 
@@ -599,3 +599,14 @@ def test_corroboration_is_order_independent():
     assert a.relation == b.relation == _DATA
     assert a.weight == b.weight == 0.95
     assert a.evidence["corroborating_passes"] == b.evidence["corroborating_passes"]
+
+
+def test_tree_nodes_only_those_in_edges():
+    emb = np.eye(3, dtype=np.float32)
+    texts = ["The A shall produce telemetry report.", "The B shall consume telemetry report.",
+             "Unrelated gizmo."]
+    tree = build(emb, texts, ["R-1", "R-2", "R-3"], np.array([0, 0, -1]),
+                 disable_spacy=True, enable_artifact_near_match=False)
+    ids = {n.id for n in tree.nodes}
+    assert ids == {e.source for e in tree.edges} | {e.target for e in tree.edges}
+    assert tree.stats["n_nodes"] == 3 and tree.stats["n_nodes_in_tree"] == len(ids)

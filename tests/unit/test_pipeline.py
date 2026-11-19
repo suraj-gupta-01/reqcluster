@@ -95,3 +95,19 @@ def test_reduce_never_runs_umap_concurrently(monkeypatch):
     for t in ts:
         t.join()
     assert peak[0] == 1
+
+
+def test_graph_keeps_edges_for_loose_group_under_small_budget():
+    from reqcluster.ml import graph
+
+    rng = np.random.default_rng(1)
+    d = 32
+    groups = []
+    for noise, n in ((0.01, 12), (0.01, 12), (0.2, 6)):
+        c = rng.normal(size=d)
+        groups.append(c + noise * rng.normal(size=(n, d)))
+    X = np.vstack(groups)
+    labels = np.repeat([0, 1, 2], [12, 12, 6])
+    edges = graph.build(X, labels, threshold=0.3, k=5, max_edges=50)
+    assert len(edges) <= 50
+    assert any(a >= 24 and b >= 24 for a, b, _ in edges)

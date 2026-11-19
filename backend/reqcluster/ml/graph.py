@@ -31,13 +31,20 @@ def build(embeddings, labels, threshold: float, k: int = 10, seed: int = 0,
     res = _hnsw_edges(Xn, k, seed, threads)
     nb, sim = res if res is not None else sampling.knn(Xn, k)
     best: dict[tuple[int, int], float] = {}
+    per_node: dict[int, list[tuple[float, tuple[int, int]]]] = {}
     for li in range(m):
         for lj, s in zip(nb[li], sim[li], strict=True):
             lj = int(lj)
             if lj == li or s < threshold:
                 continue
-            a, b = sorted((int(nodes[li]), int(nodes[lj])))
-            best[(a, b)] = max(best.get((a, b), -1.0), float(s))
-    edges = [(a, b, round(s, 4)) for (a, b), s in best.items()]
-    edges.sort(key=lambda e: (-e[2], e[0], e[1]))
-    return edges[:max_edges]
+            key = tuple(sorted((int(nodes[li]), int(nodes[lj]))))
+            best[key] = max(best.get(key, -1.0), float(s))
+            per_node.setdefault(li, []).append((float(s), key))
+    order = lambda k: (-best[k], k[0], k[1])  # noqa: E731
+    # Reserve each node's 2 best edges so tight duplicate groups cannot eat the
+    # whole budget and leave looser clusters isolated.
+    keep = {k for c in per_node.values() for _, k in sorted(c, key=lambda t: (-t[0], t[1]))[:2]}
+    chosen = sorted(keep, key=order)[:max_edges]
+    chosen += [k for k in sorted(best.keys() - keep, key=order)][: max_edges - len(chosen)]
+    chosen.sort(key=order)
+    return [(a, b, round(best[(a, b)], 4)) for a, b in chosen]
