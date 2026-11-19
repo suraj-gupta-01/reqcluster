@@ -1,8 +1,12 @@
 """Process-level native runtime setup (threads, numba cache)."""
+import logging
 import os
 import sys
+import threading
 
 from reqcluster.config import Settings
+
+log = logging.getLogger(__name__)
 
 
 def configure_process(settings: Settings) -> None:
@@ -37,3 +41,22 @@ def warm_up(settings: Settings) -> None:
     from reqcluster import embeddings
 
     embeddings.get_embedder().encode(["warm-up"], 1)
+
+
+def warm_up_reducer(seed: int) -> threading.Thread:
+    """The first UMAP call in a process spends ~20 s in numba JIT (NUMBA_CACHE_DIR does not
+    avoid it). Pay it at startup on a daemon thread so the first clustering job does not."""
+    def go():
+        try:
+            import numpy as np
+
+            from reqcluster.ml import reduce
+            reduce.reduce(np.random.default_rng(seed).standard_normal((40, 16)).astype(np.float32),
+                          seed)
+        except Exception:
+            log.warning("reducer warm-up failed; the first clustering job will compile UMAP",
+                        exc_info=True)
+
+    t = threading.Thread(target=go, name="umap-warm-up", daemon=True)
+    t.start()
+    return t

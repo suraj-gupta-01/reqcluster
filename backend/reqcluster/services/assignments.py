@@ -1,0 +1,41 @@
+"""Shared write path for edits inside a run (feedback moves, suggestion merge/split)."""
+import numpy as np
+from sqlalchemy import delete, insert, select, update
+from sqlalchemy.orm import Session
+
+from reqcluster.ml import keywords
+from reqcluster.models import AssignmentRow, AuditRow, ClusterRow, RequirementRow, RunRow
+
+
+def reassign(s: Session, run: RunRow, moves: dict[int, int], *, action: str, actor: str = "",
+             details: dict | None = None) -> None:
+    """Apply {requirement_pk: cluster_id} inside the caller's transaction.
+
+    Cluster ids are kept stable (no relabel); emptied clusters disappear. c-TF-IDF labels are
+    relative to all clusters, so every cluster row of the run is recomputed, then edit_seq is
+    bumped (pending suggestions generated before this edit become stale) and an audit row written.
+    """
+    by_target: dict[int, list[int]] = {}
+    for req_id, cid in moves.items():
+        by_target.setdefault(int(cid), []).append(int(req_id))
+    for cid, req_ids in by_target.items():
+        s.execute(update(AssignmentRow)
+                  .where(AssignmentRow.run_id == run.id, AssignmentRow.requirement_id.in_(req_ids))
+                  .values(cluster_id=cid))
+
+    rows = s.execute(select(AssignmentRow.cluster_id, RequirementRow.text)
+                     .join(RequirementRow, RequirementRow.id == AssignmentRow.requirement_id)
+                     .where(AssignmentRow.run_id == run.id)
+                     .order_by(RequirementRow.ordinal)).all()
+    labels = np.array([r[0] for r in rows], dtype=np.int64)
+    infos = keywords.label_clusters([r[1] for r in rows], labels)
+    s.execute(delete(ClusterRow).where(ClusterRow.run_id == run.id))
+    if infos:
+        s.execute(insert(ClusterRow), [
+            {"run_id": run.id, "cluster_id": c.cluster_id, "size": c.size, "label": c.label,
+             "keywords": c.keywords} for c in infos])
+    run.n_clusters = len(infos)
+    run.noise_count = int((labels == -1).sum())
+    run.edit_seq += 1
+    s.add(AuditRow(run_id=run.id, action=action, actor=actor,
+                   details={"moves": {str(k): v for k, v in moves.items()}, **(details or {})}))

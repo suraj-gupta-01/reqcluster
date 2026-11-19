@@ -33,3 +33,12 @@ def test_warm_up(monkeypatch):
     monkeypatch.setattr(reqcluster, "embeddings", fake, raising=False)
     runtime.warm_up(get_settings())
     assert seen == [(["warm-up"], 1)]
+
+
+def test_warm_up_reducer_runs_reduce_off_thread(monkeypatch):
+    from reqcluster.ml import reduce
+
+    seen = []
+    monkeypatch.setattr(reduce, "reduce", lambda X, seed: seen.append((X.shape, seed)))
+    runtime.warm_up_reducer(5).join(10)
+    assert seen == [((40, 16), 5)]

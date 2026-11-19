@@ -104,6 +104,114 @@ class GraphRow(Base):
     edges: Mapped[list] = mapped_column(JSON, default=list)  # [[req_pk_i, req_pk_j, sim], ...]
 
 
+def _run_fk():
+    return mapped_column(ForeignKey("runs.id", ondelete="CASCADE"), index=True)
+
+
+def _req_fk(**kw):
+    return mapped_column(ForeignKey("requirements.id", ondelete="CASCADE"), **kw)
+
+
+class EnrichmentRow(Base):
+    """Session-scoped: an LLM expansion of one requirement text survives re-clustering."""
+    __tablename__ = "enrichments"
+    __table_args__ = (UniqueConstraint("requirement_id", "provider", "prompt_version"),)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    session_id: Mapped[int] = mapped_column(
+        ForeignKey("sessions.id", ondelete="CASCADE"), index=True
+    )
+    requirement_id: Mapped[int] = _req_fk()
+    provider: Mapped[str] = mapped_column(String)
+    prompt_version: Mapped[str] = mapped_column(String)
+    text_hash: Mapped[str] = mapped_column(String)  # sha256 of the source text; stale if changed
+    status: Mapped[str] = mapped_column(String)  # succeeded | failed
+    source: Mapped[str] = mapped_column(String)  # llm | cache | fallback
+    expanded_text: Mapped[str] = mapped_column(Text, default="")
+    domain_terms: Mapped[list] = mapped_column(JSON, default=list)
+    functional_intent: Mapped[str] = mapped_column(Text, default="")
+    mentioned_components: Mapped[list] = mapped_column(JSON, default=list)
+    assumptions: Mapped[list] = mapped_column(JSON, default=list)
+    confidence: Mapped[float | None] = mapped_column(Float, nullable=True)
+    warnings: Mapped[list] = mapped_column(JSON, default=list)
+    error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = _ts(default=_now)
+
+
+# Everything below is run-scoped: a new run (re-cluster) makes it unreachable, and run
+# pruning deletes it through the FK cascade. This is what the acceptance suite requires.
+
+class SuggestionRow(Base):
+    __tablename__ = "suggestions"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    run_id: Mapped[int] = _run_fk()
+    edit_seq: Mapped[int] = mapped_column(Integer)  # run.edit_seq when generated; mismatch = stale
+    kind: Mapped[str] = mapped_column(String)  # merge | split
+    status: Mapped[str] = mapped_column(String, default="pending")  # pending|accepted|rejected
+    payload: Mapped[dict] = mapped_column(JSON, default=dict)  # cluster ids, scores, proposal
+    rationale: Mapped[str] = mapped_column(Text, default="")
+    provider: Mapped[str] = mapped_column(String, default="mock")
+    created_at: Mapped[datetime] = _ts(default=_now)
+    decided_at: Mapped[datetime | None] = _ts(nullable=True)
+
+
+class FeedbackRow(Base):
+    __tablename__ = "feedback"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    run_id: Mapped[int] = _run_fk()
+    requirement_id: Mapped[int] = _req_fk(index=True)
+    old_cluster_id: Mapped[int] = mapped_column(Integer)
+    new_cluster_id: Mapped[int] = mapped_column(Integer)  # -1 = noise
+    status: Mapped[str] = mapped_column(String, default="pending")  # pending|approved|rejected
+    comments: Mapped[str] = mapped_column(Text, default="")
+    applied_by: Mapped[str] = mapped_column(String, default="")
+    created_at: Mapped[datetime] = _ts(default=_now)
+    reviewed_at: Mapped[datetime | None] = _ts(nullable=True)
+
+
+class ConstraintRow(Base):
+    __tablename__ = "constraints"
+    __table_args__ = (UniqueConstraint("run_id", "a_id", "b_id", "kind"),)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    run_id: Mapped[int] = _run_fk()
+    a_id: Mapped[int] = _req_fk()  # requirement pk, always a_id < b_id
+    b_id: Mapped[int] = _req_fk()
+    kind: Mapped[str] = mapped_column(String)  # must | cannot
+    feedback_id: Mapped[int | None] = mapped_column(
+        ForeignKey("feedback.id", ondelete="SET NULL"), nullable=True
+    )
+    created_at: Mapped[datetime] = _ts(default=_now)
+
+
+class AuditRow(Base):
+    __tablename__ = "audit"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    run_id: Mapped[int] = _run_fk()
+    action: Mapped[str] = mapped_column(String)
+    actor: Mapped[str] = mapped_column(String, default="")
+    details: Mapped[dict] = mapped_column(JSON, default=dict)
+    created_at: Mapped[datetime] = _ts(default=_now)
+
+
+class DependencyTreeRow(Base):
+    __tablename__ = "dependency_trees"
+    run_id: Mapped[int] = mapped_column(ForeignKey("runs.id", ondelete="CASCADE"), primary_key=True)
+    params: Mapped[dict] = mapped_column(JSON, default=dict)
+    nodes: Mapped[list] = mapped_column(JSON, default=list)
+    edges: Mapped[list] = mapped_column(JSON, default=list)  # source/target are requirement pks
+    stats: Mapped[dict] = mapped_column(JSON, default=dict)
+    created_at: Mapped[datetime] = _ts(default=_now)
+
+
+class DependencyExplanationRow(Base):
+    __tablename__ = "dependency_explanations"
+    run_id: Mapped[int] = mapped_column(ForeignKey("runs.id", ondelete="CASCADE"), primary_key=True)
+    source: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=False)
+    target: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=False)
+    provider: Mapped[str] = mapped_column(String)
+    explanation: Mapped[dict] = mapped_column(JSON, default=dict)
+    created_at: Mapped[datetime] = _ts(default=_now)
+
+
 class JobRow(Base):
     __tablename__ = "jobs"
     __table_args__ = (

@@ -11,6 +11,7 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from reqcluster import db, embeddings, jobs, runtime
+from reqcluster.api import dependencies, enrichment, export, feedback, refinement
 from reqcluster.api import jobs as jobs_api
 from reqcluster.api import sessions as sessions_api
 from reqcluster.config import Settings, get_settings
@@ -33,6 +34,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             db.init_db()
             jobs.get_runner().sweep_on_startup()
             runtime.warm_up(s)
+            if s.embedding_backend != "mock":  # tests: compile lazily, no competing thread
+                runtime.warm_up_reducer(s.seed)
         except Exception:
             log.exception("startup failed: could not initialise database, runner or embedder")
             raise
@@ -74,8 +77,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return {"status": "ok", "embedder": e.name, "is_mock": e.is_mock}
 
     deps = [Depends(require_key)]
-    app.include_router(sessions_api.router, prefix="/api", dependencies=deps)
-    app.include_router(jobs_api.router, prefix="/api", dependencies=deps)
+    for m in (sessions_api, jobs_api, enrichment, dependencies, refinement, feedback, export):
+        app.include_router(m.router, prefix="/api", dependencies=deps)
     return app
 
 
