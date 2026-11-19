@@ -51,7 +51,7 @@ def test_not_found_and_conflict():
         sessions.clusters(sid)
     items, total = sessions.requirements(sid)
     assert total == 5 and items[0].cluster_id is None and items[0].is_noise is None
-    with pytest.raises(errors.Invalid):
+    with pytest.raises(errors.Conflict):  # enriched mode needs a finished enrichment first
         clustering.start(sid, ClusteringParams(embedding_mode="enriched"))
 
 
@@ -70,3 +70,20 @@ def test_prune_keeps_5():
     assert revs == [3, 4, 5, 6, 7]
     from reqcluster.config import get_settings
     assert len(list(get_settings().runs_dir.glob("*.npz"))) == 5
+
+
+def test_hybrid_mode_needs_enrichment_then_embeds_enriched_text(monkeypatch):
+    from reqcluster import embeddings
+    from reqcluster.services import enrichment
+
+    sid = make(12)
+    with pytest.raises(errors.Conflict):
+        clustering.start(sid, ClusteringParams(embedding_mode="hybrid"))
+    assert enrichment.start(sid, "mock").status == "succeeded"
+    seen = []
+    real = embeddings.embed
+    monkeypatch.setattr(embeddings, "embed", lambda t, progress=None: seen.extend(t) or real(t))
+    assert clustering.start(sid, ClusteringParams(embedding_mode="hybrid")).status == "succeeded"
+    assert seen and all("Domain-Aware Context" in t for t in seen)
+    labels = [c.label for c in sessions.clusters(sid)]
+    assert not any("Domain-Aware" in lab or "Original" in lab for lab in labels)

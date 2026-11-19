@@ -10,7 +10,7 @@ from reqcluster import embeddings
 from reqcluster.config import get_settings
 from reqcluster.db import session_scope
 from reqcluster.domain import ClusteringParams, Job
-from reqcluster.errors import Invalid, NotFound
+from reqcluster.errors import NotFound
 from reqcluster.jobs import JobContext, get_runner
 from reqcluster.ml import metrics, pipeline
 from reqcluster.models import (
@@ -22,6 +22,7 @@ from reqcluster.models import (
     RunRow,
     SessionRow,
 )
+from reqcluster.services import enrichment
 from reqcluster.services.sessions import unlink_runs
 
 KEEP_RUNS = 5
@@ -42,8 +43,7 @@ def start(sid: int, params: ClusteringParams) -> Job:
         if s.get(SessionRow, sid) is None:
             raise NotFound(f"session {sid} not found")
     if params.embedding_mode != "base":
-        raise Invalid("embedding mode "
-                      f"'{params.embedding_mode}' requires enrichment, which is not available yet")
+        enrichment.texts_for_mode(sid, params.embedding_mode)  # fail fast (409) if incomplete
     return get_runner().submit("cluster", sid, lambda ctx: _run(ctx, sid, params),
                                params.model_dump())
 
@@ -61,9 +61,12 @@ def _run(ctx: JobContext, sid: int, params: ClusteringParams) -> ClusteringSumma
     req_ids = [r[0] for r in rows]
     texts = [r[1] for r in rows]
 
+    # enriched/hybrid change only what is embedded; keywords and the graph keep the raw text
+    embed_texts = (texts if params.embedding_mode == "base"
+                   else enrichment.texts_for_mode(sid, params.embedding_mode))
     ctx.progress(0.05, "embedding")
     emb = embeddings.embed(
-        texts, progress=lambda done, total: ctx.progress(0.05 + 0.55 * done / max(total, 1),
+        embed_texts, progress=lambda done, total: ctx.progress(0.05 + 0.55 * done / max(total, 1),
                                                          "embedding"))
     ctx.check_cancel()
     seed = params.seed if params.seed is not None else settings.seed

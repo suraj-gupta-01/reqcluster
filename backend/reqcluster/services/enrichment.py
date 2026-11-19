@@ -118,11 +118,12 @@ def texts_for_mode(sid: int, mode: str) -> list[str]:
         reqs = list(s.scalars(select(RequirementRow).where(RequirementRow.session_id == sid)
                               .order_by(RequirementRow.ordinal)))
         enr: dict[int, str] = {}
+        by_id = {r.id: r for r in reqs}
         if mode != "base":
             for e in s.scalars(select(EnrichmentRow).where(
                     EnrichmentRow.session_id == sid, EnrichmentRow.status == "succeeded")
                     .order_by(EnrichmentRow.created_at, EnrichmentRow.id)):
-                r = next((r for r in reqs if r.id == e.requirement_id), None)
+                r = by_id.get(e.requirement_id)
                 if r is not None and e.text_hash == _hash(r.text):
                     enr[r.id] = e.expanded_text
         texts = [r.text for r in reqs]
