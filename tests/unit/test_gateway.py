@@ -127,10 +127,13 @@ def test_cache_hit_skips_call(net):
     assert r.source == "cache" and r.output.a == 7 and len(net["reqs"]) == 1
 
 
+LOADED = FakeResp(b"{}")  # Ollama /api/generate model-load reply
+
+
 def test_ollama_body(net):
-    net["queue"] = [envelope('{"a": 1}', "local")]
+    net["queue"] = [LOADED, envelope('{"a": 1}', "local")]
     make("local").complete(prompt(), FB)
-    req = net["reqs"][0]
+    req = net["reqs"][1]
     body = json.loads(req.data)
     assert req.full_url.endswith("/api/chat")
     assert body["think"] is False and body["stream"] is False
@@ -139,11 +142,11 @@ def test_ollama_body(net):
 
 
 def test_free_text_sends_no_format(net):
-    net["queue"] = [envelope("hello"), envelope("hello", "local")]
+    net["queue"] = [envelope("hello"), LOADED, envelope("hello", "local")]
     r = make().complete(prompt(model=None), lambda: "fb")
     assert r.output == "hello"
     make("local").complete(prompt(model=None), lambda: "fb")
-    for req in net["reqs"]:
+    for req in [r for r in net["reqs"] if not r.full_url.endswith("/api/generate")]:
         body = json.loads(req.data)
         assert "response_format" not in body and "format" not in body
 
@@ -230,3 +233,44 @@ def test_cache_is_single_sqlite_file_and_corruption_is_a_miss(net, tmp_path):
     assert not list((tmp_path / "cache").rglob("*.json"))
     (tmp_path / "cache" / "llm.sqlite").write_bytes(b"garbage" * 100)
     assert g.complete(prompt(), FB).output.a == 8  # corrupt file -> miss, no raise
+
+
+def test_local_loads_model_once_with_long_timeout_then_keeps_it_alive(monkeypatch):
+    # Real Ollama: a cold model load took 102 s, longer than all retries of a 30 s request
+    calls = []
+
+    def fake(req, timeout=None):
+        calls.append((req.full_url.rsplit("/", 2)[-1], timeout, json.loads(req.data)))
+        return LOADED if req.full_url.endswith("/api/generate") else envelope('{"a": 1}', "local")
+
+    monkeypatch.setattr(gw.urllib.request, "urlopen", fake)
+    g = make("local", local_llm_timeout_s=120.0, local_llm_load_timeout_s=600.0,
+             local_llm_keep_alive="30m")
+    g.complete(prompt(), FB)
+    g.complete(prompt(data={"x": "second"}), FB)
+    kinds = [c[0] for c in calls]
+    assert kinds == ["generate", "chat", "chat"]  # loaded once, before the first chat
+    assert calls[0][1] == 600.0 and calls[1][1] == 120.0  # own load and request timeouts
+    assert calls[0][2]["keep_alive"] == "30m" and calls[1][2]["keep_alive"] == "30m"
+
+
+def test_local_map_respects_local_concurrency(monkeypatch):
+    import threading
+    import time
+    active, peak, lock = [0], [0], threading.Lock()
+
+    def fake(req, timeout=None):
+        if req.full_url.endswith("/api/generate"):
+            return LOADED
+        with lock:
+            active[0] += 1
+            peak[0] = max(peak[0], active[0])
+        time.sleep(0.02)
+        with lock:
+            active[0] -= 1
+        return envelope('{"a": 1}', "local")
+
+    monkeypatch.setattr(gw.urllib.request, "urlopen", fake)
+    g = make("local", local_llm_concurrency=1, llm_concurrency=4)
+    g.map([prompt(data={"x": str(i)}) for i in range(6)], lambda p: FB())
+    assert peak[0] == 1  # Ollama serves one request at a time; more only queue into timeouts

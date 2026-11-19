@@ -37,6 +37,10 @@ class Settings:
     llm_model: str
     local_llm_url: str
     local_llm_model: str
+    local_llm_timeout_s: float
+    local_llm_load_timeout_s: float
+    local_llm_concurrency: int
+    local_llm_keep_alive: str
     llm_timeout_s: float
     llm_max_retries: int
     llm_concurrency: int
@@ -134,6 +138,11 @@ def load_settings(
         llm_model=get("REQCLUSTER_LLM_MODEL", ""),
         local_llm_url=get("REQCLUSTER_LOCAL_LLM_URL", "http://localhost:11434"),
         local_llm_model=get("REQCLUSTER_LOCAL_LLM_MODEL", "qwen3.5:4b"),
+        # local models run on CPU / small GPUs: ~10 tok/s and a 100 s cold load were measured
+        local_llm_timeout_s=get("REQCLUSTER_LOCAL_LLM_TIMEOUT_SECONDS", 120.0, float),
+        local_llm_load_timeout_s=get("REQCLUSTER_LOCAL_LLM_LOAD_TIMEOUT_SECONDS", 600.0, float),
+        local_llm_concurrency=get("REQCLUSTER_LOCAL_LLM_CONCURRENCY", 1, int, lo=1),
+        local_llm_keep_alive=get("REQCLUSTER_LOCAL_LLM_KEEP_ALIVE", "30m"),
         llm_timeout_s=get("REQCLUSTER_LLM_TIMEOUT_SECONDS", 30.0, float),
         llm_max_retries=get("REQCLUSTER_LLM_MAX_RETRIES", 2, int, lo=0, hi=5),
         llm_concurrency=get("REQCLUSTER_LLM_CONCURRENCY", 4, int, lo=1),

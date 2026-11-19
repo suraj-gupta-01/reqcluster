@@ -60,7 +60,12 @@ class LLMGateway:
     def __init__(self, settings: Settings):
         self.s = settings
         self._lock = threading.Lock()
-        self._slots = threading.BoundedSemaphore(max(1, settings.llm_concurrency))
+        # Ollama serves one request at a time by default: extra in-flight requests only queue
+        # into timeouts, so the local provider has its own (default 1) concurrency
+        self._slots = {"openai": threading.BoundedSemaphore(max(1, settings.llm_concurrency)),
+                       "local": threading.BoundedSemaphore(max(1, settings.local_llm_concurrency))}
+        self._loaded = False  # local model loaded (keep_alive keeps it resident)
+        self._load_lock = threading.Lock()  # separate: a load can take minutes
         self._breaker: dict[str, list[float]] = {}  # provider -> [fails, opened_at]
 
     # ---- public
@@ -89,7 +94,9 @@ class LLMGateway:
             provider: ProviderName | None = None) -> list[LLMResult]:
         if not prompts:
             return []
-        with ThreadPoolExecutor(max_workers=max(1, self.s.llm_concurrency)) as ex:
+        workers = self.s.local_llm_concurrency if (provider or self.s.llm_provider) == "local" \
+            else self.s.llm_concurrency
+        with ThreadPoolExecutor(max_workers=max(1, workers)) as ex:
             return list(ex.map(
                 lambda p: self.complete(p, lambda: fallback_for(p), provider), prompts))
 
@@ -129,13 +136,16 @@ class LLMGateway:
                                            "json_schema": {"name": prompt.task, "schema": schema}}
         else:
             url = s.local_llm_url.rstrip("/") + "/api/chat"
+            self._ensure_loaded()
             body = {"model": s.local_llm_model, "messages": messages, "stream": False,
-                    "think": False, "options": {"temperature": 0, "seed": s.seed}}
+                    "think": False, "keep_alive": s.local_llm_keep_alive,
+                    "options": {"temperature": 0, "seed": s.seed}}
             if schema:
                 body["format"] = schema
         req = urllib.request.Request(url, json.dumps(body).encode(), headers, method="POST")
         try:
-            with self._slots, urllib.request.urlopen(req, timeout=s.llm_timeout_s) as resp:
+            timeout = s.local_llm_timeout_s if provider == "local" else s.llm_timeout_s
+            with self._slots[provider], urllib.request.urlopen(req, timeout=timeout) as resp:
                 raw = resp.read(MAX_BODY + 1)
         except urllib.error.HTTPError as e:
             raise _Fail(f"HTTP {e.code}", e.code >= 500 or e.code == 429) from None
@@ -154,6 +164,26 @@ class LLMGateway:
         if not isinstance(content, str):
             raise _Fail("unexpected response envelope", True)
         return content
+
+    def _ensure_loaded(self) -> None:
+        """Load the Ollama model once with its own long timeout (a cold load took 102 s, longer
+        than every retry of a normal request), so requests and the breaker see a warm model."""
+        with self._load_lock:
+            if self._loaded:
+                return
+            s = self.s
+            body = {"model": s.local_llm_model, "keep_alive": s.local_llm_keep_alive}
+            req = urllib.request.Request(s.local_llm_url.rstrip("/") + "/api/generate",
+                                         json.dumps(body).encode(),
+                                         {"Content-Type": "application/json"}, method="POST")
+            try:
+                with urllib.request.urlopen(req, timeout=s.local_llm_load_timeout_s) as resp:
+                    resp.read(MAX_BODY)
+            except urllib.error.HTTPError as e:
+                raise _Fail(f"model load failed: HTTP {e.code}", e.code >= 500) from None
+            except (urllib.error.URLError, TimeoutError, OSError) as e:
+                raise _Fail(f"model load failed: {type(e).__name__}", True) from None
+            self._loaded = True
 
     # ---- breaker
     def _open(self, provider: str) -> bool:
