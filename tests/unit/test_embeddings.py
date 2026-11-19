@@ -74,3 +74,22 @@ def test_build_texts_modes():
     assert build_texts(["a\r\nb"], "base")[0] == ["a\nb"]
     with pytest.raises(ValueError):
         build_texts(["A"], "hybrid", [])
+
+
+def test_sbert_always_loads_float32(monkeypatch):
+    # gte-modernbert's config defaults to fp16: on CPU that ran 3.6 texts/s vs 17.3 in float32
+    import sentence_transformers
+    import torch
+
+    seen = {}
+
+    class ST:
+        def __init__(self, name, **kw):
+            seen.update(kw)
+
+        def get_sentence_embedding_dimension(self):
+            return 8
+
+    monkeypatch.setattr(sentence_transformers, "SentenceTransformer", ST)
+    E.SbertEmbedder("Alibaba-NLP/gte-modernbert-base", "1", "cpu")
+    assert seen["model_kwargs"]["dtype"] is torch.float32 and seen["device"] == "cpu"

@@ -74,3 +74,6 @@ Decision: keep UMAP+HDBSCAN everywhere. Known limit: results are deterministic p
 
 ## K. Accuracy mode (nomic) dropped (2026-11-20)
 `nomic-ai/nomic-embed-text-v1.5` remote code calls `get_extended_attention_mask`, removed in transformers 5 (required by sentence-transformers 6.3). Enabling it would downgrade a core dependency for +0.02-0.03 ARI at ~10x encode cost; the other candidates (bge, gte, e5, mpnet, mxbai, qwen3) were not more accurate than MiniLM. Revisit if nomic ships transformers-5 compatible code.
+
+### K2. Accuracy embedder found: `Alibaba-NLP/gte-modernbert-base` (native, transformers 5)
+`findings/exp/embedder_candidates.py`, 3 seeds, ARI MiniLM -> gte: multidomain .679 -> .742, adversarial .320 -> .358, uav2k .991 -> .992, uav10k .958 -> .998. modernbert-embed (nomic successor) .687/.346/.976 and bge-m3 .657/.251/.976 were not better. Speed (texts/s): CPU float32 MiniLM 150, gte 17 (fp16-on-CPU default was 3.6; the embedder now always loads float32); GPU RTX 2050 MiniLM 3551, gte 863.
