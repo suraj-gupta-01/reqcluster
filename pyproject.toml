@@ -61,6 +61,7 @@ explicit = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]
 markers = ["acceptance: black-box contract tests for the redesign"]
 addopts = "-m 'not acceptance' --import-mode=importlib"
 
