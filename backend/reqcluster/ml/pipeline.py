@@ -4,7 +4,19 @@ import numpy as np
 
 from ..domain import ClusteringParams, ClusteringResult
 from ..errors import Invalid
-from . import cluster, graph, keywords, reduce
+from . import cluster, labels as L, graph, keywords, reduce
+
+
+def _cluster(x10, params: ClusteringParams, mcs: int, seed: int):
+    hdb, probs = cluster.hdbscan(x10, mcs, params.min_samples)
+    if params.clusterer != "ward" or (hdb == -1).all():
+        return hdb, probs
+    # ward draws the groups (ARI uav10k .963 -> .999, multidomain .688 -> .722), HDBSCAN keeps
+    # flagging outliers (adversarial .413 vs .346 for pure ward): findings/exp/hybrid_noise.py
+    w, _ = cluster.ward(x10, seed)
+    noise = hdb == -1
+    labels = L.relabel_contiguous(np.where(noise, -1, w))
+    return labels, np.where(noise, 0.0, 1.0).astype(np.float32)
 
 
 def run(embeddings, texts, params: ClusteringParams, *, seed: int, threads: int = 1,
@@ -29,9 +41,7 @@ def run(embeddings, texts, params: ClusteringParams, *, seed: int, threads: int 
 
     x10, xy = step("reduce", 0.0, lambda: reduce.reduce(X, seed))
     mcs = params.min_cluster_size or cluster.auto_min_cluster_size(n)
-    labels, probs = step("cluster", 0.4, lambda: (
-        cluster.ward(x10, seed) if params.clusterer == "ward"
-        else cluster.hdbscan(x10, mcs, params.min_samples)))
+    labels, probs = step("cluster", 0.4, lambda: _cluster(x10, params, mcs, seed))
     clusters = step("keywords", 0.7, lambda: keywords.label_clusters(texts, labels))
     edges = step("graph", 0.85, lambda: graph.build(
         X, labels, params.sim_threshold, params.top_k, seed, threads))

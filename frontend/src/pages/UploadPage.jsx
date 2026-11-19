@@ -201,8 +201,8 @@ export default function UploadPage({ onSessionCreated }) {
                     <select value={params.clusterer}
                       onChange={e => setParams(p => ({ ...p, clusterer: e.target.value }))}
                       className="input text-sm w-full">
-                      <option value="hdbscan">HDBSCAN (finds outliers)</option>
-                      <option value="ward">Ward (every requirement assigned)</option>
+                      <option value="hdbscan">HDBSCAN (default, most robust)</option>
+                      <option value="ward">Ward + outliers (large mixed-domain sets)</option>
                     </select>
                     {params.clusterer === 'ward' && <p className="text-xs text-gray-600 mt-1">Min cluster size and min samples are ignored.</p>}
                   </div>

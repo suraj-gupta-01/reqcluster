@@ -152,3 +152,23 @@ def test_viz_epochs_drop_only_for_large_n():
 
     assert _viz_epochs(10_000) == _viz_epochs(20_000) == 100
     assert _viz_epochs(35_000) == 50
+
+
+def test_ward_mode_keeps_hdbscan_outliers(monkeypatch):
+    # ward draws the groups, HDBSCAN still flags outliers (adversarial: ARI .413 vs .346 pure ward)
+    from reqcluster.ml import cluster
+
+    X, t = blobs()
+    real = cluster.hdbscan
+
+    def hdb_with_outliers(x10, mcs, ms):
+        labels, probs = real(x10, mcs, ms)
+        labels = labels.copy()
+        labels[[3, 40, 77]] = -1  # rows HDBSCAN calls noise
+        return labels, probs
+
+    monkeypatch.setattr(cluster, "hdbscan", hdb_with_outliers)
+    w = pipeline.run(X, t, P(clusterer="ward"), seed=3)
+    assert set(np.flatnonzero(w.labels == -1)) == {3, 40, 77}  # same outliers as HDBSCAN
+    assert (w.probabilities[w.labels == -1] == 0).all() and (w.probabilities[w.labels >= 0] == 1).all()
+    assert len(w.clusters) >= 8  # groups still come from ward

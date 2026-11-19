@@ -35,8 +35,8 @@ class ClusteringParams(BaseModel):
 
     clusterer: Literal["hdbscan", "ward"] = Field(
         default="hdbscan",
-        description="ward assigns every requirement to a cluster (no noise); "
-                    "min_cluster_size and min_samples are ignored for ward.")
+        description="ward: ward linkage draws the groups (silhouette-chosen k) while HDBSCAN "
+                    "still flags outliers; better on large mixed-domain sets, worse on uav2k.")
     min_cluster_size: int | None = Field(default=None, ge=2)  # None = auto
     min_samples: int = Field(default=3, ge=1)
     sim_threshold: float = Field(default=0.5, ge=0.0, le=1.0)
