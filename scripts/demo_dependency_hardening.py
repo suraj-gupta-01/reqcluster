@@ -12,9 +12,9 @@ than reading canned output:
 
 Usage::
 
-    python tools/demo_dependency_hardening.py            # full walkthrough
-    python tools/demo_dependency_hardening.py --section 3
-    python tools/demo_dependency_hardening.py --quick    # skip the slow scoring
+    python -m scripts.demo_dependency_hardening            # full walkthrough
+    python -m scripts.demo_dependency_hardening --section 3
+    python -m scripts.demo_dependency_hardening --quick    # skip the slow scoring
 
 Everything runs offline. No LLM or network call is made.
 """
@@ -23,29 +23,14 @@ from __future__ import annotations
 
 import argparse
 import csv
-import importlib.util
-import os
-import subprocess
 import sys
-import tempfile
 from pathlib import Path
-from typing import Any, Dict, List, Sequence, Tuple
+from typing import Any
+from collections.abc import Sequence
 
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
-for _path in (str(ROOT), str(ROOT / "backend")):
-    if _path not in sys.path:
-        sys.path.insert(0, _path)
-
-# Load .env if present
-env_file = ROOT / ".env"
-if env_file.exists():
-    for line in env_file.read_text(encoding="utf-8").splitlines():
-        line = line.strip()
-        if line and not line.startswith("#") and "=" in line:
-            k, v = line.split("=", 1)
-            os.environ.setdefault(k.strip(), v.strip())
 
 # Colour only when attached to a terminal, so piping to a file stays readable.
 if sys.stdout.isatty():
@@ -62,8 +47,9 @@ def banner(number: int, title: str) -> None:
     print(f"{BOLD}{CYAN}{'=' * 78}{RESET}\n")
 
 
-def load_csv(path: Path) -> Tuple[List[str], List[str], List[str]]:
-    rows = list(csv.DictReader(open(path, encoding="utf-8-sig")))
+def load_csv(path: Path) -> tuple[list[str], list[str], list[str]]:
+    with open(path, encoding="utf-8-sig") as f:
+        rows = list(csv.DictReader(f))
     return (
         [r["text"] for r in rows],
         [r["id"] for r in rows],
@@ -71,38 +57,17 @@ def load_csv(path: Path) -> Tuple[List[str], List[str], List[str]]:
     )
 
 
-def load_gold(path: Path) -> List[Dict[str, Any]]:
+def load_gold(path: Path) -> list[dict[str, Any]]:
     return [dict(r) for r in csv.DictReader(open(path, encoding="utf-8-sig"))]
 
 
 def labels_from(modules: Sequence[str]) -> np.ndarray:
-    seen: Dict[str, int] = {}
-    out: List[int] = []
+    seen: dict[str, int] = {}
+    out: list[int] = []
     for module in modules:
         seen.setdefault(module, len(seen))
         out.append(seen[module])
     return np.asarray(out, dtype=np.int32)
-
-
-def load_previous_engine():
-    """Import the pre-hardening engine from git history for a fair comparison."""
-    revision = "016d9c3:backend/core/dependency_tree.py"
-    source = subprocess.run(
-        ["git", "show", revision], capture_output=True, text=True, cwd=ROOT
-    ).stdout
-    if not source:
-        return None
-    directory = Path(tempfile.mkdtemp())
-    (directory / "old_dt.py").write_text(
-        source.replace("from .artifact_extractor import", "from core.artifact_extractor import")
-              .replace("from .labeling import", "from core.labeling import"),
-        encoding="utf-8",
-    )
-    spec = importlib.util.spec_from_file_location("old_dt", directory / "old_dt.py")
-    module = importlib.util.module_from_spec(spec)
-    sys.modules["old_dt"] = module
-    spec.loader.exec_module(module)
-    return module.build_dependency_tree
 
 
 # ---------------------------------------------------------------------------
@@ -144,7 +109,7 @@ def _verdict(found: set, expected: set) -> str:
 
 
 def section_problem_and_fix() -> None:
-    from core.artifact_extractor import extract_artifacts, spacy_available
+    from reqcluster.ml.dependency.extract import extract_artifacts, spacy_available
 
     banner(1, "THE PROBLEM — what the regex extractor misses")
     print(f"{DIM}Pass 0 links a requirement that PRODUCES an artifact to one that")
@@ -155,7 +120,7 @@ def section_problem_and_fix() -> None:
     regex = extract_artifacts(texts, ids, use_spacy=False)
 
     regex_pass = 0
-    for (kind, text, expected), art in zip(DEMO_SENTENCES, regex):
+    for (kind, text, expected), art in zip(DEMO_SENTENCES, regex, strict=True):
         found = art.produced | art.consumed
         regex_pass += expected <= found
         print(f"  [{kind}]  {_verdict(found, expected)}")
@@ -174,7 +139,7 @@ def section_problem_and_fix() -> None:
 
     spacy_out = extract_artifacts(texts, ids, use_spacy=True)
     spacy_pass = 0
-    for (kind, text, expected), before, after in zip(DEMO_SENTENCES, regex, spacy_out):
+    for (kind, text, expected), before, after in zip(DEMO_SENTENCES, regex, spacy_out, strict=True):
         before_found = before.produced | before.consumed
         found = after.produced | after.consumed
         spacy_pass += expected <= found
@@ -197,13 +162,13 @@ def section_problem_and_fix() -> None:
 # ---------------------------------------------------------------------------
 
 def section_measure(quick: bool) -> None:
-    from core.dependency_eval import (
+    from eval.dependency_scoring import (
         partition_gold_by_objectivity,
         score_dependency_tree,
     )
-    from core.dependency_tree import build_dependency_tree
-    from core.embeddings import generate_embeddings
-    import core.artifact_extractor as extractor
+    from reqcluster.embeddings import embed
+    from reqcluster.ml.dependency.extract import reset_nlp_cache
+    from reqcluster.ml.dependency.tree import build as build_dependency_tree
 
     banner(3, "THE MEASURE — scored against hand-labeled gold edges")
     print(f"{DIM}Three axes, kept separate on purpose:")
@@ -211,7 +176,6 @@ def section_measure(quick: bool) -> None:
     print("  typed      = did we get the relation label right?")
     print(f"  undirected = did we find the pair but reverse the arrow?{RESET}\n")
 
-    old_engine = load_previous_engine()
     datasets = [
         ("aerospace (neutral)", "data/aerospace_requirements.csv",
          "data/aerospace_requirements_gold_edges.csv"),
@@ -227,20 +191,19 @@ def section_measure(quick: bool) -> None:
     for name, csv_path, gold_path in datasets:
         texts, ids, modules = load_csv(ROOT / csv_path)
         gold = load_gold(ROOT / gold_path)
-        embeddings = generate_embeddings(texts)
+        embeddings = embed(texts)
         labels = labels_from(modules)
 
-        variants: List[Tuple[str, Any, Dict[str, Any]]] = []
-        if old_engine is not None:
-            variants.append(("before (regex, no near-match)", old_engine, {}))
-        variants.append(("after  (spaCy + near-match)", build_dependency_tree, {}))
+        variants: list[tuple[str, dict[str, Any]]] = [
+            ("before (regex, no near-match)",
+             {"disable_spacy": True, "enable_artifact_near_match": False}),
+            ("after  (spaCy + near-match)", {}),
+        ]
 
-        for label, engine, kwargs in variants:
-            if engine is old_engine:
-                extractor.reset_nlp_cache()
-                extractor._nlp, extractor._nlp_loaded = None, True
-            tree = engine(embeddings, texts, ids, labels, **kwargs)
-            extractor.reset_nlp_cache()
+        for label, kwargs in variants:
+            reset_nlp_cache()
+            tree = build_dependency_tree(embeddings, texts, ids, labels, **kwargs).to_dict()
+            reset_nlp_cache()
             index = {n["node_id"]: n["id"] for n in tree["nodes"]}
             d = score_dependency_tree(tree["edges"], gold, index)["detection"]
             colour = GREEN if "after" in label else DIM
@@ -265,9 +228,10 @@ def section_measure(quick: bool) -> None:
 # ---------------------------------------------------------------------------
 
 def section_explain() -> None:
-    from core.dependency_tree import build_dependency_tree
-    from core.embeddings import generate_embeddings
-    from llm_services.edge_explanation import generate_edge_explanation
+    from reqcluster.embeddings import embed
+    from reqcluster.llm.gateway import get_gateway
+    from reqcluster.llm.narrate import explain_edge
+    from reqcluster.ml.dependency.tree import build as build_dependency_tree
 
     banner(4, "EXPLAINABILITY — every edge carries its own evidence")
 
@@ -279,8 +243,8 @@ def section_explain() -> None:
     ]
     ids = ["REQ-001", "REQ-002", "REQ-003", "REQ-004"]
     tree = build_dependency_tree(
-        generate_embeddings(texts), texts, ids, np.zeros(len(texts), dtype=np.int32)
-    )
+        embed(texts), texts, ids, np.zeros(len(texts), dtype=np.int32)
+    ).to_dict()
     by_index = {n["id"]: n for n in tree["nodes"]}
 
     for edge in tree["edges"]:
@@ -295,38 +259,19 @@ def section_explain() -> None:
             if key == "corroboration":
                 continue
             print(f"      {key:<26} {value}")
-        provider = os.getenv("REQCLUSTER_LLM_PROVIDER") or "mock"
-        try:
-            result = generate_edge_explanation(
-                source_text=source["requirement_text"],
-                target_text=target["requirement_text"],
-                relation=edge["relation"],
-                evidence=edge["evidence"],
-                source_id=source["node_id"],
-                target_id=target["node_id"],
-                confidence_tier=edge["confidence_tier"],
-                rationale=edge["rationale"],
-                provider_name=provider,
-            )
-            model_info = os.getenv("REQCLUSTER_LLM_MODEL", "") if provider != "mock" else "offline"
-            label = f"{result['provider']} ({model_info})" if model_info != "offline" else f"{result['provider']}, offline"
-            print(f"    {GREEN}explanation ({label}):{RESET}")
-            print(f"      {result['explanation_text']}\n")
-        except Exception as exc:
-            # Fallback to mock deterministic template if live call fails
-            mock_result = generate_edge_explanation(
-                source_text=source["requirement_text"],
-                target_text=target["requirement_text"],
-                relation=edge["relation"],
-                evidence=edge["evidence"],
-                source_id=source["node_id"],
-                target_id=target["node_id"],
-                confidence_tier=edge["confidence_tier"],
-                rationale=edge["rationale"],
-                provider_name="mock",
-            )
-            print(f"    {YELLOW}explanation (mock, offline - live LLM error: {exc}):{RESET}")
-            print(f"      {mock_result['explanation_text']}\n")
+        result = explain_edge(
+            get_gateway(),
+            source["requirement_text"],
+            target["requirement_text"],
+            edge["relation"],
+            edge["evidence"],
+            source_id=source["node_id"],
+            target_id=target["node_id"],
+            confidence_tier=edge["confidence_tier"],
+            rationale=edge["rationale"],
+        )
+        print(f"    {GREEN}explanation ({result.provider}, {result.source}):{RESET}")
+        print(f"      {result.output}\n")
 
     print(f"{DIM}The evidence panel needs no model call — it is already in the payload,")
     print("so it renders instantly on click. The prose above is the deterministic")
@@ -342,11 +287,14 @@ _SIM_BLOCK_DISPLAY = 512
 
 
 def section_robustness() -> None:
-    from core.dependency_tree import (
-        MAX_PAIRS_PER_ARTIFACT,
+    from reqcluster.ml.dependency.tree import (
         _SIM_BLOCK,
-        build_dependency_tree,
+        MAX_PAIRS_PER_ARTIFACT,
     )
+    from reqcluster.ml.dependency.tree import build as build_tree
+
+    def build_dependency_tree(*args, **kwargs):
+        return build_tree(*args, **kwargs).to_dict()
 
     global _SIM_BLOCK_DISPLAY
     _SIM_BLOCK_DISPLAY = _SIM_BLOCK
@@ -431,7 +379,7 @@ def main() -> int:
     if args.section in (None, 5):
         section_robustness()
 
-    print(f"\n{BOLD}{GREEN}Done.{RESET} Full reports live in eval-results/.\n")
+    print(f"\n{BOLD}{GREEN}Done.{RESET} Full reports are written by eval_dependency_tree.py to var/reports/.\n")
     return 0
 
 

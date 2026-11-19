@@ -1,6 +1,6 @@
 """Benchmark SBERT embedding throughput on the detected accelerator.
 
-Auto-detects the device (via backend/core/device.py), loads the model on it, warms
+Auto-detects the device (via torch.cuda), loads the model on it, warms
 it up, then times encoding N texts and reports throughput. Force a device with
 --device to compare CPU vs GPU on the same machine.
 
@@ -16,15 +16,11 @@ Examples:
 from __future__ import annotations
 
 import argparse
-import os
 import statistics
 import sys
 import time
 
-# Make backend/core importable as a top-level module (no package side effects).
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.insert(0, os.path.join(ROOT, "backend", "core"))
-import device as device_mod  # noqa: E402
+from reqcluster.embeddings import adaptive_batch_size
 
 
 def make_texts(n: int) -> list[str]:
@@ -46,16 +42,17 @@ def main() -> None:
     ap.add_argument("--repeats", type=int, default=3)
     args = ap.parse_args()
 
-    info = device_mod.detect()
-    chosen = info.device if args.device == "auto" else (
-        "cuda:0" if args.device == "cuda" else "cpu")
-    batch = args.batch or (info.embedding_batch_size if chosen.startswith("cuda") else 64)
+    import torch
 
-    if args.device == "cuda" and info.backend != "cuda":
-        print(f"[error] --device cuda requested but CUDA is unavailable. {info.notes}")
+    cuda = torch.cuda.is_available()
+    chosen = ("cuda:0" if cuda else "cpu") if args.device == "auto" else (
+        "cuda:0" if args.device == "cuda" else "cpu")
+    batch = args.batch or adaptive_batch_size(args.n)
+
+    if args.device == "cuda" and not cuda:
+        print("[error] --device cuda requested but CUDA is unavailable.")
         sys.exit(2)
 
-    print(f"device-report: {info.to_dict()}")
     print(f"running on: {chosen} | model={args.model} | n={args.n} | batch={batch} | repeats={args.repeats}")
 
     from sentence_transformers import SentenceTransformer

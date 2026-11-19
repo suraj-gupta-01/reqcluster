@@ -2,14 +2,11 @@
 """Serve the interactive Dependency Engine Hardening Demo UI.
 
 Usage:
-    uv run python tools/serve_demo_ui.py [--port 8080]
+    uv run python scripts/serve_demo_ui.py [--port 8080]
 """
 
 import argparse
-import asyncio
 import json
-import os
-import sys
 import urllib.request
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
@@ -22,32 +19,17 @@ except Exception:
     _nlp_preloaded = None
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
-sys.path.insert(0, str(ROOT / "backend"))
 
-# Load .env
-env_file = ROOT / ".env"
-if env_file.exists():
-    for line in env_file.read_text(encoding="utf-8").splitlines():
-        line = line.strip()
-        if line and not line.startswith("#") and "=" in line:
-            k, v = line.split("=", 1)
-            os.environ.setdefault(k.strip(), v.strip())
+from reqcluster.config import get_settings  # noqa: E402
+from reqcluster.llm.gateway import get_gateway  # noqa: E402
+from reqcluster.llm.narrate import explain_edge  # noqa: E402
+from reqcluster.ml.dependency import extract as extractor  # noqa: E402
+from reqcluster.ml.dependency.extract import extract_artifacts, spacy_available  # noqa: E402
 
-import backend.core.artifact_extractor as extractor
 if _nlp_preloaded is not None:
-    extractor._nlp = _nlp_preloaded
-    extractor._nlp_loaded = True
+    extractor._NLP_CACHE["en_core_web_sm"] = _nlp_preloaded
 
-from backend.core.artifact_extractor import extract_artifacts, spacy_available
-from backend.core.dependency_eval import score_dependency_tree
-from backend.core.dependency_tree import build_dependency_tree
-from backend.core.embeddings import generate_embeddings
-from backend.llm_services.edge_explanation import generate_edge_explanation
-import numpy as np
-
-
-STATIC_DIR = ROOT / "tools" / "demo_ui"
+STATIC_DIR = ROOT / "scripts" / "demo_ui"
 
 
 class DemoAPIHandler(SimpleHTTPRequestHandler):
@@ -91,16 +73,15 @@ class DemoAPIHandler(SimpleHTTPRequestHandler):
             self.send_error(404, "Endpoint not found")
 
     def handle_status(self):
-        provider = os.getenv("REQCLUSTER_LLM_PROVIDER", "mock")
-        base_url = os.getenv("REQCLUSTER_LLM_BASE_URL", "http://localhost:1234/v1")
-        model = os.getenv("REQCLUSTER_LLM_MODEL", "qwen2.5-3b-instruct")
-        
+        cfg = get_settings()
+        provider, base_url, model = cfg.llm_provider, cfg.llm_base_url, cfg.llm_model
+
         # Test LM Studio
         llm_online = False
         try:
             req = urllib.request.Request(f"{base_url}/models")
             with urllib.request.urlopen(req, timeout=1.5) as resp:
-                data = json.loads(resp.read().decode())
+                resp.read()
                 llm_online = True
         except Exception:
             llm_online = False
@@ -152,44 +133,27 @@ class DemoAPIHandler(SimpleHTTPRequestHandler):
         rationale = data.get("rationale", "")
         use_mock = data.get("use_mock", False)
 
-        provider = "mock" if use_mock else (os.getenv("REQCLUSTER_LLM_PROVIDER") or "openai-compatible")
-
-        try:
-            result = generate_edge_explanation(
-                source_text=source_text,
-                target_text=target_text,
-                relation=relation,
-                evidence=evidence,
-                source_id=source_id,
-                target_id=target_id,
-                confidence_tier=confidence_tier,
-                rationale=rationale,
-                provider_name=provider,
-            )
-            resp_payload = {
-                "success": True,
-                "provider": result["provider"],
-                "explanation": result["explanation_text"],
-            }
-        except Exception as exc:
-            # Fallback to mock on error
-            mock_res = generate_edge_explanation(
-                source_text=source_text,
-                target_text=target_text,
-                relation=relation,
-                evidence=evidence,
-                source_id=source_id,
-                target_id=target_id,
-                confidence_tier=confidence_tier,
-                rationale=rationale,
-                provider_name="mock",
-            )
-            resp_payload = {
-                "success": False,
-                "error": str(exc),
-                "fallback_provider": "mock",
-                "explanation": mock_res["explanation_text"],
-            }
+        result = explain_edge(
+            get_gateway(),
+            source_text,
+            target_text,
+            relation,
+            evidence,
+            source_id=source_id,
+            target_id=target_id,
+            confidence_tier=confidence_tier,
+            rationale=rationale,
+            provider="mock" if use_mock else None,
+        )
+        # The gateway falls back to the deterministic template on LLM failure.
+        resp_payload = {
+            "success": result.error is None,
+            "provider": result.provider,
+            "explanation": result.output,
+        }
+        if result.error:
+            resp_payload["error"] = result.error
+            resp_payload["fallback_provider"] = "mock"
 
         self.send_response(200)
         self.send_header("Content-Type", "application/json")
@@ -207,9 +171,9 @@ def main():
     httpd = HTTPServer(server_address, DemoAPIHandler)
 
     print("\n" + "=" * 65)
-    print(f"  ReqCluster Dependency Hardening Demo UI")
+    print("  ReqCluster Dependency Hardening Demo UI")
     print(f"  Running at: http://localhost:{args.port}")
-    print(f"  Local LM Studio bridge: Active")
+    print("  Local LM Studio bridge: Active")
     print("=" * 65 + "\n")
 
     try:

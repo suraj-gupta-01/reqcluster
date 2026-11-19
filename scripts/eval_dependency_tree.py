@@ -4,21 +4,21 @@
 Runs ``build_dependency_tree`` over a requirements CSV and scores the result
 against a hand-labeled gold edge file, reporting precision / recall / F1 broken
 out by relation type and split across three axes (detection, typed, undirected —
-see ``core.dependency_eval``).
+see ``eval.dependency_scoring``).
 
-Mirrors ``tools/stress_test_reqcluster.py``: a standalone script that writes a
-timestamped report, here into ``eval-results/``.
+Mirrors ``scripts/stress_test_reqcluster.py``: a standalone script that writes a
+timestamped report, here into ``var/reports/``.
 
 Usage
 -----
 Score one configuration::
 
-    python tools/eval_dependency_tree.py data/aerospace_requirements.csv
+    python -m scripts.eval_dependency_tree data/aerospace_requirements.csv
 
 Compare the regex baseline against spaCy, with and without artifact near-match
 (this is what Phase 0's baseline and Phase 2's exit criterion are read from)::
 
-    python tools/eval_dependency_tree.py data/aerospace_requirements.csv --compare
+    python -m scripts.eval_dependency_tree data/aerospace_requirements.csv --compare
 
 The gold file defaults to ``<dataset>_gold_edges.csv`` alongside the dataset.
 Both CSV (``source_id,target_id,relation``) and JSON list-of-objects are read.
@@ -30,30 +30,20 @@ import argparse
 import csv
 import json
 import logging
-import sys
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any
+from collections.abc import Sequence
 
 import numpy as np
 
-ROOT = Path(__file__).resolve().parents[1]
-for _path in (str(ROOT), str(ROOT / "backend")):
-    if _path not in sys.path:
-        sys.path.insert(0, _path)
-
-from core.artifact_extractor import (  # noqa: E402
+from reqcluster.embeddings import embed
+from reqcluster.ml.dependency.extract import (
     DEFAULT_NEAR_MATCH_THRESHOLD,
     reset_nlp_cache,
     spacy_available,
 )
-from core.dependency_eval import (  # noqa: E402
-    partition_gold_by_objectivity,
-    score_dependency_tree,
-    summarize_errors,
-)
-from core.dependency_tree import build_dependency_tree  # noqa: E402
-from core.embeddings import generate_embeddings  # noqa: E402
+from reqcluster.ml.dependency.tree import build as build_dependency_tree
 
 logger = logging.getLogger("eval_dependency_tree")
 
@@ -62,16 +52,16 @@ logger = logging.getLogger("eval_dependency_tree")
 # Loading
 # ---------------------------------------------------------------------------
 
-def load_requirements(csv_path: Path) -> Tuple[List[str], List[str], List[str]]:
+def load_requirements(csv_path: Path) -> tuple[list[str], list[str], list[str]]:
     """Load ``(texts, req_ids, modules)`` from a requirements CSV."""
-    with open(csv_path, "r", encoding="utf-8-sig", newline="") as handle:
+    with open(csv_path, encoding="utf-8-sig", newline="") as handle:
         rows = list(csv.DictReader(handle))
     if not rows:
         raise ValueError(f"{csv_path} contains no rows.")
 
     fields = list(rows[0].keys())
 
-    def pick(*candidates: str) -> Optional[str]:
+    def pick(*candidates: str) -> str | None:
         lowered = {f.lower().strip(): f for f in fields}
         for candidate in candidates:
             if candidate in lowered:
@@ -90,18 +80,18 @@ def load_requirements(csv_path: Path) -> Tuple[List[str], List[str], List[str]]:
     return texts, req_ids, modules
 
 
-def load_gold_edges(path: Optional[Path]) -> List[Dict[str, Any]]:
+def load_gold_edges(path: Path | None) -> list[dict[str, Any]]:
     """Load gold edges from CSV (``source_id,target_id,relation``) or JSON."""
     if path is None or not path.exists():
         return []
     if path.suffix.lower() == ".json":
-        with open(path, "r", encoding="utf-8") as handle:
+        with open(path, encoding="utf-8") as handle:
             return json.load(handle)
-    with open(path, "r", encoding="utf-8-sig", newline="") as handle:
+    with open(path, encoding="utf-8-sig", newline="") as handle:
         return [dict(row) for row in csv.DictReader(handle)]
 
 
-def default_gold_path(csv_path: Path) -> Optional[Path]:
+def default_gold_path(csv_path: Path) -> Path | None:
     for suffix in (".csv", ".json"):
         candidate = csv_path.with_name(f"{csv_path.stem}_gold_edges{suffix}")
         if candidate.exists():
@@ -126,8 +116,8 @@ def compute_labels(
     ``pipeline`` runs the real UMAP+HDBSCAN path for an end-to-end number.
     """
     if label_source == "module" and any(modules):
-        seen: Dict[str, int] = {}
-        out: List[int] = []
+        seen: dict[str, int] = {}
+        out: list[int] = []
         for module in modules:
             if module not in seen:
                 seen[module] = len(seen)
@@ -135,10 +125,11 @@ def compute_labels(
         return np.asarray(out, dtype=np.int32)
 
     if label_source == "pipeline":
-        from core.pipeline import run_pipeline  # noqa: PLC0415 — heavy import
+        from reqcluster.domain import ClusteringParams  # noqa: PLC0415 — heavy import
+        from reqcluster.ml.pipeline import run  # noqa: PLC0415
 
-        results = run_pipeline(texts=list(texts), req_ids=list(req_ids))
-        return np.asarray(results["labels"])
+        result = run(embed(list(texts)), list(texts), ClusteringParams(), seed=42)
+        return np.asarray(result.labels)
 
     return np.full(len(texts), -1, dtype=np.int32)
 
@@ -148,24 +139,25 @@ def run_variant(
     req_ids: Sequence[str],
     embeddings: np.ndarray,
     labels: np.ndarray,
-    gold_edges: Sequence[Dict[str, Any]],
-    objective_gold: Sequence[Dict[str, Any]],
+    gold_edges: Sequence[dict[str, Any]],
+    objective_gold: Sequence[dict[str, Any]],
     *,
     backend: str,
     near_match: bool,
     near_match_threshold: float,
     top_k: int,
     sim_threshold: float,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Build and score one engine configuration."""
-    import core.artifact_extractor as extractor
+    # `eval` is not an installed package: it resolves only with the repo root on
+    # sys.path (python -m scripts.eval_dependency_tree), so import at use, not at --help.
+    from eval.dependency_scoring import (  # noqa: PLC0415
+        score_dependency_tree,
+        summarize_errors,
+    )
 
     reset_nlp_cache()
-    if backend == "regex":
-        # Force the fallback path without touching the environment globally.
-        extractor._nlp = None
-        extractor._nlp_loaded = True
-    elif backend == "spacy" and not spacy_available():
+    if backend == "spacy" and not spacy_available():
         raise RuntimeError("spaCy backend requested but unavailable.")
 
     tree = build_dependency_tree(
@@ -177,7 +169,8 @@ def run_variant(
         sim_threshold=sim_threshold,
         enable_artifact_near_match=near_match,
         artifact_near_match_threshold=near_match_threshold,
-    )
+        disable_spacy=backend == "regex",
+    ).to_dict()
     reset_nlp_cache()
 
     id_to_index = {
@@ -209,14 +202,14 @@ def run_variant(
 # Reporting
 # ---------------------------------------------------------------------------
 
-def _variant_name(variant: Dict[str, Any]) -> str:
+def _variant_name(variant: dict[str, Any]) -> str:
     name = variant["backend"]
     if variant["near_match"]:
         name += f" + near-match@{variant['near_match_threshold']:.2f}"
     return name
 
 
-def _metric_row(label: str, block: Dict[str, Any]) -> str:
+def _metric_row(label: str, block: dict[str, Any]) -> str:
     return (
         f"| {label} | {block['precision']:.3f} | {block['recall']:.3f} | "
         f"{block['f1']:.3f} | {block['true_positives']} | "
@@ -227,8 +220,8 @@ def _metric_row(label: str, block: Dict[str, Any]) -> str:
 
 def build_markdown_report(
     dataset: Path,
-    gold_path: Optional[Path],
-    variants: List[Dict[str, Any]],
+    gold_path: Path | None,
+    variants: list[dict[str, Any]],
     label_source: str,
     n_requirements: int,
     n_gold: int,
@@ -236,7 +229,7 @@ def build_markdown_report(
     objective_count = sum(
         1 for v in variants if v.get("objective_metrics")
     ) and (variants[0]["objective_metrics"]["detection"]["support"])
-    lines: List[str] = [
+    lines: list[str] = [
         "# Dependency Engine Evaluation",
         "",
         f"- **Dataset:** `{dataset}` ({n_requirements} requirements)",
@@ -244,7 +237,7 @@ def build_markdown_report(
          f"{objective_count} objectively verifiable)") if gold_path
         else "- **Gold edges:** none (unscored run)",
         f"- **Cluster labels:** {label_source}",
-        f"- **Generated:** {datetime.now(timezone.utc).isoformat(timespec='seconds')}",
+        f"- **Generated:** {datetime.now(UTC).isoformat(timespec='seconds')}",
         f"- **spaCy available:** {spacy_available()}",
         "",
         "## Summary",
@@ -340,7 +333,7 @@ def build_markdown_report(
 # CLI
 # ---------------------------------------------------------------------------
 
-def main(argv: Optional[Sequence[str]] = None) -> int:
+def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="Evaluate the dependency tree engine against gold edges."
     )
@@ -350,8 +343,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         help="Gold edge CSV/JSON (default: <dataset>_gold_edges.csv).",
     )
     parser.add_argument(
-        "--output-dir", type=Path, default=ROOT / "eval-results",
-        help="Where to write the report (default: eval-results/).",
+        "--output-dir", type=Path, default=Path("var/reports"),
+        help="Where to write the report (default: var/reports/).",
     )
     parser.add_argument(
         "--backend", choices=("auto", "spacy", "regex"), default="auto",
@@ -399,6 +392,12 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             gold_path,
         )
 
+    # `eval` is not an installed package: it resolves only with the repo root on
+    # sys.path (python -m scripts.eval_dependency_tree), so import at use, not at --help.
+    from eval.dependency_scoring import (  # noqa: PLC0415
+        partition_gold_by_objectivity,
+    )
+
     objective_gold, judgment_gold = partition_gold_by_objectivity(
         gold_edges, texts, req_ids
     )
@@ -408,7 +407,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         len(texts), args.csv_path, len(gold_edges),
         len(objective_gold), len(judgment_gold),
     )
-    embeddings = generate_embeddings(texts)
+    embeddings = embed(texts)
     labels = compute_labels(texts, req_ids, modules, args.labels)
 
     if args.compare:
@@ -423,7 +422,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     else:
         configurations = [(args.backend, args.near_match)]
 
-    variants: List[Dict[str, Any]] = []
+    variants: list[dict[str, Any]] = []
     for backend, near_match in configurations:
         logger.info("Running variant: backend=%s near_match=%s", backend, near_match)
         variants.append(
@@ -438,7 +437,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         )
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    stamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
     stem = f"dependency_{args.csv_path.stem}_{stamp}"
 
     report_md = build_markdown_report(
@@ -453,7 +452,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             {
                 "dataset": str(args.csv_path),
                 "gold_edges_path": str(gold_path) if gold_path else None,
-                "generated_at": datetime.now(timezone.utc).isoformat(),
+                "generated_at": datetime.now(UTC).isoformat(),
                 "n_requirements": len(texts),
                 "n_gold_edges": len(gold_edges),
                 "label_source": args.labels,
@@ -472,7 +471,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                 {
                     "dataset": str(args.csv_path),
                     "gold_edges_path": str(gold_path) if gold_path else None,
-                    "generated_at": datetime.now(timezone.utc).isoformat(),
+                    "generated_at": datetime.now(UTC).isoformat(),
                     "configuration": _variant_name(variants[0]),
                     "n_requirements": len(texts),
                     "n_gold_edges": len(gold_edges),

@@ -109,10 +109,10 @@ def upload_csv(base_url: str, csv_path: Path) -> dict:
         f"--{boundary}\r\n"
         f'Content-Disposition: form-data; name="file"; filename="{csv_path.name}"\r\n'
         "Content-Type: text/csv\r\n\r\n"
-    ).encode("utf-8") + content + f"\r\n--{boundary}--\r\n".encode("utf-8")
+    ).encode() + content + f"\r\n--{boundary}--\r\n".encode()
     status, parsed = request_json(
         "POST",
-        f"{base_url}/api/upload",
+        f"{base_url}/api/sessions",
         data=body,
         headers={"Content-Type": f"multipart/form-data; boundary={boundary}"},
     )
@@ -142,26 +142,34 @@ def run(args: argparse.Namespace) -> dict:
         start = time.perf_counter()
         upload = upload_csv(base_url, csv_path)
         upload_duration_ms = (time.perf_counter() - start) * 1000.0
-        session_id = int(upload["session_id"])
+        session_id = int(upload["session"]["id"])
 
     cluster_payload = json.dumps({
-        "session_id": session_id,
         "embedding_mode": "base",
-        "similarity_threshold": args.similarity_threshold,
+        "sim_threshold": args.similarity_threshold,
     }).encode("utf-8")
-    cluster_ms, cluster_status, cluster_body = timed_call(
+    start = time.perf_counter()
+    cluster_status, cluster_body = request_json(
         "POST",
-        f"{base_url}/api/cluster",
+        f"{base_url}/api/sessions/{session_id}/cluster",
         data=cluster_payload,
         headers={"Content-Type": "application/json"},
-        timeout=args.cluster_timeout,
+        timeout=30.0,
     )
+    if cluster_status < 400:  # 202: poll the job to completion
+        deadline = time.monotonic() + args.cluster_timeout
+        while cluster_body.get("status") in ("queued", "running") and time.monotonic() < deadline:
+            time.sleep(0.5)
+            cluster_status, cluster_body = request_json(
+                "GET", f"{base_url}/api/jobs/{cluster_body['id']}", timeout=30.0
+            )
+    cluster_ms = (time.perf_counter() - start) * 1000.0
 
     endpoints = [
         f"{base_url}/api/sessions/{session_id}",
-        f"{base_url}/api/requirements?session_id={session_id}",
-        f"{base_url}/api/clusters?session_id={session_id}",
-        f"{base_url}/api/graph?session_id={session_id}",
+        f"{base_url}/api/sessions/{session_id}/requirements",
+        f"{base_url}/api/sessions/{session_id}/clusters",
+        f"{base_url}/api/sessions/{session_id}/graph",
     ]
     latencies: list[float] = []
     failures: list[dict] = []
@@ -230,7 +238,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--similarity-threshold", type=float, default=0.65)
     parser.add_argument("--cluster-timeout", type=float, default=1800.0)
     parser.add_argument("--read-timeout", type=float, default=30.0)
-    parser.add_argument("--output-dir", default="stress-results")
+    parser.add_argument("--output-dir", default="var/reports")
     args = parser.parse_args()
     if args.requirements < 1 or args.requirements > 100000:
         raise SystemExit("--requirements must be in 1..100000")

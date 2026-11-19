@@ -155,8 +155,7 @@ and avoids the Windows torch DLL issue).
 ### Backend
 ```bash
 uv sync
-cd backend
-uv run uvicorn main:app --reload --port 8000
+uv run reqcluster-api            # http://127.0.0.1:8000 (REQCLUSTER_PORT to change)
 ```
 First clustering run downloads the SBERT model (~80 MB) once. With no
 `DATABASE_URL` set, the backend uses a local SQLite file (a startup warning makes
@@ -180,6 +179,7 @@ cd frontend
 npm install
 npm run dev
 ```
+Or run both at once: `uv run python scripts/dev.py` (or `./start.sh`).
 Open **http://localhost:5173** (API docs at **http://localhost:8000/docs**).
 
 ### Docker (Postgres + Redis + backend + frontend)
@@ -196,8 +196,7 @@ docker compose up -d postgres redis
 ### Backend
 ```bash
 uv sync
-cd backend
-uv run uvicorn main:app --reload --port 8000
+uv run reqcluster-api            # http://127.0.0.1:8000 (REQCLUSTER_PORT to change)
 ```
 First clustering run downloads the SBERT model (~80 MB) once. With no
 `DATABASE_URL` set, the backend uses a local SQLite file (a startup warning makes
@@ -221,6 +220,7 @@ cd frontend
 npm install
 npm run dev
 ```
+Or run both at once: `uv run python scripts/dev.py` (or `./start.sh`).
 Open **http://localhost:5173** (API docs at **http://localhost:8000/docs**).
 
 
@@ -237,18 +237,18 @@ Walk through the dependency-engine hardening end to end (offline, ~20 s, every
 number computed live):
 
 ```bash
-python tools/demo_dependency_hardening.py            # all five sections
-python tools/demo_dependency_hardening.py --section 3   # just the scores
+uv run python -m scripts.demo_dependency_hardening            # all five sections
+uv run python -m scripts.demo_dependency_hardening --section 3   # just the scores
 ```
 
 Score the engine against the hand-labeled gold edge sets:
 
 ```bash
-python tools/eval_dependency_tree.py data/aerospace_requirements.csv --compare
-python tools/eval_dependency_tree.py data/dependency_adversarial_set.csv --compare
+uv run python -m scripts.eval_dependency_tree data/aerospace_requirements.csv --compare
+uv run python -m scripts.eval_dependency_tree data/dependency_adversarial_set.csv --compare
 ```
 
-Reports land in `eval-results/`.
+Reports land in `var/reports/`.
 
 ```bash
 # full backend suite (offline, deterministic - no model download, no network)

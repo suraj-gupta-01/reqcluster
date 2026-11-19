@@ -9,7 +9,7 @@ uv sync --extra all --extra cpu     # Python 3.12 env (.venv); use --extra gpu f
 uv run pytest -q                    # backend tests
 uv run ruff check backend tests     # lint
 cd frontend && npm install && npm run build && npm run lint
-./start.sh                          # dev: backend :8000 + frontend :5173
+uv run python scripts/dev.py        # dev: backend :8000 + frontend :5173 (./start.sh wraps it)
 uv run python -m eval --help        # evaluation harness
 ```
 
