@@ -31,3 +31,22 @@ def test_reassign_moves_relabels_and_bumps_edit_seq():
     assert moved.cluster_id == -1 and moved.is_noise
     assert sessions.get(sid).noise_count == sum(i.is_noise for i in items2)
     assert other in sizes
+
+
+def test_reassign_rejects_concurrent_edit():
+    import pytest
+
+    from reqcluster import errors
+
+    sid = make()
+    clustering.start(sid, ClusteringParams(min_cluster_size=5))
+    rid = sessions.requirements(sid)[0][0].id
+    with session_scope() as s:
+        run = s.get(RunRow, s.get(SessionRow, sid).current_run_id)
+        run_id, seen = run.id, run.edit_seq
+    with session_scope() as s:  # another edit lands first
+        reassign(s, s.get(RunRow, run_id), {rid: -1}, action="first")
+    with pytest.raises(errors.Stale), session_scope() as s:
+        run = s.get(RunRow, run_id)
+        run.edit_seq = seen  # this caller loaded the run before the first edit
+        reassign(s, run, {rid: 0}, action="second")

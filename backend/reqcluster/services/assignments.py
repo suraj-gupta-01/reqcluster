@@ -2,7 +2,9 @@
 import numpy as np
 from sqlalchemy import delete, insert, select, update
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.attributes import set_committed_value
 
+from reqcluster.errors import Stale
 from reqcluster.ml import keywords
 from reqcluster.models import AssignmentRow, AuditRow, ClusterRow, RequirementRow, RunRow
 
@@ -15,6 +17,13 @@ def reassign(s: Session, run: RunRow, moves: dict[int, int], *, action: str, act
     relative to all clusters, so every cluster row of the run is recomputed, then edit_seq is
     bumped (pending suggestions generated before this edit become stale) and an audit row written.
     """
+    # Claim the edit first: a conditional bump makes two concurrent edits of the same revision
+    # (two accepts, accept + feedback move) fail cleanly instead of both applying.
+    claimed = s.execute(update(RunRow).where(RunRow.id == run.id, RunRow.edit_seq == run.edit_seq)
+                        .values(edit_seq=RunRow.edit_seq + 1)).rowcount
+    if not claimed:
+        raise Stale("clusters were changed by another edit; refresh and retry")
+    set_committed_value(run, "edit_seq", run.edit_seq + 1)
     by_target: dict[int, list[int]] = {}
     for req_id, cid in moves.items():
         by_target.setdefault(int(cid), []).append(int(req_id))
@@ -36,6 +45,5 @@ def reassign(s: Session, run: RunRow, moves: dict[int, int], *, action: str, act
              "keywords": c.keywords} for c in infos])
     run.n_clusters = len(infos)
     run.noise_count = int((labels == -1).sum())
-    run.edit_seq += 1
     s.add(AuditRow(run_id=run.id, action=action, actor=actor,
                    details={"moves": {str(k): v for k, v in moves.items()}, **(details or {})}))
