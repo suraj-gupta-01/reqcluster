@@ -1,0 +1,63 @@
+import numpy as np
+import pytest
+
+from reqcluster.domain import ClusteringParams
+from reqcluster.errors import Invalid
+from reqcluster.ml import pipeline
+
+
+def two_blobs(n_per=30, d=384, seed=0):
+    rng = np.random.default_rng(seed)
+    C = rng.normal(size=(2, d))
+    X = np.vstack([c + 0.05 * rng.normal(size=(n_per, d)) for c in C])
+    X /= np.linalg.norm(X, axis=1, keepdims=True)
+    texts = [f"alpha brake{i}" for i in range(n_per)] + [f"beta display{i}" for i in range(n_per)]
+    return X.astype(np.float32), texts
+
+
+def P(**kw):
+    return ClusteringParams(**kw)
+
+
+def rand(n, d=384, seed=0):
+    X = np.random.default_rng(seed).normal(size=(n, d)).astype(np.float32)
+    return X / np.linalg.norm(X, axis=1, keepdims=True), [f"req {i}" for i in range(n)]
+
+
+@pytest.mark.parametrize("n", [1, 3, 8])
+def test_small_n_completes(n):
+    X, t = rand(n)
+    r = pipeline.run(X, t, P(), seed=0)
+    assert r.xy.shape == (n, 2) and len(r.labels) == n
+    if n < 5:
+        assert (r.labels == -1).all()
+        assert "fewer than 5 requirements: clustering skipped" in r.warnings
+
+
+def test_big_min_cluster_size_all_noise():
+    X, t = rand(12)
+    r = pipeline.run(X, t, P(min_cluster_size=60), seed=0)
+    assert (r.labels == -1).all()
+    assert "all requirements were classified as noise" in r.warnings
+
+
+def test_two_blobs_and_determinism():
+    X, t = two_blobs()
+    steps = []
+    a = pipeline.run(X, t, P(min_cluster_size=5), seed=7, progress=lambda f, s: steps.append(s))
+    b = pipeline.run(X, t, P(min_cluster_size=5), seed=7)
+    assert len(a.clusters) == 2
+    assert np.array_equal(a.labels, b.labels) and np.array_equal(a.x10, b.x10)
+    assert steps[:4] == ["reduce", "cluster", "keywords", "graph"]
+    assert set(a.durations) == {"reduce", "cluster", "keywords", "graph"}
+    assert all(c.cluster_id != -1 for c in a.clusters)
+    for i, j, _s in a.edges:
+        assert i < j and a.labels[i] != -1 and a.labels[j] != -1
+
+
+def test_length_mismatch():
+    X, t = rand(10)
+    with pytest.raises(Invalid):
+        pipeline.run(X, t[:5], P(), seed=0)
+    with pytest.raises(Invalid):
+        pipeline.run(X[:0], [], P(), seed=0)
