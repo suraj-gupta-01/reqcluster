@@ -1,3 +1,4 @@
+from sqlalchemy import select
 import pytest
 
 from reqcluster import errors
@@ -20,3 +21,21 @@ def test_uncertainty_and_quality():
     assert [p.revision for p in q] == [1, 2] and q[0].kind == "cluster"
     with pytest.raises(errors.NotFound):
         active_learning.quality(999)
+
+
+def test_moved_requirement_has_prob_one_and_leaves_queue():
+    from reqcluster.services import feedback
+    from tests.unit.test_svc_feedback import two_clusters
+    sid = make(30)
+    clustering.start(sid, ClusteringParams())
+    before = active_learning.uncertainty(sid, 30)
+    pick = next(t for t in before if t.uncertainty > 0)
+    _, _, dst = two_clusters(sid)
+    feedback.submit(sid, pick.requirement_id, dst)
+    after = active_learning.uncertainty(sid, 30)
+    assert pick.requirement_id not in {t.requirement_id for t in after}
+    from reqcluster.db import session_scope
+    from reqcluster.models import AssignmentRow
+    with session_scope() as s:
+        a = s.scalars(select(AssignmentRow).where(AssignmentRow.requirement_id == pick.requirement_id)).one()
+        assert a.probability == 1.0

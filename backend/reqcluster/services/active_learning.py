@@ -7,7 +7,7 @@ from sqlalchemy import select
 from reqcluster.db import session_scope
 from reqcluster.errors import NotFound
 from reqcluster.ml import active
-from reqcluster.models import RequirementRow, RunRow, SessionRow
+from reqcluster.models import AssignmentRow, FeedbackRow, RequirementRow, RunRow, SessionRow
 from reqcluster.services.feedback import _ordered, load_npz
 from reqcluster.services.sessions import _current_run
 
@@ -36,10 +36,16 @@ def uncertainty(sid: int, top_k: int = 20) -> list[UncertainItem]:
         run = _current_run(s, sid)
         pks, _, labels = _ordered(s, run.id, sid)
         rid = run.id
+        probs = dict(s.execute(select(AssignmentRow.requirement_id, AssignmentRow.probability)
+                               .where(AssignmentRow.run_id == rid)).all())
+        reviewed = set(s.scalars(select(FeedbackRow.requirement_id).where(
+            FeedbackRow.run_id == rid, FeedbackRow.status != "rejected")))
         info = {r.id: (r.req_id, r.text) for r in s.scalars(
             select(RequirementRow).where(RequirementRow.session_id == sid))}
     npz = load_npz(rid)
-    top = active.uncertainty(npz["probabilities"], npz["x10"], labels, top_k)
+    p = [1.0 if probs[pk] is None else probs[pk] for pk in pks]
+    ranked = active.uncertainty(p, npz["x10"], labels, len(pks))
+    top = [t for t in ranked if pks[t["index"]] not in reviewed][:max(0, int(top_k))]
     return [UncertainItem(requirement_id=pks[t["index"]], req_id=info[pks[t["index"]]][0],
                           text=info[pks[t["index"]]][1], cluster_id=t["cluster_id"],
                           is_noise=t["is_noise"], membership_prob=t["membership_prob"],

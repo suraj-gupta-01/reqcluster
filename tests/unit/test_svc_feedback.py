@@ -112,3 +112,27 @@ def test_confidence():
     assert feedback.confidence("about brake pedal", "brake pedal", ["brake"]) > 0.5
     assert feedback.confidence("zzz", "brake", ["pedal"]) == 0.5
 
+
+
+def test_review_requires_idle_and_pending(monkeypatch):
+    sid = clustered()
+    rid, src, dst = two_clusters(sid)
+    fid = feedback.submit(sid, rid, dst).feedback_id
+    runner = feedback.get_runner()
+    real = runner.latest
+    monkeypatch.setattr(runner, "latest", lambda *a, **k: type("J", (), {"status": "running", "kind": "recluster"})())
+    with pytest.raises(errors.Conflict):
+        feedback.review(sid, fid, False)
+    monkeypatch.setattr(runner, "latest", real)
+    feedback.review(sid, fid, False)
+    with pytest.raises(errors.Conflict):
+        feedback.review(sid, fid, True)
+    assert labels(sid)[rid] == src
+
+
+def test_recluster_reports_moved():
+    sid = clustered()
+    rid, _, dst = two_clusters(sid)
+    feedback.submit(sid, rid, dst)
+    job = feedback.recluster(sid)
+    assert job.result["moved"] >= 0

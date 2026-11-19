@@ -31,6 +31,10 @@ from reqcluster.services.clustering import ClusteringSummary, persist_run
 from reqcluster.services.sessions import _current_run
 
 
+class ReclusterSummary(ClusteringSummary):
+    moved: int
+
+
 class SubmitOut(BaseModel):
     feedback_id: int | None  # None for a no-op move into the current cluster
     requirement_id: int
@@ -156,11 +160,14 @@ def _out(s, fb: FeedbackRow, req_id: str) -> FeedbackOut:
 
 
 def review(sid: int, feedback_id: int, approve: bool) -> FeedbackOut:
+    _check_idle(sid)
     with session_scope() as s:
         run = _current_run(s, sid)
         fb = s.get(FeedbackRow, feedback_id)
         if fb is None or fb.run_id != run.id:
             raise NotFound(f"feedback {feedback_id} not found")
+        if fb.status != "pending":
+            raise Conflict(f"feedback {feedback_id} is already {fb.status}")
         fb.status = "approved" if approve else "rejected"
         fb.reviewed_at = datetime.now(UTC)
         if not approve:
@@ -223,7 +230,7 @@ def recluster(sid: int) -> Job:
     return get_runner().submit("recluster", sid, lambda ctx: _recluster(ctx, sid), {})
 
 
-def _recluster(ctx: JobContext, sid: int) -> ClusteringSummary:
+def _recluster(ctx: JobContext, sid: int) -> ReclusterSummary:
     with session_scope() as s:
         run = _current_run(s, sid)
         rid, params = run.id, dict(run.params)
@@ -232,8 +239,11 @@ def _recluster(ctx: JobContext, sid: int) -> ClusteringSummary:
                                 ConstraintRow.feedback_id)
                          .where(ConstraintRow.run_id == rid)).all()
         g = s.scalar(select(GraphRow.edges).where(GraphRow.run_id == rid))
+        db_probs = dict(s.execute(select(AssignmentRow.requirement_id, AssignmentRow.probability)
+                                  .where(AssignmentRow.run_id == rid)).all())
     npz = load_npz(rid)
-    x10, xy, probs = npz["x10"], npz["xy"], npz["probabilities"]
+    x10, xy = npz["x10"], npz["xy"]
+    probs = np.array([1.0 if db_probs[pk] is None else db_probs[pk] for pk in pks])
     pos = {pk: i for i, pk in enumerate(pks)}
     must = [(pos[a], pos[b]) for a, b, k, _ in cons if k == "must"]
     cannot = [(pos[a], pos[b]) for a, b, k, _ in cons if k == "cannot"]
@@ -242,13 +252,13 @@ def _recluster(ctx: JobContext, sid: int) -> ClusteringSummary:
     X = embeddings.embed(texts)
     ctx.check_cancel()
     ctx.progress(0.6, "constraints")
-    new, _ = C.apply(X, labels, must, cannot)
+    new, moved = C.apply(X, labels, must, cannot)
     seed = params.get("seed")
     m = metrics.compute(new, x10, seed if seed is not None else get_settings().seed)
     clusters = keywords.label_clusters(texts, new)
     ctx.check_cancel()
     new_rid, revision = persist_run(sid, "constrained", params, pks, new, probs, x10, xy,
                                     clusters, g or [], m, [], {}, constraints=cons)
-    return ClusteringSummary(run_id=new_rid, revision=revision, n_clusters=len(clusters),
+    return ReclusterSummary(run_id=new_rid, revision=revision, n_clusters=len(clusters),
                              noise_count=int((new == -1).sum()), warnings=[], durations={},
-                             metrics=m)
+                             metrics=m, moved=int(moved))
