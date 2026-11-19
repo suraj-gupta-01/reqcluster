@@ -1,7 +1,7 @@
 """6. Error behaviour."""
 import pytest
 
-from .conftest import make_csv, topic_texts
+from .conftest import topic_texts
 from .helpers import assert_json_error
 
 pytestmark = pytest.mark.acceptance

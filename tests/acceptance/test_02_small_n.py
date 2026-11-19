@@ -1,7 +1,7 @@
 """2. Small-N and degenerate clustering."""
 import pytest
 
-from .conftest import TOPICS, topic_texts
+from .conftest import topic_texts
 from .helpers import assert_coherent
 
 pytestmark = pytest.mark.acceptance

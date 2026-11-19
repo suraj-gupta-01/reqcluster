@@ -28,13 +28,12 @@ fast = ["hnswlib>=0.8.0"]                 # ANN similarity graph; falls back to 
 nlp = ["spacy>=3.8"]                      # dependency-parse artifacts; falls back to regex
 charts = ["matplotlib>=3.9"]              # charts inside the PDF report
 postgres = ["psycopg2-binary>=2.9.10"]    # DATABASE_URL=postgresql://...
-redis = ["redis>=5.2"]                    # REDIS_URL embedding cache
 eval = ["pyyaml>=6.0"]
 # Pick exactly one torch build (same on Windows and Linux):
 #   uv sync --extra cpu      or      uv sync --extra gpu   (CUDA 12.6, NVIDIA driver >= 560)
 cpu = ["torch>=2.4"]
 gpu = ["torch>=2.4"]
-all = ["reqcluster[fast,nlp,charts,postgres,redis,eval]"]
+all = ["reqcluster[fast,nlp,charts,postgres,eval]"]
 
 [dependency-groups]
 dev = ["pytest>=8.3", "pytest-cov>=6.0", "ruff>=0.8", "pyyaml>=6.0"]

@@ -8,19 +8,8 @@ Adapter conventions
   * cluster()/enrich() block until the work is finished (job polling hidden)
   * error_message(body) -> str|None, normalising the error envelope
 """
-import sys
-from pathlib import Path
-
-_ROOT = Path(__file__).resolve().parents[2]
-# shortcut: legacy import path, removed at cutover S26
-for _p in (str(_ROOT / "backend"), str(_ROOT)):
-    if _p not in sys.path:
-        sys.path.insert(0, _p)
-
-import hashlib
 import io
 import json
-import os
 import threading
 import time
 import zlib
@@ -28,10 +17,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import numpy as np
 import pytest
-from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 
 # ---------------------------------------------------------------- test data
 
@@ -141,39 +127,10 @@ class FakeEmbedder:
             progress_callback(len(texts), len(texts))
         return out
 
-    def domain(self, texts, enriched_texts=None, config=None, progress_callback=None, **k):
-        merged = [e if (enriched_texts and e) else t for t, e in zip(
-            texts, enriched_texts or [None] * len(texts))]
-        return self(merged, progress_callback=progress_callback)
-
-
-# Modules that imported the embedding functions by name. Update for a new design.
-EMBED_TARGETS = [
-    "core.embeddings.generate_embeddings",
-    "core.pipeline.generate_embeddings",
-    "core.feedback_bridge.generate_embeddings",
-    "services.refinement_service.generate_embeddings",
-    "services.active_learning_service.generate_embeddings",
-    "services.dependency_service.generate_embeddings",
-]
-DOMAIN_TARGETS = [
-    "core.domain_embeddings.generate_domain_embeddings",
-    "core.pipeline.generate_domain_embeddings",
-]
-
 
 @pytest.fixture
 def embedder(monkeypatch):
-    import importlib
-
     e = FakeEmbedder()
-    for target, fn in [(t, e) for t in EMBED_TARGETS] + [(t, e.domain) for t in DOMAIN_TARGETS]:
-        mod, attr = target.rsplit(".", 1)
-        try:
-            monkeypatch.setattr(importlib.import_module(mod), attr, fn, raising=False)
-        except ImportError:
-            pass
-    monkeypatch.delenv("REDIS_URL", raising=False)
 
     class _FakeEmbedderAdapter:
         name, revision, is_mock, dim = "fake", "1", True, 384
@@ -630,42 +587,7 @@ class NewApi(LegacyApi):
 
 
 @pytest.fixture
-def legacy_api(tmp_path, embedder, monkeypatch):
-    """Legacy backend. Swap point: build the app under test against a temp DB, return an adapter."""
-    from api import routes
-    from models.database import Base, get_db
-
-    engine = create_engine(f"sqlite:///{tmp_path / 'acc.db'}",
-                           connect_args={"check_same_thread": False})
-    Session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-    Base.metadata.create_all(bind=engine)
-
-    def override_get_db():
-        db = Session()
-        try:
-            yield db
-        finally:
-            db.close()
-
-    app = FastAPI()
-    app.include_router(routes.router, prefix="/api")
-    app.dependency_overrides[get_db] = override_get_db
-    app.dependency_overrides[routes.get_db] = override_get_db
-    monkeypatch.setattr(routes, "SessionLocal", Session)
-    routes.pipeline_progress.clear()
-    routes.progress_cache.clear()
-    monkeypatch.setenv("REQCLUSTER_LLM_PROVIDER", "mock")
-    with TestClient(app, raise_server_exceptions=False) as client:
-        yield LegacyApi(client)
-    engine.dispose()
-
-
-@pytest.fixture
 def api(request):
-    """Swap point: REQCLUSTER_ACCEPTANCE_API = new (default) | legacy."""
-    if os.environ.get("REQCLUSTER_ACCEPTANCE_API", "new") == "legacy":
-        yield request.getfixturevalue("legacy_api")
-        return
     tmp_path = request.getfixturevalue("tmp_path")
     request.getfixturevalue("embedder")
     mp = request.getfixturevalue("monkeypatch")

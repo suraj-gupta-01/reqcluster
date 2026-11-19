@@ -127,11 +127,12 @@ def test_csv_export_neutralises_formula_injection(api):
         "A normal requirement shall remain untouched here",
     ]
     ids = ["=cmd|' /C calc'!A0", "+7", "-9x", "@id", "OK-1"]
-    import csv, io
+    import csv
+    import io
     buf = io.StringIO()
     w = csv.writer(buf)
     w.writerow(["id", "text"])
-    for i, t in zip(ids, texts):
+    for i, t in zip(ids, texts, strict=False):
         w.writerow([i, t])
     st, b = api.upload("inj.csv", buf.getvalue().encode())
     assert st == 200, b

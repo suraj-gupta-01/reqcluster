@@ -1,7 +1,6 @@
 """4. Re-cluster invalidates derived artefacts."""
 import pytest
 
-from .conftest import DEP_TEXTS
 
 pytestmark = pytest.mark.acceptance
 

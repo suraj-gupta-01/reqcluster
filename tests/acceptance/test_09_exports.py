@@ -67,7 +67,8 @@ def test_jama_export_is_valid_json(api, nasty_session):
 
 
 def test_csv_export_roundtrips_special_text(api, nasty_session):
-    import csv, io
+    import csv
+    import io
     st, content, _ = api.export(nasty_session, "csv")
     assert st == 200
     rows = list(csv.reader(io.StringIO(content.decode("utf-8-sig"))))
