@@ -277,8 +277,3 @@ def representatives(embeddings: np.ndarray, texts: list[str], labels: np.ndarray
                 int(idx[j]), round(float(sims[j]), 6), r + 1)
             for r, j in enumerate(top)]
     return out
-
-
-def summary_texts(embeddings, texts, labels, req_ids, top_n: int = 3) -> dict[int, str]:
-    return {cid: "; ".join(r.text.strip() for r in reps if r.text.strip())
-            for cid, reps in representatives(embeddings, texts, labels, req_ids, top_n).items()}

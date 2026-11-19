@@ -12,7 +12,7 @@ from reqcluster.config import get_settings
 from reqcluster.db import session_scope
 from reqcluster.domain import Job
 from reqcluster.errors import Conflict, NotFound
-from reqcluster.export.bundle import _guard
+from reqcluster.export.bundle import csv_guard
 from reqcluster.jobs import JobContext, get_runner
 from reqcluster.ml import constraints as C
 from reqcluster.ml import keywords, metrics
@@ -232,7 +232,7 @@ def export(sid: int, fmt: str) -> tuple[bytes, str]:
     w.writerow(cols)
     for i in items:
         d = i.model_dump()
-        w.writerow([_guard(d[c]) for c in cols])
+        w.writerow([csv_guard(d[c]) for c in cols])
     return buf.getvalue().encode("utf-8"), "text/csv"
 
 

@@ -3,6 +3,7 @@ import pytest
 
 from reqcluster import embeddings as E
 from reqcluster.errors import Unavailable
+from reqcluster.texts import build_texts
 
 
 class Fake:
@@ -63,13 +64,13 @@ def test_sbert_load_failure(monkeypatch):
 
 
 def test_build_texts_modes():
-    assert E.build_texts(["A", "B"], "base", ["x", None]) == (["A", "B"], [])
-    assert E.build_texts(["A"], "enriched", ["Ctx"]) == (["Ctx"], [])
-    texts, warns = E.build_texts(["A"], "enriched", [None])
+    assert build_texts(["A", "B"], "base", ["x", None]) == (["A", "B"], [])
+    assert build_texts(["A"], "enriched", ["Ctx"]) == (["Ctx"], [])
+    texts, warns = build_texts(["A"], "enriched", [None])
     assert texts == ["A"] and warns
-    assert E.build_texts(["O"], "hybrid", ["C"])[0] == [
+    assert build_texts(["O"], "hybrid", ["C"])[0] == [
         "Original Requirement:\nO\n\nDomain-Aware Context:\nC"
     ]
-    assert E.build_texts(["a\r\nb"], "base")[0] == ["a\nb"]
+    assert build_texts(["a\r\nb"], "base")[0] == ["a\nb"]
     with pytest.raises(ValueError):
-        E.build_texts(["A"], "hybrid", [])
+        build_texts(["A"], "hybrid", [])

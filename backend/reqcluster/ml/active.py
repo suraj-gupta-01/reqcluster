@@ -1,4 +1,4 @@
-"""Active-learning helpers: uncertainty ranking and clustering quality. Pure."""
+"""Active-learning helpers: uncertainty ranking by centroid margin. Pure."""
 
 from __future__ import annotations
 
@@ -7,12 +7,16 @@ from typing import Any
 import numpy as np
 
 from reqcluster.errors import Invalid
-from reqcluster.ml import labels as L
-from reqcluster.ml import sampling
+
+
+def _unit(a):
+    a = np.asarray(a, dtype=float)
+    return a / np.maximum(np.linalg.norm(a, axis=-1, keepdims=True), 1e-12)
 
 
 def uncertainty(probs, X, labels, top_k: int = 20) -> list[dict[str, Any]]:
-    """Most uncertain first: noise is 1.0, clustered points 1 - membership prob."""
+    """Most uncertain first. Margin = cos(own centroid) - best other cosine (noise: nearest
+    centroid counts as own, so margin is the gap between the two nearest). Small margin ranks first."""
     labels = np.asarray(labels)
     n = len(labels)
     if len(X) != n:
@@ -20,30 +24,27 @@ def uncertainty(probs, X, labels, top_k: int = 20) -> list[dict[str, Any]]:
     p = np.ones(n) if probs is None else np.asarray(probs, dtype=float)
     if len(p) != n:
         raise Invalid("probs and labels length differ")
-    scored = []
-    for i in range(n):
-        noise = bool(labels[i] == -1)
-        scored.append(
-            {
-                "index": i,
-                "cluster_id": int(labels[i]),
-                "is_noise": noise,
-                "membership_prob": float(p[i]),
-                "uncertainty": 1.0 if noise else round(max(0.0, 1.0 - float(p[i])), 4),
-            }
-        )
-    scored.sort(key=lambda d: (d["uncertainty"], d["is_noise"]), reverse=True)
+    ids = sorted(int(c) for c in set(labels.tolist()) if c != -1)
+    margin = np.zeros(n)
+    if ids and n:
+        Xu = _unit(X)
+        C = _unit(np.stack([Xu[labels == c].mean(axis=0) for c in ids]))
+        sims = Xu @ C.T
+        col = {c: j for j, c in enumerate(ids)}
+        for i in range(n):
+            s = sims[i]
+            own = s.argmax() if labels[i] == -1 else col[int(labels[i])]
+            rest = np.delete(s, own)
+            margin[i] = s[own] - (rest.max() if len(rest) else -1.0)
+    scored = [
+        {
+            "index": i,
+            "cluster_id": int(labels[i]),
+            "is_noise": bool(labels[i] == -1),
+            "membership_prob": float(p[i]),
+            "uncertainty": round(float(np.clip((1.0 - margin[i]) / 2.0, 0.0, 1.0)), 4),
+        }
+        for i in range(n)
+    ]
+    scored.sort(key=lambda d: d["uncertainty"], reverse=True)
     return scored[: max(0, int(top_k))]
-
-
-def quality(X10, labels, seed: int = 0) -> dict[str, Any]:
-    labels = np.asarray(labels)
-    n = len(labels)
-    noise = int((labels == -1).sum())
-    sil = sampling.silhouette(X10, labels, seed=seed)
-    return {
-        "n_clusters": len(L.cluster_ids(labels)),
-        "noise_count": noise,
-        "noise_rate": round(noise / n, 4) if n else 0.0,
-        "silhouette": None if sil is None else round(sil, 4),
-    }

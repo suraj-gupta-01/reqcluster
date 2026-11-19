@@ -244,12 +244,6 @@ class AblationReport:
     warnings: list[str]
 
 
-def build_embedding_texts(originals: Sequence[str], enriched: Sequence[str | None] | None,
-                          mode: str) -> list[str]:
-    """Deterministic model input per mode; missing enrichment falls back to the original."""
-    return build_texts(originals, mode, enriched)[0]
-
-
 def _empty_variant(n: int, shape: list[int], durations: dict[str, float]) -> VariantReport:
     return VariantReport(embedding_shape=shape, noise_count=n, noise_rate=1.0 if n else 0.0,
                          duration_ms=durations)
@@ -325,8 +319,8 @@ def run_ablation(
             d["embedding"] = elapsed_ms(t)
         return X, res
 
-    base_X, base_res = variant("base", build_embedding_texts(texts, None, "base"), bd)
-    target_X, tgt_res = variant(mode, build_embedding_texts(texts, enriched, mode), td)
+    base_X, base_res = variant("base", build_texts(texts, "base", None)[0], bd)
+    target_X, tgt_res = variant(mode, build_texts(texts, mode, enriched)[0], td)
 
     base_r, base_l, base_10 = _run_variant("base", texts, base_X, params, seed, threads, bd,
                                            warnings, base_res)

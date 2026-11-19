@@ -26,14 +26,16 @@ def reduce(X: np.ndarray, seed: int) -> tuple[np.ndarray, np.ndarray]:
 
 
 # Exact cosine kNN via blocked BLAS matmul (multi-threaded) instead of UMAP's single-threaded
-# numba pairwise pass (<4096 rows) or NN-descent; above this size NN-descent is cheaper.
-EXACT_KNN_MAX = 20_000
+# numba pairwise pass (<4096 rows) / NN-descent. Faster up to the 50k upload cap: 35k rows
+# reduce 220 s -> 118 s (kNN itself 18.6 s). Blocks shrink above 20k to cap the matmul buffer.
+EXACT_KNN_MAX = 50_000
 
 
 def _exact_knn(X: np.ndarray, nn: int):
     from . import sampling
 
-    idx, sim = sampling.knn(X, nn - 1)  # excludes self
+    block = 2048 if len(X) <= 20_000 else 1024  # 1024 x 50k float32 = 205 MB per block
+    idx, sim = sampling.knn(X, nn - 1, block=block)  # excludes self
     n = len(X)
     knn_i = np.hstack([np.arange(n)[:, None], idx]).astype(np.int32)
     knn_d = np.hstack([np.zeros((n, 1), np.float32), np.clip(1.0 - sim, 0.0, 2.0)])

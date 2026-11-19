@@ -108,7 +108,7 @@ def xml_id(prefix: str, value, seen: set) -> str:
     return out
 
 
-def _guard(v) -> str:
+def csv_guard(v) -> str:
     v = "" if v is None else str(v)
     if v and v[0] in "=+-@\t\r" and not _NUMBER.fullmatch(v):
         return "'" + v
@@ -119,10 +119,10 @@ def to_csv(b: ExportBundle) -> bytes:
     buf = io.StringIO(newline="")
     w = csv.writer(buf)
     keys = list(dict.fromkeys(k for r in b.requirements for k in r.attributes))
-    w.writerow([_guard(h) for h in ("req_id", "text", "cluster_id", "cluster_label", "is_noise",
+    w.writerow([csv_guard(h) for h in ("req_id", "text", "cluster_id", "cluster_label", "is_noise",
                                     "ordinal", *keys)])  # keys come from the uploaded header
     for r in b.requirements:
-        w.writerow([_guard(x) for x in (r.req_id, r.text, "" if r.cluster_id is None else r.cluster_id,
+        w.writerow([csv_guard(x) for x in (r.req_id, r.text, "" if r.cluster_id is None else r.cluster_id,
                                          r.cluster_label, r.is_noise, r.ordinal,
                                          *(r.attributes.get(k, "") for k in keys))])
     return buf.getvalue().encode("utf-8-sig")

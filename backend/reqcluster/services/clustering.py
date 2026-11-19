@@ -71,10 +71,6 @@ def next_cluster_id(s, run: RunRow) -> int:
     return run.max_cluster_id
 
 
-def _scaled(ctx: JobContext, lo: float, hi: float, step: str):
-    return lambda frac, name=step: ctx.progress(lo + (hi - lo) * frac, name)
-
-
 def _run(ctx: JobContext, sid: int, params: ClusteringParams) -> ClusteringSummary:
     settings = get_settings()
     with session_scope() as s:

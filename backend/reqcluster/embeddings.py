@@ -11,7 +11,6 @@ import numpy as np
 from reqcluster.config import get_settings
 from reqcluster.errors import Unavailable
 from reqcluster.store import EmbeddingStore, key
-from reqcluster.texts import build_texts  # noqa: F401
 
 log = logging.getLogger(__name__)
 
