@@ -35,7 +35,7 @@ gpu = ["torch>=2.4"]
 all = ["reqcluster[fast,nlp,charts,postgres,eval]"]
 
 [dependency-groups]
-dev = ["pytest>=8.3", "pytest-cov>=6.0", "ruff>=0.8", "pyyaml>=6.0"]
+dev = ["pytest>=8.3", "pytest-cov>=6.0", "ruff>=0.8", "pyyaml>=6.0", "hypothesis>=6.100"]
 
 [tool.uv]
 default-groups = ["dev"]
@@ -60,8 +60,12 @@ explicit = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
-markers = ["acceptance: black-box contract tests for the redesign"]
-addopts = "-m 'not acceptance' --import-mode=importlib"
+markers = [
+  "acceptance: black-box contract tests for the redesign",
+  "hardening: production-hardening fuzz/stress/failure suite (opt in: -m hardening)",
+  "slow: long-running tests",
+]
+addopts = "-m 'not acceptance and not hardening' --import-mode=importlib"
 
 [tool.ruff]
 line-length = 100
