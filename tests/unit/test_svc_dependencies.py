@@ -49,7 +49,7 @@ def test_tree_tied_to_run_and_explain_cache():
     assert forced.cached is False
     assert dependencies.explain(sid, req).cached is True
     with pytest.raises(errors.NotFound):
-        dependencies.explain(sid, dependencies.ExplainRequest(source=-1, target=-2))
+        dependencies.explain(sid, dependencies.ExplainRequest(source=999999, target=999998))
     b = build_bundle(sid)
     assert len(b.edges) == len(res["edges"]) and b.edges[0][0].startswith("R")
     clustering.start(sid, ClusteringParams(seed=7))

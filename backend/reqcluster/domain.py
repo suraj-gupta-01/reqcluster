@@ -1,7 +1,7 @@
 """Domain types shared across layers."""
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Literal
+from typing import Annotated, Literal
 
 import numpy as np
 from pydantic import BaseModel, ConfigDict, Field
@@ -13,6 +13,10 @@ JobStatus = Literal["queued", "running", "succeeded", "failed", "cancelled"]
 SessionStatus = Literal["uploaded", "queued", "running", "done", "error"]
 
 NOISE: int = -1
+
+# SQLite integers are signed 64-bit; reject anything larger at the HTTP boundary (422, not 500).
+DbId = Annotated[int, Field(ge=1, le=2**63 - 1)]
+ClusterRef = Annotated[int, Field(ge=-1, le=2**63 - 1)]  # -1 = noise
 
 
 class RequirementIn(BaseModel):

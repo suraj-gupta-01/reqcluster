@@ -1,6 +1,8 @@
 """Active learning: most uncertain requirements and per-run quality history."""
 from datetime import datetime
 
+import numpy as np
+
 from pydantic import BaseModel
 from sqlalchemy import select
 
@@ -8,7 +10,7 @@ from reqcluster.db import session_scope
 from reqcluster.errors import NotFound
 from reqcluster.ml import active
 from reqcluster.models import AssignmentRow, FeedbackRow, RequirementRow, RunRow, SessionRow
-from reqcluster.services.feedback import _ordered, load_npz
+from reqcluster.services.feedback import _ordered
 from reqcluster.services.sessions import _current_run
 
 
@@ -42,9 +44,8 @@ def uncertainty(sid: int, top_k: int = 20) -> list[UncertainItem]:
             FeedbackRow.run_id == rid, FeedbackRow.status != "rejected")))
         info = {r.id: (r.req_id, r.text) for r in s.scalars(
             select(RequirementRow).where(RequirementRow.session_id == sid))}
-    npz = load_npz(rid)
     p = [1.0 if probs[pk] is None else probs[pk] for pk in pks]
-    ranked = active.uncertainty(p, npz["x10"], labels, len(pks))
+    ranked = active.uncertainty(p, np.empty((len(pks), 0)), labels, len(pks))
     top = [t for t in ranked if pks[t["index"]] not in reviewed][:max(0, int(top_k))]
     return [UncertainItem(requirement_id=pks[t["index"]], req_id=info[pks[t["index"]]][0],
                           text=info[pks[t["index"]]][1], cluster_id=t["cluster_id"],

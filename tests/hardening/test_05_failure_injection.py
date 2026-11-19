@@ -78,7 +78,9 @@ def test_db_locked_during_result_write(app_async, times):
 
 def _final_write_lock(c, times):
     from reqcluster import db
-    sid = upload(c, topic_texts(5))
+    # 16 rows: below the UMAP threshold (20), so a cold process does not spend the wait window
+    # compiling numba; this test is about lock recovery, not JIT time.
+    sid = upload(c, topic_texts(4))
     hook, _ = _lock_errors(lambda s: s.lstrip().upper().startswith("UPDATE JOBS") and "finished_at" in s, times)
     event.listen(db.get_engine(), "before_cursor_execute", hook)
     jid = c.post(f"/api/sessions/{sid}/cluster", json={}).json()["id"]
@@ -97,8 +99,6 @@ def test_db_locked_briefly_on_final_status_write(app_async):
     assert status in TERMINAL, f"job stuck in {status!r}"
 
 
-@pytest.mark.xfail(strict=True, reason="FLAW: jobs.py:99-109 _finish gives up after 5 attempts (~2 s) and leaves the "
-                   "job 'running' forever; the session is then blocked (409) until a restart sweep")
 def test_db_locked_long_on_final_status_write(app_async):
     sid, status = _final_write_lock(app_async[0], 10**6)
     assert status in TERMINAL, f"job stuck in {status!r}"

@@ -56,8 +56,6 @@ def check(c, data, name):
     c.delete(f"/api/sessions/{sid}")
 
 
-@pytest.mark.xfail(strict=True, reason="FLAW: ingest.py:140-146 dedups on full text then truncates to "
-                   "10k, so two texts sharing a 10k prefix both survive as identical stored texts")
 def test_truncation_collision_keeps_texts_unique(fuzz_app):
     c, _ = fuzz_app
     body = ("text\n" + "A" * 10_100 + " tail one\n" + "A" * 10_100 + " tail two\n").encode()

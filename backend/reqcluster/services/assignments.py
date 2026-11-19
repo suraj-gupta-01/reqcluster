@@ -45,5 +45,11 @@ def reassign(s: Session, run: RunRow, moves: dict[int, int], *, action: str, act
              "keywords": c.keywords} for c in infos])
     run.n_clusters = len(infos)
     run.noise_count = int((labels == -1).sum())
+    n = len(labels)
+    rate = run.noise_count / n if n else 0.0
+    # silhouette is stale after a manual edit; the other counts are recomputed
+    run.metrics = {**(run.metrics or {}), "n": n, "n_clusters": run.n_clusters,
+                   "noise_count": run.noise_count, "noise_rate": rate, "coverage": 1 - rate,
+                   "silhouette": None}
     s.add(AuditRow(run_id=run.id, action=action, actor=actor,
                    details={"moves": {str(k): v for k, v in moves.items()}, **(details or {})}))

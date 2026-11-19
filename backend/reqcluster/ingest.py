@@ -137,14 +137,14 @@ def parse(data: bytes, filename: str, max_rows: int = 50000) -> IngestResult:
         if len(text) < MIN_TEXT_CHARS:
             stats["empty_dropped"] += 1
             continue
+        truncated = len(text) > MAX_TEXT_CHARS
+        text = text[:MAX_TEXT_CHARS]  # before the dedupe key: stored texts must be unique
         key = text.casefold()
         if key in seen_text:
             stats["duplicates"] += 1
             continue
         seen_text.add(key)
-        if len(text) > MAX_TEXT_CHARS:
-            text = text[:MAX_TEXT_CHARS]
-            stats["truncated"] += 1
+        stats["truncated"] += truncated
         if len(out) >= max_rows:
             raise TooLarge(f"Too many requirements; the limit is {max_rows} rows.")
         ordinal = len(out) + 1

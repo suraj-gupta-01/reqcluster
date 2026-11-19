@@ -36,7 +36,7 @@ def test_dependencies(client):
     assert first.status_code == 200 and first.json()["cached"] is False
     assert client.post(url, json={"source": e["source"], "target": e["target"]}).json()["cached"]
     assert client.post(url, json={"source": 1, "target": 2, "bogus": 1}).status_code == 422
-    assert client.post(url, json={"source": -1, "target": -2}).status_code == 404
+    assert client.post(url, json={"source": 999999, "target": 999998}).status_code == 404
     assert client.post(f"/api/sessions/{sid}/dependencies",
                        json={"provider": "x"}).status_code == 422
     assert client.post("/api/sessions/999/dependencies", json={}).status_code == 404

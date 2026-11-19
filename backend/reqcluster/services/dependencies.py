@@ -8,7 +8,7 @@ from sqlalchemy import delete, select
 from reqcluster import embeddings
 from reqcluster.config import get_settings
 from reqcluster.db import session_scope
-from reqcluster.domain import Job, ProviderName
+from reqcluster.domain import DbId, Job, ProviderName
 from reqcluster.errors import Conflict, NotFound
 from reqcluster.jobs import JobContext, get_runner
 from reqcluster.llm.gateway import get_gateway
@@ -31,8 +31,8 @@ class DependencyRequest(BaseModel):
 
 class ExplainRequest(BaseModel):
     model_config = {"extra": "forbid"}
-    source: int
-    target: int
+    source: DbId
+    target: DbId
     provider: ProviderName | None = None
     force: bool = False
 

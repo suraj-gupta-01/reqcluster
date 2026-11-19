@@ -86,7 +86,10 @@ class JobRunner:
                 s.flush()
                 job_id = row.id
         except IntegrityError as exc:
-            if "uq_jobs_one_active" in str(exc) or "UNIQUE" in str(exc).upper():
+            msg = str(exc).upper()
+            if "FOREIGN KEY" in msg:  # session deleted concurrently
+                raise NotFound(f"session {session_id} not found") from exc
+            if "uq_jobs_one_active" in str(exc) or "UNIQUE" in msg:
                 raise Conflict("another job is already queued or running for this session") from exc
             raise
         if self._cpu is None:
@@ -97,16 +100,20 @@ class JobRunner:
         return job
 
     def _finish(self, job_id: str, **values: Any) -> None:
-        for attempt in range(1, 6):
+        # A finished job must not stay 'running' (it would block the session): retry until the
+        # write lands. Process death is covered by the startup sweep.
+        delay, attempt = 0.2, 0
+        while True:
+            attempt += 1
             try:
                 with session_scope() as s:
-                    s.execute(update(JobRow).where(JobRow.id == job_id).values(finished_at=_now(), **values))
+                    s.execute(update(JobRow).where(JobRow.id == job_id, JobRow.status == "running")
+                              .values(finished_at=_now(), **values))
                 return
             except Exception:
                 log.warning("job %s: status write failed (attempt %d)", job_id, attempt, exc_info=True)
-                if attempt < 5:
-                    time.sleep(0.2 * attempt)
-        log.error("job %s: giving up writing final status; row may stay running", job_id)
+                time.sleep(delay)
+                delay = min(delay * 2, 1.0)
 
     def _execute(self, job_id: str, fn: Callable[[JobContext], Any]) -> None:
         with session_scope() as s:

@@ -36,8 +36,6 @@ def worker(app, sids, seed, n_ops, codes, errors):
     def call(method, url, **kw):
         r = c.request(method, url, **kw)
         codes[(method, url.split("?")[0].rstrip("0123456789").rstrip("/") or url, r.status_code)] += 1
-        if r.status_code == 500 and method == "POST" and url.startswith(f"/api/sessions/{sids[-1]}/"):
-            return r  # delete-vs-start race, pinned deterministically by test_submit_for_deleted_session
         if r.status_code not in OK_CODES:
             errors.append((method, url, r.status_code, r.text[:200]))
         return r
@@ -150,10 +148,6 @@ def test_concurrent_mixed_operations(tmp_path, workers):
         print(workers, dict(Counter(j[3] for j in jobs)), sum(v for k, v in codes.items() if k[2] == 409), "x409")
 
 
-@pytest.mark.xfail(strict=True, reason="FLAW: jobs.py:88-92 submit() only translates the uq_jobs_one_active "
-                   "IntegrityError; a session deleted between the service's existence check and the job "
-                   "insert surfaces as FOREIGN KEY IntegrityError -> 500 (seen as POST /suggestions 500 "
-                   "under concurrent DELETE). Fix: map FK violations to NotFound in submit()")
 def test_submit_for_deleted_session_is_not_found(app):
     from reqcluster.errors import NotFound
     from reqcluster.jobs import get_runner

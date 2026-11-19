@@ -2,7 +2,7 @@ import pytest
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 
-from .conftest import is_envelope, run_cluster, running_app, topic_texts, upload
+from .conftest import is_envelope, running_app, topic_texts, upload
 
 pytestmark = pytest.mark.hardening
 S = settings(max_examples=40, derandomize=True, deadline=None, suppress_health_check=list(HealthCheck))
@@ -92,10 +92,6 @@ def test_malformed_json_and_huge_body(world):
 HUGE = ["99999999999999999999", "9223372036854775808", "-9223372036854775809"]
 
 
-@pytest.mark.xfail(strict=True, reason="FLAW: path/query/body ints are unbounded (api/*.py `sid: int`, "
-                   "FeedbackIn.requirement_id/new_cluster_id, cluster_id query); ints > 2**63 reach "
-                   "sqlite and raise OverflowError -> 500. Fix: Annotated[int, Path(ge=1, le=2**63-1)] "
-                   "alias used everywhere, and bound the body/query ints")
 def test_out_of_range_integers_are_client_errors(world):
     c, sid, job = world
     paths = c.app.openapi()["paths"]

@@ -25,6 +25,9 @@ def test_reassign_moves_relabels_and_bumps_edit_seq():
         sizes = {c.cluster_id: c.size for c in s.scalars(
             select(ClusterRow).where(ClusterRow.run_id == run.id))}
         assert -1 not in sizes and run.n_clusters == len(sizes)
+        m = run.metrics
+        assert m["n_clusters"] == run.n_clusters and m["noise_count"] == run.noise_count
+        assert m["coverage"] == 1 - m["noise_rate"] and m["silhouette"] is None
         assert s.scalars(select(AuditRow).where(AuditRow.run_id == run.id)).one().actor == "me"
     items2, _ = sessions.requirements(sid, page_size=1000)
     moved = next(i for i in items2 if i.id == first.id)

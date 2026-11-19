@@ -1,4 +1,5 @@
 """Clustering job: embed, reduce, cluster, then persist one revision in a single transaction."""
+import contextlib
 import json
 import os
 import tempfile
@@ -42,11 +43,12 @@ class ClusteringSummary(BaseModel):
 
 
 def start(sid: int, params: ClusteringParams) -> Job:
-    with session_scope() as s:
-        if s.get(SessionRow, sid) is None:
-            raise NotFound(f"session {sid} not found")
     if params.embedding_mode != "base":
-        enrichment.texts_for_mode(sid, params.embedding_mode)  # fail fast (409) if incomplete
+        enrichment.texts_for_mode(sid, params.embedding_mode)  # 404 / fail fast (409) if incomplete
+    else:
+        with session_scope() as s:
+            if s.get(SessionRow, sid) is None:
+                raise NotFound(f"session {sid} not found")
     return get_runner().submit("cluster", sid, lambda ctx: _run(ctx, sid, params),
                                params.model_dump())
 
@@ -180,5 +182,6 @@ def _write_npz(run_id: int, **arrays) -> None:
             np.savez_compressed(f, **arrays)
         os.replace(tmp, d / f"{run_id}.npz")
     except BaseException:
-        os.unlink(tmp)
+        with contextlib.suppress(OSError):  # Windows may refuse while the file is open
+            os.unlink(tmp)
         raise
