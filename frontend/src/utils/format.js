@@ -19,3 +19,10 @@ export const getErrorMessage = (error, fallback = 'Request failed.') => {
 
 // A 409 means the data changed underneath the user (stale suggestion, concurrent edit, running job).
 export const isConflict = (error) => error?.status === 409
+
+// For optional data that is legitimately absent until a job ran (409): use the fallback;
+// any other error still reaches useApi's `error` so the page can show it.
+export const conflictAs = (fallback) => (error) => {
+  if (isConflict(error)) return fallback
+  throw error
+}

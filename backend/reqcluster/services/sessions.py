@@ -5,7 +5,7 @@ from datetime import datetime
 
 import numpy as np
 from pydantic import BaseModel
-from sqlalchemy import delete as sa_delete, func, insert, select
+from sqlalchemy import delete as sa_delete, func, insert, select, or_
 
 from reqcluster.config import get_settings
 from reqcluster.db import session_scope
@@ -302,7 +302,8 @@ def requirements(sid: int, cluster_id: int | None = None, noise: bool | None = N
             q = q.where(AssignmentRow.cluster_id == -1 if noise else AssignmentRow.cluster_id != -1)
         if search:
             pat = f"%{_like_escape(search)}%"
-            q = q.where(RequirementRow.text.ilike(pat, escape="\\"))
+            q = q.where(or_(RequirementRow.text.ilike(pat, escape="\\"),
+                            RequirementRow.req_id.ilike(pat, escape="\\")))
         total = s.scalar(select(func.count()).select_from(q.subquery()))
         col = _SORT.get(sort, RequirementRow.ordinal)
         col = col.desc() if dir == "desc" else col.asc()

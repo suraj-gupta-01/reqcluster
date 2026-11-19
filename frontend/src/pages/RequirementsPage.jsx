@@ -4,7 +4,7 @@ import { Loader, Search, ChevronRight, ArrowUpDown, Sparkles, AlertTriangle, Che
 import { getRequirements, getClusters, getEnrichment, submitFeedback } from '../api/endpoints.js'
 import { useApi } from '../hooks/useApi.js'
 import { useSession } from '../state/SessionContext.jsx'
-import { getErrorMessage, isConflict } from '../utils/format.js'
+import { getErrorMessage, isConflict, conflictAs } from '../utils/format.js'
 import { getClusterColor } from '../utils/colors.js'
 import MoveToClusterModal from '../components/MoveToClusterModal.jsx'
 
@@ -50,8 +50,8 @@ export default function RequirementsPage() {
 
   const { data: clustersData, reload: reloadClusters } = useApi(
     (o) => (sessionId ? getClusters(sessionId, o) : Promise.resolve([])), [sessionId])
-  const { data: enrichmentRows } = useApi(
-    (o) => (sessionId ? getEnrichment(sessionId, o).catch(() => []) : Promise.resolve([])), [sessionId])
+  const { data: enrichmentRows, error: enrichError } = useApi(
+    (o) => (sessionId ? getEnrichment(sessionId, o).catch(conflictAs([])) : Promise.resolve([])), [sessionId])
   const clusters = clustersData ?? EMPTY
 
   const query = { page, page_size: PAGE_SIZE, sort: sortField, dir: sortDir }
@@ -129,6 +129,9 @@ export default function RequirementsPage() {
 
   return (
     <div className="p-6 flex flex-col gap-4 h-screen">
+      {enrichError && (
+        <div className="text-xs text-red-400">{getErrorMessage(enrichError, 'Failed to load enrichment data.')}</div>
+      )}
       {/* Header */}
       <div className="flex-shrink-0">
         <h1 className="text-xl font-bold text-white">Requirements</h1>

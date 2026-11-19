@@ -17,7 +17,7 @@ import { startEnrichment, getEnrichment, getEnrichmentSummary, getMetrics, start
 import { useApi } from '../hooks/useApi.js'
 import { useJob } from '../hooks/useJob.js'
 import { useSession } from '../state/SessionContext.jsx'
-import { getErrorMessage } from '../utils/format.js'
+import { getErrorMessage, conflictAs } from '../utils/format.js'
 import AblationReportPanel from '../components/AblationReportPanel.jsx'
 import DomainVocabularyTags from '../components/DomainVocabularyTags.jsx'
 import EmbeddingComparisonPanel from '../components/EmbeddingComparisonPanel.jsx'
@@ -58,9 +58,9 @@ function Enrichment({ sessionId, reloadSession }) {
 
   const resultsQ = useApi((o) => getEnrichment(sessionId, o), [sessionId])
   // 409 until enrichment exists: show nothing
-  const summaryQ = useApi((o) => getEnrichmentSummary(sessionId, o).catch(() => null), [sessionId, resultsQ.data])
+  const summaryQ = useApi((o) => getEnrichmentSummary(sessionId, o).catch(conflictAs(null)), [sessionId, resultsQ.data])
   const qualityReport = summaryQ.data?.quality_report
-  const metricsQ = useApi((o) => getMetrics(sessionId, o).catch(() => null), [sessionId, clusterResult])
+  const metricsQ = useApi((o) => getMetrics(sessionId, o).catch(conflictAs(null)), [sessionId, clusterResult])
   const results = useMemo(() => resultsQ.data || [], [resultsQ.data])
 
   const enrichJob = useJob(enrichJobId, (j) => {
@@ -179,6 +179,8 @@ function Enrichment({ sessionId, reloadSession }) {
 
       {error && <Alert text={error} tone="red" />}
       {resultsQ.error && <Alert text={getErrorMessage(resultsQ.error, 'Failed to load enrichment results.')} tone="red" />}
+      {summaryQ.error && <Alert text={getErrorMessage(summaryQ.error, 'Failed to load the enrichment summary.')} tone="red" />}
+      {metricsQ.error && <Alert text={getErrorMessage(metricsQ.error, 'Failed to load clustering metrics.')} tone="red" />}
       {notice && <Alert text={notice} tone="emerald" icon={CheckCircle} />}
 
       <div className="grid lg:grid-cols-[380px_minmax(0,1fr)] gap-6">

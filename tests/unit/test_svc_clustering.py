@@ -87,3 +87,20 @@ def test_hybrid_mode_needs_enrichment_then_embeds_enriched_text(monkeypatch):
     assert seen and all("Domain-Aware Context" in t for t in seen)
     labels = [c.label for c in sessions.clusters(sid)]
     assert not any("Domain-Aware" in lab or "Original" in lab for lab in labels)
+
+
+def test_failed_persist_leaves_no_orphan_npz(monkeypatch):
+    from reqcluster.config import get_settings
+
+    sid = make()
+    clustering.start(sid, ClusteringParams())  # run 1 succeeds
+    before = sorted(p.name for p in get_settings().runs_dir.glob("*.npz"))
+    monkeypatch.setattr(clustering, "KEEP_RUNS", "boom")  # prune step fails after the npz write
+    assert clustering.start(sid, ClusteringParams(seed=7)).status == "failed"
+    assert sorted(p.name for p in get_settings().runs_dir.glob("*.npz")) == before
+
+
+def test_search_matches_req_id_too():
+    sid = make(texts=["The pump shall start", "The valve shall close", "The fan shall spin"])
+    items, total = sessions.requirements(sid, search="R1")
+    assert total == 1 and items[0].req_id == "R1"

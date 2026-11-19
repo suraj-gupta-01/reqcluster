@@ -3,7 +3,7 @@ import { Layers, Hash, AlertTriangle, ChevronRight, Loader, Tag, Sparkles, Wrenc
 import { getClusters, getEnrichmentSummary, getSuggestions } from '../api/endpoints.js'
 import { useApi } from '../hooks/useApi.js'
 import { useSession } from '../state/SessionContext.jsx'
-import { getErrorMessage } from '../utils/format.js'
+import { getErrorMessage, conflictAs } from '../utils/format.js'
 import SessionGate from '../components/SessionGate.jsx'
 import { getClusterColor } from '../utils/colors.js'
 
@@ -80,7 +80,7 @@ export default function OverviewPage() {
 function Overview() {
   const { sessionId, session } = useSession()
   const clustersQ = useApi((o) => getClusters(sessionId, o), [sessionId])
-  const enrichQ = useApi((o) => getEnrichmentSummary(sessionId, o).catch(() => null), [sessionId])
+  const enrichQ = useApi((o) => getEnrichmentSummary(sessionId, o).catch(conflictAs(null)), [sessionId])
   const sugsQ = useApi((o) => getSuggestions(sessionId, undefined, o), [sessionId])
   const clusters = clustersQ.data || []
   const refinementSuggestions = sugsQ.data || []
@@ -111,6 +111,9 @@ function Overview() {
 
   return (
     <div className="p-8">
+      {enrichQ.error && (
+        <div className="mb-4 text-xs text-red-400">{getErrorMessage(enrichQ.error, 'Failed to load enrichment status.')}</div>
+      )}
       {/* Header */}
       <div className="mb-6">
         <div className="text-xs text-gray-500 mb-1 font-mono">{session?.name}</div>

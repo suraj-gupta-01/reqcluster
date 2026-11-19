@@ -134,36 +134,42 @@ def persist_run(sid, kind, params, req_ids, labels, probabilities, x10, xy, clus
     """Write one new revision (rows + npz + carried constraints), make it current, prune old
     runs. One transaction, so a crash can never leave a constrained run without its constraints."""
     n_noise = int((labels == -1).sum())
-    with session_scope() as s:
-        revision = (s.scalar(select(func.max(RunRow.revision)).where(RunRow.session_id == sid))
-                    or 0) + 1
-        run = RunRow(session_id=sid, revision=revision, kind=kind, params=params,
-                     metrics=metrics, warnings=warnings, durations=durations,
-                     reports=reports or {}, n_clusters=len(clusters), noise_count=n_noise,
-                     max_cluster_id=int(labels.max()) if len(labels) else -1)
-        s.add(run)
-        s.flush()
-        rid = run.id
-        s.execute(insert(AssignmentRow), [
-            {"run_id": rid, "requirement_id": req_ids[i], "cluster_id": int(labels[i]),
-             "probability": float(probabilities[i]), "x": float(xy[i, 0]), "y": float(xy[i, 1])}
-            for i in range(len(req_ids))
-        ])
-        if clusters:
-            s.execute(insert(ClusterRow), [
-                {"run_id": rid, "cluster_id": c.cluster_id, "size": c.size, "label": c.label,
-                 "keywords": c.keywords} for c in clusters])
-        if constraints:
-            s.execute(insert(ConstraintRow), [
-                {"run_id": rid, "a_id": a, "b_id": b, "kind": k, "feedback_id": f}
-                for a, b, k, f in constraints])
-        _write_npz(rid, x10=x10, xy=xy, probabilities=probabilities,
-                   edges=np.asarray(edges, dtype=np.float64).reshape(-1, 3))
-        s.get(SessionRow, sid).current_run_id = rid
-        old = list(s.scalars(select(RunRow.id).where(RunRow.session_id == sid)
-                             .order_by(RunRow.revision.desc()).offset(KEEP_RUNS)))
-        if old:
-            s.execute(delete(RunRow).where(RunRow.id.in_(old)))
+    rid = None
+    try:
+        with session_scope() as s:
+            revision = (s.scalar(select(func.max(RunRow.revision)).where(RunRow.session_id == sid))
+                        or 0) + 1
+            run = RunRow(session_id=sid, revision=revision, kind=kind, params=params,
+                         metrics=metrics, warnings=warnings, durations=durations,
+                         reports=reports or {}, n_clusters=len(clusters), noise_count=n_noise,
+                         max_cluster_id=int(labels.max()) if len(labels) else -1)
+            s.add(run)
+            s.flush()
+            rid = run.id
+            s.execute(insert(AssignmentRow), [
+                {"run_id": rid, "requirement_id": req_ids[i], "cluster_id": int(labels[i]),
+                 "probability": float(probabilities[i]), "x": float(xy[i, 0]), "y": float(xy[i, 1])}
+                for i in range(len(req_ids))
+            ])
+            if clusters:
+                s.execute(insert(ClusterRow), [
+                    {"run_id": rid, "cluster_id": c.cluster_id, "size": c.size, "label": c.label,
+                     "keywords": c.keywords} for c in clusters])
+            if constraints:
+                s.execute(insert(ConstraintRow), [
+                    {"run_id": rid, "a_id": a, "b_id": b, "kind": k, "feedback_id": f}
+                    for a, b, k, f in constraints])
+            _write_npz(rid, x10=x10, xy=xy, probabilities=probabilities,
+                       edges=np.asarray(edges, dtype=np.float64).reshape(-1, 3))
+            s.get(SessionRow, sid).current_run_id = rid
+            old = list(s.scalars(select(RunRow.id).where(RunRow.session_id == sid)
+                                 .order_by(RunRow.revision.desc()).offset(KEEP_RUNS)))
+            if old:
+                s.execute(delete(RunRow).where(RunRow.id.in_(old)))
+    except BaseException:
+        if rid is not None:  # the npz was written for a run the DB rolled back
+            unlink_runs([rid])
+        raise
     unlink_runs(old)
     return rid, revision
 
