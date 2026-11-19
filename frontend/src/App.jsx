@@ -1,23 +1,24 @@
-import { useState, useEffect } from 'react'
-import { BrowserRouter, Routes, Route, NavLink, useLocation } from 'react-router-dom'
+import { useState, useEffect, lazy, Suspense } from 'react'
+import { BrowserRouter, Routes, Route, NavLink, Navigate, Outlet, useLocation, useParams } from 'react-router-dom'
 import {
   Upload, LayoutDashboard, Network, Database, Activity, Sparkles,
   Wrench, Inbox, Workflow, Brain, Download,
 } from 'lucide-react'
 
-import { getSession, getFeedbackQueue } from './utils/api.js'
-import UploadPage from './pages/UploadPage.jsx'
-import OverviewPage from './pages/OverviewPage.jsx'
-import ScatterPage from './pages/ScatterPage.jsx'
-import ClusterDetailPage from './pages/ClusterDetailPage.jsx'
-import GraphPage from './pages/GraphPage.jsx'
-import RequirementsPage from './pages/RequirementsPage.jsx'
-import EnrichmentPage from './pages/EnrichmentPage.jsx'
-import RefinementPage from './pages/RefinementPage.jsx'
-import ReviewQueuePage from './pages/ReviewQueuePage.jsx'
-import DependencyTreePage from './pages/DependencyTreePage.jsx'
-import ActiveLearningPage from './pages/ActiveLearningPage.jsx'
-import ExportPage from './pages/ExportPage.jsx'
+import { getSession, getFeedback } from './api/endpoints.js'
+import { SessionProvider } from './state/SessionContext.jsx'
+const UploadPage = lazy(() => import('./pages/UploadPage.jsx'))
+const OverviewPage = lazy(() => import('./pages/OverviewPage.jsx'))
+const ScatterPage = lazy(() => import('./pages/ScatterPage.jsx'))
+const ClusterDetailPage = lazy(() => import('./pages/ClusterDetailPage.jsx'))
+const GraphPage = lazy(() => import('./pages/GraphPage.jsx'))
+const RequirementsPage = lazy(() => import('./pages/RequirementsPage.jsx'))
+const EnrichmentPage = lazy(() => import('./pages/EnrichmentPage.jsx'))
+const RefinementPage = lazy(() => import('./pages/RefinementPage.jsx'))
+const ReviewQueuePage = lazy(() => import('./pages/ReviewQueuePage.jsx'))
+const DependencyTreePage = lazy(() => import('./pages/DependencyTreePage.jsx'))
+const ActiveLearningPage = lazy(() => import('./pages/ActiveLearningPage.jsx'))
+const ExportPage = lazy(() => import('./pages/ExportPage.jsx'))
 
 /* Custom node-graph mark - represents clustering, not a generic boxed logo. */
 function GlyphMark() {
@@ -39,6 +40,8 @@ function GlyphMark() {
 function StatusChip({ status }) {
   const map = {
     done: { label: 'Ready', dot: '#2fbcaa', ring: 'rgba(47,188,170,0.4)', pulse: false },
+    running: { label: 'Processing', dot: '#f4b860', ring: 'rgba(244,184,96,0.4)', pulse: true },
+    queued: { label: 'Queued', dot: '#f4b860', ring: 'rgba(244,184,96,0.4)', pulse: true },
     processing: { label: 'Processing', dot: '#f4b860', ring: 'rgba(244,184,96,0.4)', pulse: true },
     uploaded: { label: 'Uploaded', dot: '#f4b860', ring: 'rgba(244,184,96,0.4)', pulse: false },
   }
@@ -183,20 +186,21 @@ function ToolLink({ item }) {
 
 function PipelineRail({ sessionId, sessionStatus, pendingCount }) {
   const done = sessionStatus === 'done'
+  const sp = (p) => `/s/${sessionId}/${p}`
   const pipeline = [
     { to: '/', icon: Upload, label: 'Upload', exact: true, disabled: false },
-    { to: `/overview/${sessionId}`, icon: LayoutDashboard, label: 'Overview', disabled: !sessionId },
-    { to: `/scatter/${sessionId}`, icon: Activity, label: 'Scatter Plot', disabled: !sessionId || !done },
-    { to: `/graph/${sessionId}`, icon: Network, label: 'Similarity Graph', disabled: !sessionId || !done },
-    { to: '/dependencies', icon: Workflow, label: 'Dependency Tree', disabled: false },
-    { to: `/requirements/${sessionId}`, icon: Database, label: 'Requirements', disabled: !sessionId || !done },
+    { to: sp('overview'), icon: LayoutDashboard, label: 'Overview', disabled: !sessionId },
+    { to: sp('scatter'), icon: Activity, label: 'Scatter Plot', disabled: !sessionId || !done },
+    { to: sp('graph'), icon: Network, label: 'Similarity Graph', disabled: !sessionId || !done },
+    { to: sp('dependencies'), icon: Workflow, label: 'Dependency Tree', disabled: !sessionId },
+    { to: sp('requirements'), icon: Database, label: 'Requirements', disabled: !sessionId || !done },
   ]
   const intelligence = [
-    { to: '/enrichment', icon: Sparkles, label: 'Enrichment', disabled: false },
-    { to: '/refinement', icon: Wrench, label: 'Refinement', disabled: false },
-    { to: `/review-queue/${sessionId}`, icon: Inbox, label: 'Review Queue', disabled: !sessionId || !done, badge: pendingCount },
-    { to: '/active-learning', icon: Brain, label: 'Active Learning', disabled: false },
-    { to: '/export', icon: Download, label: 'Export', disabled: false },
+    { to: sp('enrichment'), icon: Sparkles, label: 'Enrichment', disabled: !sessionId },
+    { to: sp('refinement'), icon: Wrench, label: 'Refinement', disabled: !sessionId },
+    { to: sp('review'), icon: Inbox, label: 'Review Queue', disabled: !sessionId || !done, badge: pendingCount },
+    { to: sp('active-learning'), icon: Brain, label: 'Active Learning', disabled: !sessionId },
+    { to: sp('export'), icon: Download, label: 'Export', disabled: !sessionId },
   ]
 
   return (
@@ -224,6 +228,15 @@ function PipelineRail({ sessionId, sessionStatus, pendingCount }) {
   )
 }
 
+function SessionLayout() {
+  return <SessionProvider><Outlet /></SessionProvider>
+}
+
+function LegacyRedirect({ to }) {
+  const { sessionId, clusterId } = useParams()
+  return <Navigate replace to={`/s/${sessionId}/${to.replace(':clusterId', clusterId)}`} />
+}
+
 function AppContent() {
   const location = useLocation()
   const [uploadSessionId, setUploadSessionId] = useState(null)
@@ -232,7 +245,7 @@ function AppContent() {
 
   // Derive the active session from the URL so a page refresh keeps the rail
   // working; fall back to the id captured during the upload flow.
-  const match = location.pathname.match(/\/(?:overview|scatter|graph|requirements|cluster|review-queue)\/(\d+)/)
+  const match = location.pathname.match(/^\/(?:s|overview|scatter|graph|requirements|cluster|review-queue)\/(\d+)/)
   const sessionId = match ? parseInt(match[1]) : uploadSessionId
   const done = sessionStatus === 'done'
 
@@ -251,7 +264,7 @@ function AppContent() {
       return
     }
     let cancelled = false
-    getFeedbackQueue(sessionId, 'pending')
+    getFeedback(sessionId, 'pending')
       .then(items => { if (!cancelled) setPendingCount(items.length) })
       .catch(() => {})
     return () => { cancelled = true }
@@ -263,20 +276,36 @@ function AppContent() {
       <div className="flex flex-1 min-h-0">
         <PipelineRail sessionId={sessionId} sessionStatus={sessionStatus} pendingCount={pendingCount} />
         <main className="flex-1 overflow-auto min-w-0 app-main">
-          <Routes>
-            <Route path="/" element={<UploadPage onSessionCreated={(id, status) => { setUploadSessionId(id); setSessionStatus(status) }} />} />
-            <Route path="/enrichment" element={<EnrichmentPage />} />
-            <Route path="/refinement" element={<RefinementPage />} />
-            <Route path="/dependencies" element={<DependencyTreePage />} />
-            <Route path="/active-learning" element={<ActiveLearningPage />} />
-            <Route path="/export" element={<ExportPage />} />
-            <Route path="/overview/:sessionId" element={<OverviewPage onStatusChange={setSessionStatus} />} />
-            <Route path="/scatter/:sessionId" element={<ScatterPage />} />
-            <Route path="/cluster/:sessionId/:clusterId" element={<ClusterDetailPage />} />
-            <Route path="/graph/:sessionId" element={<GraphPage />} />
-            <Route path="/requirements/:sessionId" element={<RequirementsPage />} />
-            <Route path="/review-queue/:sessionId" element={<ReviewQueuePage />} />
-          </Routes>
+          <Suspense fallback={<div className="p-6 text-sm text-gray-500">Loading...</div>}>
+            <Routes>
+              <Route path="/" element={<UploadPage onSessionCreated={(id, status) => { setUploadSessionId(id); setSessionStatus(status) }} />} />
+              <Route path="/s/:sessionId" element={<SessionLayout />}>
+                <Route path="overview" element={<OverviewPage onStatusChange={setSessionStatus} />} />
+                <Route path="scatter" element={<ScatterPage />} />
+                <Route path="graph" element={<GraphPage />} />
+                <Route path="requirements" element={<RequirementsPage />} />
+                <Route path="clusters/:clusterId" element={<ClusterDetailPage />} />
+                <Route path="enrichment" element={<EnrichmentPage />} />
+                <Route path="refinement" element={<RefinementPage />} />
+                <Route path="review" element={<ReviewQueuePage />} />
+                <Route path="dependencies" element={<DependencyTreePage />} />
+                <Route path="active-learning" element={<ActiveLearningPage />} />
+                <Route path="export" element={<ExportPage />} />
+              </Route>
+              {/* Compatibility: pre-migration pages still link to / read the old paths. */}
+              <Route path="/overview/:sessionId" element={<LegacyRedirect to="overview" />} />
+              <Route path="/scatter/:sessionId" element={<LegacyRedirect to="scatter" />} />
+              <Route path="/graph/:sessionId" element={<LegacyRedirect to="graph" />} />
+              <Route path="/requirements/:sessionId" element={<LegacyRedirect to="requirements" />} />
+              <Route path="/review-queue/:sessionId" element={<LegacyRedirect to="review" />} />
+              <Route path="/cluster/:sessionId/:clusterId" element={<LegacyRedirect to="clusters/:clusterId" />} />
+              <Route path="/enrichment" element={<EnrichmentPage />} />
+              <Route path="/refinement" element={<RefinementPage />} />
+              <Route path="/dependencies" element={<DependencyTreePage />} />
+              <Route path="/active-learning" element={<ActiveLearningPage />} />
+              <Route path="/export" element={<ExportPage />} />
+            </Routes>
+          </Suspense>
         </main>
       </div>
     </div>
