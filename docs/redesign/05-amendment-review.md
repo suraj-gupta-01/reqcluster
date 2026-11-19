@@ -71,3 +71,6 @@ Decision: keep UMAP+HDBSCAN everywhere. Known limit: results are deterministic p
 
 ## J. Exact BLAS kNN fed to UMAP (2026-11-19)
 `reduce` passes exact cosine neighbours (blocked matmul, `ml/sampling.knn`) as `precomputed_knn` up to 20k rows, replacing UMAP's single-threaded numba pairwise pass (<4096 rows) / NN-descent. 3 seeds, ARI: adversarial .320 -> .311 (noise), multidomain .649 -> .679, uav2k .987 -> .991; reduce 1.5-1.7x faster (uav2k 6.6 -> 3.9 s warm). Also: numba cache is no longer redirected to `{home}` (empty dir forced a 85-100 s recompile; default cache 20 s).
+
+## K. Accuracy mode (nomic) dropped (2026-11-20)
+`nomic-ai/nomic-embed-text-v1.5` remote code calls `get_extended_attention_mask`, removed in transformers 5 (required by sentence-transformers 6.3). Enabling it would downgrade a core dependency for +0.02-0.03 ARI at ~10x encode cost; the other candidates (bge, gte, e5, mpnet, mxbai, qwen3) were not more accurate than MiniLM. Revisit if nomic ships transformers-5 compatible code.
