@@ -31,6 +31,7 @@ class EnrichmentSummary(BaseModel):
     total: int
     succeeded: int
     failed: int
+    fallback: int = 0  # succeeded via the template fallback because the real provider failed
     provider: str
 
 
@@ -102,8 +103,14 @@ def _run(ctx: JobContext, sid: int, provider: ProviderName | None) -> Enrichment
         if fresh:
             s.execute(insert(EnrichmentRow), fresh)
     ok = sum(e.status == "succeeded" for e in results)
+    fb = sum(e.status == "succeeded" and _is_fallback(e.source, provider) for e in results)
     return EnrichmentSummary(total=len(results), succeeded=ok, failed=len(results) - ok,
-                             provider=provider)
+                             fallback=fb, provider=provider)
+
+
+def _is_fallback(source: str, provider: str | None) -> bool:
+    """Template text produced because a real provider failed (mock output is the intended text)."""
+    return source == "fallback" and (provider or "mock") != "mock"
 
 
 def results(sid: int) -> list[EnrichmentOut]:
@@ -136,7 +143,8 @@ def texts_for_mode(sid: int, mode: str) -> list[str]:
                     EnrichmentRow.session_id == sid, EnrichmentRow.status == "succeeded")
                     .order_by(EnrichmentRow.created_at, EnrichmentRow.id)):
                 r = by_id.get(e.requirement_id)
-                if r is not None and e.text_hash == _hash(r.text):
+                if r is not None and e.text_hash == _hash(r.text) and not _is_fallback(e.source,
+                                                                                       e.provider):
                     enr[r.id] = e.expanded_text
         texts = [r.text for r in reqs]
         if mode == "base":

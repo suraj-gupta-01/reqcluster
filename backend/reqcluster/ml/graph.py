@@ -19,11 +19,13 @@ def _hnsw_edges(Xn: np.ndarray, k: int, seed: int, threads: int):
 
 
 def build(embeddings, labels, threshold: float, k: int = 10, seed: int = 0,
-          threads: int = 1, max_edges: int = 4000) -> list[tuple[int, int, float]]:
+          threads: int = 1, max_edges: int | None = None) -> list[tuple[int, int, float]]:
     nodes = np.flatnonzero(labels != -1)
     m = len(nodes)
     if m < 2 or k < 1:
         return []
+    # budget grows with N: a fixed 4000 cannot give 10k nodes their 2 reserved edges (~5k needed)
+    max_edges = max_edges if max_edges is not None else max(4000, 2 * m)
     X = np.asarray(embeddings, dtype=np.float32)[nodes]
     norms = np.linalg.norm(X, axis=1, keepdims=True)
     norms[norms == 0] = 1.0

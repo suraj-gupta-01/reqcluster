@@ -46,7 +46,7 @@ def old(X, labels, threshold, k, max_edges):
 
 print(f"nodes (non-noise): {len(nodes)} of {len(labels)}")
 for name, edges in (("before", old(X, labels, THRESHOLD, K, MAX_EDGES)),
-                    ("after", graph.build(X, labels, THRESHOLD, K, 0, 1, MAX_EDGES))):
+                    ("after", graph.build(X, labels, THRESHOLD, K, 0, 1))):
     w = np.array([e[2] for e in edges])
     covered = len({i for e in edges for i in e[:2]})
     print(f"{name}: edges={len(edges)} nodes_with_edge={covered} min_w={w.min():.4f} median_w={np.median(w):.4f}")

@@ -47,3 +47,18 @@ def test_unknown_session():
     init_db()
     with pytest.raises(errors.NotFound):
         enrichment.start(999, None)
+
+
+def test_real_provider_fallback_is_counted_and_not_used_for_enriched_clustering(monkeypatch):
+    from reqcluster.config import get_settings
+    from reqcluster.llm import gateway as gw
+
+    monkeypatch.setenv("REQCLUSTER_LLM_BASE_URL", "")
+    monkeypatch.setenv("REQCLUSTER_LLM_MAX_RETRIES", "0")
+    get_settings.cache_clear()
+    gw.reset_gateway()
+    sid = make()
+    job = enrichment.start(sid, "openai")
+    assert job.result["fallback"] == 4 and job.result["succeeded"] == 4
+    with pytest.raises(errors.Conflict):  # template text must not silently feed hybrid clustering
+        enrichment.texts_for_mode(sid, "hybrid")

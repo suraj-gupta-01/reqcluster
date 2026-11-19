@@ -407,9 +407,6 @@ def expand_all(reqs: list[tuple[int, str]], gateway: LLMGateway,
         provider)
     for i, res in zip(todo, results, strict=True):
         rid, text = reqs[i]
-        if res.source == "fallback" and res.provider != "mock":
-            out[i] = Expansion(rid, status="failed", source="fallback", error=res.error)
-            continue
         try:
             parsed = parse_expansion(res.output.model_dump())
         except ValueError as e:
