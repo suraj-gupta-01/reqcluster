@@ -189,6 +189,11 @@ function ClusterDetail() {
                   <span className="font-mono text-xs text-gray-500 mt-0.5 flex-shrink-0 w-20">{r.req_id}</span>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-gray-200 leading-relaxed">{r.text}</p>
+                    {Object.keys(r.attributes || {}).length > 0 && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        {Object.entries(r.attributes).map(([k, v]) => `${k}: ${v}`).join(' | ')}
+                      </p>
+                    )}
                   </div>
                   <div className="flex items-center gap-4 flex-shrink-0">
                     <div className="w-28 pt-1">

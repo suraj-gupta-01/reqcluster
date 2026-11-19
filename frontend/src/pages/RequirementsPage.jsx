@@ -99,6 +99,7 @@ export default function RequirementsPage() {
 
   const totalPages = Math.max(1, Math.ceil(totalMatched / PAGE_SIZE))
   const paginated = requirements
+  const attrKeys = [...new Set(paginated.flatMap(r => Object.keys(r.attributes || {})))]
 
   const handleSort = (field) => {
     if (sortField === field) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
@@ -196,13 +197,14 @@ export default function RequirementsPage() {
                 <th className="text-left px-4 py-3 w-32">
                   {renderSortHeader('probability', 'Membership')}
                 </th>
+                {attrKeys.map(k => <th key={k} className="text-left px-4 py-3">{k}</th>)}
                 <th className="w-40 px-4 py-3 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-800/50">
               {requirementsLoading ? (
                 <tr>
-                  <td colSpan={5} className="text-center py-12">
+                  <td colSpan={5 + attrKeys.length} className="text-center py-12">
                     <div className="flex items-center justify-center gap-2 text-gray-500">
                       <Loader size={16} className="animate-spin text-brand-400" />
                       <span>Loading requirements...</span>
@@ -211,7 +213,7 @@ export default function RequirementsPage() {
                 </tr>
               ) : paginated.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="text-center py-12 text-gray-500">
+                  <td colSpan={5 + attrKeys.length} className="text-center py-12 text-gray-500">
                     No requirements match your filters.
                   </td>
                 </tr>
@@ -296,6 +298,7 @@ export default function RequirementsPage() {
                         : <MembershipDot prob={r.probability} />
                       }
                     </td>
+                    {attrKeys.map(k => <td key={k} className="px-4 py-3 text-xs text-gray-400">{r.attributes?.[k] ?? ''}</td>)}
                     <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-end gap-2">
                         <button

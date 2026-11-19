@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { Wrench, GitMerge, Scissors, Clock, AlertTriangle, RefreshCw } from 'lucide-react'
-import { startSuggestions, getSuggestions, decideSuggestion, getAudit, getClusters } from '../api/endpoints.js'
+import { startSuggestions, getSuggestions, decideSuggestion, getAudit, getClusters, getCoherence } from '../api/endpoints.js'
 import { useApi } from '../hooks/useApi.js'
 import { useJob } from '../hooks/useJob.js'
 import { useSession } from '../state/SessionContext.jsx'
@@ -20,6 +20,9 @@ export default function RefinementPage() {
   const sugg = useApi((o) => (sessionId ? getSuggestions(sessionId, undefined, o) : Promise.resolve([])), [sessionId])
   const auditApi = useApi((o) => (sessionId ? getAudit(sessionId, o) : Promise.resolve([])), [sessionId])
   const clustersApi = useApi((o) => (sessionId ? getClusters(sessionId, o) : Promise.resolve([])), [sessionId])
+
+  const cohApi = useApi((o) => (sessionId ? getCoherence(sessionId, o) : Promise.resolve([])), [sessionId, sugg.data])
+  const coherenceScores = cohApi.data || []
 
   const all = sugg.data || []
   const mergeSuggestions = all.filter(s => s.kind === 'merge')
@@ -126,6 +129,29 @@ export default function RefinementPage() {
         <div className="card p-3 mb-4 border-amber-900/30 bg-amber-950/10 flex items-start gap-2">
           <AlertTriangle size={14} className="text-amber-400 mt-0.5 flex-shrink-0" />
           <p className="text-sm text-amber-300/80">{error}</p>
+        </div>
+      )}
+
+      {coherenceScores.length > 0 && (
+        <div className="card p-4 mb-6">
+          <h2 className="text-sm font-semibold text-gray-300 mb-3">Cluster Coherence Scores</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            {coherenceScores.map(cs => (
+              <div key={cs.cluster_id} title={cs.assessment} className="bg-gray-800/40 rounded-lg p-3 border border-gray-700/30">
+                <div className="text-xs text-gray-500 truncate mb-1">
+                  {cs.top_keywords?.slice(0, 2).join(', ') || `Cluster ${cs.cluster_id}`}
+                </div>
+                <div className={`text-lg font-bold ${
+                  cs.coherence_score >= 0.8 ? 'text-emerald-400'
+                    : cs.coherence_score >= 0.6 ? 'text-amber-400'
+                      : 'text-red-400'
+                }`}>
+                  {cs.coherence_score.toFixed(3)}
+                </div>
+                <div className="text-xs text-gray-500">{cs.size} reqs - {cs.assessment}</div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 

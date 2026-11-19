@@ -110,10 +110,12 @@ function Scatter() {
             cluster_id: r.cluster_id,
             prob: r.probability,
             correction: correctionMap[r.id] || null,
+            attrs: Object.entries(r.attributes || {}).map(([k, v]) => `${k}: ${v}`).join(' | '),
           })),
           hovertemplate:
             '<b>%{customdata.req_id}</b><br>' +
             '%{customdata.text}<br>' +
+            '<i>%{customdata.attrs}</i><br>' +
             '<i>Cluster: %{customdata.cluster_id}</i><br>' +
             '<i>Membership: %{customdata.prob:.2f}</i>' +
             '<extra></extra>',

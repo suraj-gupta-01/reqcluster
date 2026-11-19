@@ -30,6 +30,9 @@ export async function getRequirements(sid, query, o) {
 export const startEnrichment = (sid, body, o) => post(`${s(sid)}/enrich`, body ?? {}, o)
 export const getEnrichment = (sid, o) => get(`${s(sid)}/enrichment`, undefined, o)
 
+export const getEnrichmentSummary = (sid, o) => get(`${s(sid)}/enrichment/summary`, undefined, o)
+export const getCoherence = (sid, o) => get(`${s(sid)}/coherence`, undefined, o)
+
 export const startSuggestions = (sid, params, o) => post(`${s(sid)}/suggestions`, params ?? {}, o)
 export const getSuggestions = (sid, status, o) => get(`${s(sid)}/suggestions`, { status }, o)
 export const decideSuggestion = (sid, id, decision, actor, o) =>

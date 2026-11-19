@@ -152,10 +152,10 @@ export default function EnrichmentResultsTable({ results, requirements = [] }) {
                     <div>
                       <div className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Quality Metrics</div>
                       <div className="grid grid-cols-2 gap-2 text-xs">
-                        <Metric label="Lexical overlap" value={metricValue(row.quality_report, 'lexical_overlap')} />
-                        <Metric label="Length ratio" value={metricValue(row.quality_report, 'length_ratio')} />
-                        <Metric label="Risk score" value={metricValue(row.quality_report, 'hallucination_risk_score')} />
-                        <Metric label="Adjusted confidence" value={metricValue(row.quality_report, 'adjusted_confidence_score')} />
+                        <Metric label="Lexical overlap" value={metricValue(row.quality, 'lexical_overlap')} />
+                        <Metric label="Length ratio" value={metricValue(row.quality, 'length_ratio')} />
+                        <Metric label="Risk score" value={metricValue(row.quality, 'hallucination_risk_score')} />
+                        <Metric label="Adjusted confidence" value={metricValue(row.quality, 'adjusted_confidence_score')} />
                       </div>
                     </div>
 

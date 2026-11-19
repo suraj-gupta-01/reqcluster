@@ -20,7 +20,7 @@ export default function UploadPage({ onSessionCreated }) {
   const [error, setError] = useState(null)
   const [jobId, setJobId] = useState(null)
   const [showParams, setShowParams] = useState(false)
-  const [params, setParams] = useState({ min_cluster_size: '', min_samples: 3, sim_threshold: 0.5, top_k: 10, embedding_mode: 'base' })
+  const [params, setParams] = useState({ min_cluster_size: '', min_samples: 3, sim_threshold: 0.5, top_k: 10, embedding_mode: 'base', enable_embedding_comparison: false, run_ablation: false })
 
   const validateAndSetFile = useCallback((f) => {
     if (!f.name.match(/\.(csv|xlsx|xls)$/i)) {
@@ -80,6 +80,8 @@ export default function UploadPage({ onSessionCreated }) {
         sim_threshold: params.sim_threshold,
         top_k: params.top_k,
         embedding_mode: params.embedding_mode,
+        enable_embedding_comparison: params.enable_embedding_comparison,
+        run_ablation: params.run_ablation,
       }
       if (params.min_cluster_size) payload.min_cluster_size = parseInt(params.min_cluster_size)
       setJobId((await startClustering(sid, payload)).id)
@@ -233,6 +235,13 @@ export default function UploadPage({ onSessionCreated }) {
                       <option value="hybrid">hybrid</option>
                     </select>
                   </div>
+                  {[['enable_embedding_comparison', 'Embedding comparison'], ['run_ablation', 'Ablation report']].map(([key, label]) => (
+                    <label key={key} className="flex items-center gap-2 text-xs text-gray-400">
+                      <input type="checkbox" checked={params[key]}
+                        onChange={e => setParams(p => ({ ...p, [key]: e.target.checked }))} />
+                      {label}
+                    </label>
+                  ))}
                 </div>
               )}
             </div>

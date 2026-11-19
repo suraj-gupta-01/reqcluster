@@ -13,7 +13,7 @@ import {
   Sparkles,
 } from 'lucide-react'
 
-import { startEnrichment, getEnrichment, getRequirements, startClustering } from '../api/endpoints.js'
+import { startEnrichment, getEnrichment, getEnrichmentSummary, getMetrics, getRequirements, startClustering } from '../api/endpoints.js'
 import { useApi } from '../hooks/useApi.js'
 import { useJob } from '../hooks/useJob.js'
 import { useSession } from '../state/SessionContext.jsx'
@@ -57,6 +57,9 @@ function Enrichment({ sessionId, reloadSession }) {
   const [notice, setNotice] = useState(null)
 
   const resultsQ = useApi((o) => getEnrichment(sessionId, o), [sessionId])
+  // 409 until enrichment exists: show nothing
+  const summaryQ = useApi((o) => getEnrichmentSummary(sessionId, o).catch(() => null), [sessionId, resultsQ.data])
+  const qualityReport = summaryQ.data?.quality_report
   const reqQ = useApi(async (o) => {
     const items = []
     for (let page = 1; ; page++) {
@@ -65,6 +68,7 @@ function Enrichment({ sessionId, reloadSession }) {
       if (items.length >= r.total || r.items.length === 0) return items
     }
   }, [sessionId])
+  const metricsQ = useApi((o) => getMetrics(sessionId, o).catch(() => null), [sessionId, clusterResult])
   const results = useMemo(() => resultsQ.data || [], [resultsQ.data])
   const requirements = reqQ.data || []
 
@@ -104,6 +108,7 @@ function Enrichment({ sessionId, reloadSession }) {
   const enrichmentReady = status?.status === 'complete'
 
   const vocabulary = useMemo(() => {
+    if (summaryQ.data?.domain_vocabulary?.length) return summaryQ.data.domain_vocabulary
     const seen = new Set()
     const terms = []
     results.forEach(row => (row.domain_terms || []).forEach(term => {
@@ -111,7 +116,7 @@ function Enrichment({ sessionId, reloadSession }) {
       if (!seen.has(key)) { seen.add(key); terms.push(term) }
     }))
     return terms
-  }, [results])
+  }, [results, summaryQ.data])
 
   const validation = {}
   if (clusterOptions.sim_threshold < 0 || clusterOptions.sim_threshold > 1) validation.sim_threshold = 'Similarity threshold must be between 0 and 1.'
@@ -140,7 +145,12 @@ function Enrichment({ sessionId, reloadSession }) {
     setClusterResult(null)
     setNotice(null)
     setClusterMode(mode)
-    const payload = { embedding_mode: mode, sim_threshold: Number(clusterOptions.sim_threshold) }
+    const payload = {
+      embedding_mode: mode,
+      sim_threshold: Number(clusterOptions.sim_threshold),
+      enable_embedding_comparison: !!clusterOptions.enable_embedding_comparison,
+      run_ablation: !!clusterOptions.run_ablation,
+    }
     if (clusterOptions.min_cluster_size !== '') payload.min_cluster_size = Number(clusterOptions.min_cluster_size)
     if (clusterOptions.min_samples !== '') payload.min_samples = Number(clusterOptions.min_samples)
     try {
@@ -238,6 +248,13 @@ function Enrichment({ sessionId, reloadSession }) {
               />
             </div>
 
+            {[['enable_embedding_comparison', 'Embedding comparison'], ['run_ablation', 'Ablation report']].map(([key, label]) => (
+              <label key={key} className="flex items-center gap-2 text-xs text-gray-400">
+                <input type="checkbox" checked={!!clusterOptions[key]} onChange={e => updateClusterOption(key, e.target.checked)} />
+                {label}
+              </label>
+            ))}
+
             {!enrichmentReady && (
               <p className="text-xs text-amber-300">{MISSING_ENRICHMENT_MESSAGE}</p>
             )}
@@ -265,6 +282,25 @@ function Enrichment({ sessionId, reloadSession }) {
           </div>
           <EnrichmentResultsTable results={results} requirements={requirements} />
 
+          {qualityReport?.aggregate && (
+            <div className="card p-4">
+              <h2 className="text-sm font-semibold text-gray-200 mb-3">Quality Summary</h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                {[
+                  ['Succeeded', qualityReport.succeeded ?? 0],
+                  ['Failed', qualityReport.failed ?? 0],
+                  ['Mean risk', qualityReport.aggregate.mean_hallucination_risk_score ?? '-'],
+                  ['Mean confidence', qualityReport.aggregate.mean_adjusted_confidence_score ?? '-'],
+                ].map(([label, value]) => (
+                  <div key={label} className="bg-gray-950/50 border border-gray-800 rounded-lg p-3">
+                    <div className="text-lg font-semibold text-white">{value}</div>
+                    <div className="text-xs text-gray-500">{label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {clusterResult && (
             <section className="space-y-4">
               <div className="card p-4 border-emerald-900/40 bg-emerald-950/10">
@@ -285,8 +321,8 @@ function Enrichment({ sessionId, reloadSession }) {
                   </div>
                 </div>
               </div>
-              <EmbeddingComparisonPanel report={clusterResult.embedding_comparison} />
-              <AblationReportPanel report={clusterResult.ablation_report} />
+              <EmbeddingComparisonPanel report={metricsQ.data?.embedding_comparison} />
+              <AblationReportPanel report={metricsQ.data?.ablation_report} />
             </section>
           )}
         </div>
