@@ -30,7 +30,7 @@ export default function EnrichmentResultsTable({ results, requirements = [] }) {
 
   const requirementMap = useMemo(() => {
     const map = {}
-    requirements.forEach(req => { map[req.req_id] = req })
+    requirements.forEach(req => { map[req.id] = req })
     return map
   }, [requirements])
 
@@ -38,7 +38,7 @@ export default function EnrichmentResultsTable({ results, requirements = [] }) {
     const q = search.trim().toLowerCase()
     return (results || []).filter((row) => {
       const req = requirementMap[row.requirement_id]
-      const text = `${row.requirement_id || ''} ${row.expanded_text || ''} ${req?.text || ''}`.toLowerCase()
+      const text = `${row.req_id || ''} ${row.expanded_text || ''} ${req?.text || ''}`.toLowerCase()
       if (q && !text.includes(q)) return false
       if (statusFilter !== 'all' && row.status !== statusFilter) return false
       if (lowConfidenceOnly && !((row.confidence ?? 1) < 0.7)) return false
@@ -112,7 +112,7 @@ export default function EnrichmentResultsTable({ results, requirements = [] }) {
                 className="w-full text-left px-4 py-3 flex items-center gap-4"
               >
                 <ChevronDown size={14} className={`text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-                <span className="font-mono text-xs text-brand-400 w-24 flex-shrink-0">{row.requirement_id || '-'}</span>
+                <span className="font-mono text-xs text-brand-400 w-24 flex-shrink-0">{row.req_id || '-'}</span>
                 <span className="text-sm text-gray-300 line-clamp-1 flex-1">
                   {row.expanded_text || 'No expanded text persisted.'}
                 </span>

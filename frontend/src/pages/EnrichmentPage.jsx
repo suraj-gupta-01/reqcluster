@@ -1,11 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Activity,
   AlertCircle,
   CheckCircle,
   ChevronRight,
-  Database,
   GitCompare,
   Loader,
   Network,
@@ -14,48 +13,19 @@ import {
   Sparkles,
 } from 'lucide-react'
 
-import {
-  clusterSession,
-  enrichSession,
-  getEnrichmentResults,
-  getEnrichmentStatus,
-  getErrorMessage,
-  getProgress,
-  getRequirements,
-  getSessions,
-} from '../utils/api.js'
+import { startEnrichment, getEnrichment, getRequirements, startClustering } from '../api/endpoints.js'
+import { useApi } from '../hooks/useApi.js'
+import { useJob } from '../hooks/useJob.js'
+import { useSession } from '../state/SessionContext.jsx'
+import { getErrorMessage } from '../utils/format.js'
 import AblationReportPanel from '../components/AblationReportPanel.jsx'
 import DomainVocabularyTags from '../components/DomainVocabularyTags.jsx'
 import EmbeddingComparisonPanel from '../components/EmbeddingComparisonPanel.jsx'
 import EnrichmentResultsTable from '../components/EnrichmentResultsTable.jsx'
 import EnrichmentStatusCard from '../components/EnrichmentStatusCard.jsx'
+import JobProgress from '../components/JobProgress.jsx'
 
 const MISSING_ENRICHMENT_MESSAGE = 'Run enrichment for this session before clustering with enriched or hybrid embeddings.'
-
-const initialEnrichmentOptions = {
-  provider_name: 'local',
-  embedding_mode: 'hybrid',
-  batch_size: 8,
-  max_concurrency: 4,
-  timeout_seconds: 30,
-  force_refresh: false,
-  fail_fast: false,
-  use_cache: true,
-}
-
-const initialClusterOptions = {
-  similarity_threshold: 0.65,
-  min_cluster_size: '',
-  min_samples: '',
-  enable_embedding_comparison: true,
-  run_ablation: false,
-}
-
-function clampNumber(value, min, max) {
-  const parsed = Number(value)
-  if (!Number.isFinite(parsed)) return min
-  return Math.min(max, Math.max(min, parsed))
-}
 
 function isPositiveIntegerOrEmpty(value, min = 1) {
   if (value === '' || value === null || value === undefined) return true
@@ -63,316 +33,121 @@ function isPositiveIntegerOrEmpty(value, min = 1) {
   return Number.isInteger(parsed) && parsed >= min
 }
 
-function statusReady(status) {
-  return !!status && status.status === 'complete' && status.total > 0 && status.succeeded === status.total
-}
-
-function formErrors(enrichmentOptions, clusterOptions) {
-  const errors = {}
-  if (enrichmentOptions.batch_size < 1 || enrichmentOptions.batch_size > 64) errors.batch_size = 'Batch size must be between 1 and 64.'
-  if (enrichmentOptions.max_concurrency < 1 || enrichmentOptions.max_concurrency > 16) errors.max_concurrency = 'Max concurrency must be between 1 and 16.'
-  if (enrichmentOptions.timeout_seconds < 1 || enrichmentOptions.timeout_seconds > 120) errors.timeout_seconds = 'Timeout must be between 1 and 120 seconds.'
-  if (clusterOptions.similarity_threshold < 0 || clusterOptions.similarity_threshold > 1) errors.similarity_threshold = 'Similarity threshold must be between 0 and 1.'
-  if (!isPositiveIntegerOrEmpty(clusterOptions.min_cluster_size, 2)) errors.min_cluster_size = 'Min cluster size must be 2 or greater, or empty.'
-  if (!isPositiveIntegerOrEmpty(clusterOptions.min_samples, 1)) errors.min_samples = 'Min samples must be a positive integer, or empty.'
-  return errors
-}
-
 export default function EnrichmentPage() {
-  const statusPollRef = useRef(null)
-  const clusterPollRef = useRef(null)
-  const mountedRef = useRef(true)
+  const { sessionId, reloadSession } = useSession()
+  if (!sessionId) {
+    return (
+      <div className="p-8 text-sm text-gray-400">
+        <Link to="/" className="text-brand-400 hover:underline">Select or upload a session first</Link>
+      </div>
+    )
+  }
+  return <Enrichment sessionId={sessionId} reloadSession={reloadSession} />
+}
 
-  const [sessions, setSessions] = useState([])
-  const [selectedSessionId, setSelectedSessionId] = useState('')
-  const [requirements, setRequirements] = useState([])
-  const [enrichmentOptions, setEnrichmentOptions] = useState(initialEnrichmentOptions)
-  const [clusterOptions, setClusterOptions] = useState(initialClusterOptions)
-
-  const [loadingSessions, setLoadingSessions] = useState(true)
-  const [loadingStatus, setLoadingStatus] = useState(false)
-  const [loadingResults, setLoadingResults] = useState(false)
-  const [enriching, setEnriching] = useState(false)
-  const [clustering, setClustering] = useState(false)
-
-  const [status, setStatus] = useState(null)
-  const [results, setResults] = useState([])
-  const [domainVocabulary, setDomainVocabulary] = useState([])
-  const [qualityReport, setQualityReport] = useState(null)
+function Enrichment({ sessionId, reloadSession }) {
+  const [provider, setProvider] = useState('')
+  const [clusterOptions, setClusterOptions] = useState({ sim_threshold: 0.5, min_cluster_size: '', min_samples: '' })
+  const [enrichJobId, setEnrichJobId] = useState(null)
+  const [clusterJobId, setClusterJobId] = useState(null)
+  const [clusterMode, setClusterMode] = useState('base')
   const [clusterResult, setClusterResult] = useState(null)
-  const [clusterProgress, setClusterProgress] = useState(null)
-
   const [error, setError] = useState(null)
   const [clusterError, setClusterError] = useState(null)
   const [notice, setNotice] = useState(null)
 
-  const validation = useMemo(
-    () => formErrors(enrichmentOptions, clusterOptions),
-    [enrichmentOptions, clusterOptions],
-  )
-  const hasValidationErrors = Object.keys(validation).length > 0
-  const enrichmentReady = statusReady(status)
+  const resultsQ = useApi((o) => getEnrichment(sessionId, o), [sessionId])
+  const reqQ = useApi(async (o) => {
+    const items = []
+    for (let page = 1; ; page++) {
+      const r = await getRequirements(sessionId, { page, page_size: 1000 }, o)
+      items.push(...r.items)
+      if (items.length >= r.total || r.items.length === 0) return items
+    }
+  }, [sessionId])
+  const results = useMemo(() => resultsQ.data || [], [resultsQ.data])
+  const requirements = reqQ.data || []
 
-  const vocabularyForDisplay = useMemo(() => {
-    if (domainVocabulary?.length) return domainVocabulary
-    const terms = []
+  const enrichJob = useJob(enrichJobId, (j) => {
+    setEnrichJobId(null)
+    if (j.status === 'succeeded') setNotice('Enrichment completed.')
+    else setError(j.status === 'cancelled' ? 'Enrichment cancelled.' : j.error || 'Enrichment failed.')
+    resultsQ.reload()
+  })
+  const clusterJob = useJob(clusterJobId, (j) => {
+    setClusterJobId(null)
+    if (j.status === 'succeeded') {
+      setClusterResult({ ...(j.result || {}), embedding_mode: clusterMode })
+      setNotice('Clustering completed.')
+    } else {
+      setClusterError(j.status === 'cancelled' ? 'Clustering cancelled.' : j.error || 'Clustering failed.')
+    }
+    reloadSession()
+  })
+  const enriching = enrichJobId != null
+  const clustering = clusterJobId != null
+
+  const status = useMemo(() => {
+    if (!results.length) return null
+    const succeeded = results.filter(r => r.status === 'succeeded').length
+    return {
+      session_id: sessionId,
+      status: succeeded === results.length ? 'complete' : 'partial',
+      total: results.length,
+      succeeded,
+      failed: results.length - succeeded,
+      pending: 0,
+      provider: results[0].provider,
+      warnings: [...new Set(results.flatMap(r => r.warnings || []))],
+    }
+  }, [results, sessionId])
+  const enrichmentReady = status?.status === 'complete'
+
+  const vocabulary = useMemo(() => {
     const seen = new Set()
-    results.forEach(row => {
-      row.domain_terms?.forEach(term => {
-        const key = String(term).toLowerCase()
-        if (!seen.has(key)) {
-          seen.add(key)
-          terms.push(term)
-        }
-      })
-    })
+    const terms = []
+    results.forEach(row => (row.domain_terms || []).forEach(term => {
+      const key = String(term).toLowerCase()
+      if (!seen.has(key)) { seen.add(key); terms.push(term) }
+    }))
     return terms
-  }, [domainVocabulary, results])
+  }, [results])
 
-  const selectedSession = useMemo(
-    () => sessions.find(session => String(session.id) === String(selectedSessionId)),
-    [sessions, selectedSessionId],
-  )
-
-  const stopStatusPolling = useCallback(() => {
-    if (statusPollRef.current) clearInterval(statusPollRef.current)
-    statusPollRef.current = null
-  }, [])
-
-  const stopClusterPolling = useCallback(() => {
-    if (clusterPollRef.current) clearInterval(clusterPollRef.current)
-    clusterPollRef.current = null
-  }, [])
-
-  const loadStatus = useCallback(async (sessionId = selectedSessionId, quiet = false) => {
-    if (!sessionId) return null
-    if (!quiet) setLoadingStatus(true)
-    try {
-      const next = await getEnrichmentStatus(sessionId)
-      if (mountedRef.current) setStatus(next)
-      return next
-    } catch (err) {
-      if (mountedRef.current && !quiet) setError(getErrorMessage(err, 'Failed to load enrichment status.'))
-      return null
-    } finally {
-      if (mountedRef.current && !quiet) setLoadingStatus(false)
-    }
-  }, [selectedSessionId])
-
-  const loadResults = useCallback(async (sessionId = selectedSessionId) => {
-    if (!sessionId) return []
-    setLoadingResults(true)
-    try {
-      const [rows, reqs] = await Promise.all([
-        getEnrichmentResults(sessionId),
-        getRequirements(sessionId),
-      ])
-      if (mountedRef.current) {
-        setResults(rows)
-        setRequirements(reqs)
-      }
-      return rows
-    } catch (err) {
-      if (mountedRef.current) setError(getErrorMessage(err, 'Failed to load enrichment results.'))
-      return []
-    } finally {
-      if (mountedRef.current) setLoadingResults(false)
-    }
-  }, [selectedSessionId])
-
-  const startStatusPolling = useCallback((sessionId) => {
-    stopStatusPolling()
-    let polls = 0
-    statusPollRef.current = setInterval(async () => {
-      polls += 1
-      const next = await loadStatus(sessionId, true)
-      if (!mountedRef.current) return
-      if (next?.status === 'complete' || next?.status === 'failed' || polls >= 90) {
-        stopStatusPolling()
-      }
-    }, 1000)
-  }, [loadStatus, stopStatusPolling])
-
-  useEffect(() => {
-    mountedRef.current = true
-    const load = async () => {
-      try {
-        const list = await getSessions()
-        if (!mountedRef.current) return
-        setSessions(list)
-        const latest = list?.[0]?.id
-        if (latest) setSelectedSessionId(String(latest))
-      } catch (err) {
-        if (mountedRef.current) setError(getErrorMessage(err, 'Failed to load sessions.'))
-      } finally {
-        if (mountedRef.current) setLoadingSessions(false)
-      }
-    }
-    load()
-    return () => {
-      mountedRef.current = false
-      stopStatusPolling()
-      stopClusterPolling()
-    }
-  }, [stopClusterPolling, stopStatusPolling])
-
-  useEffect(() => {
-    if (!selectedSessionId) return
-    const timer = window.setTimeout(() => {
-      if (!mountedRef.current) return
-      setError(null)
-      setClusterError(null)
-      setNotice(null)
-      setStatus(null)
-      setResults([])
-      setRequirements([])
-      setDomainVocabulary([])
-      setQualityReport(null)
-      setClusterResult(null)
-      void loadStatus(selectedSessionId, true)
-      void loadResults(selectedSessionId)
-    }, 0)
-    return () => window.clearTimeout(timer)
-  }, [selectedSessionId, loadStatus, loadResults])
-
-  const updateEnrichmentOption = (key, value) => {
-    setEnrichmentOptions(prev => ({ ...prev, [key]: value }))
-  }
-
-  const updateClusterOption = (key, value) => {
-    setClusterOptions(prev => ({ ...prev, [key]: value }))
-  }
+  const validation = {}
+  if (clusterOptions.sim_threshold < 0 || clusterOptions.sim_threshold > 1) validation.sim_threshold = 'Similarity threshold must be between 0 and 1.'
+  if (!isPositiveIntegerOrEmpty(clusterOptions.min_cluster_size, 2)) validation.min_cluster_size = 'Min cluster size must be 2 or greater, or empty.'
+  if (!isPositiveIntegerOrEmpty(clusterOptions.min_samples, 1)) validation.min_samples = 'Min samples must be a positive integer, or empty.'
+  const hasValidationErrors = Object.keys(validation).length > 0
+  const updateClusterOption = (key, value) => setClusterOptions(prev => ({ ...prev, [key]: value }))
 
   const handleStartEnrichment = async () => {
-    if (!selectedSessionId || hasValidationErrors) return
     setError(null)
     setNotice(null)
-    setClusterError(null)
-    setEnriching(true)
-    startStatusPolling(selectedSessionId)
     try {
-      const response = await enrichSession({
-        session_id: Number(selectedSessionId),
-        ...enrichmentOptions,
-      })
-      if (!mountedRef.current) return
-      setStatus({
-        session_id: response.session_id,
-        status: response.status,
-        total: response.total,
-        succeeded: response.succeeded,
-        failed: response.failed,
-        pending: Math.max((response.total || 0) - (response.succeeded || 0) - (response.failed || 0), 0),
-        provider: response.provider,
-        model: response.model,
-        latest_run_created_at: new Date().toISOString(),
-        warnings: response.warnings || [],
-      })
-      setDomainVocabulary(response.domain_vocabulary || [])
-      setQualityReport(response.quality_report || null)
-      setNotice(response.status === 'complete' ? 'Enrichment completed.' : 'Enrichment finished with warnings.')
-      await loadResults(selectedSessionId)
-      await loadStatus(selectedSessionId, true)
+      setEnrichJobId((await startEnrichment(sessionId, provider ? { provider } : {})).id)
     } catch (err) {
-      if (mountedRef.current) setError(getErrorMessage(err, 'Enrichment failed.'))
-    } finally {
-      stopStatusPolling()
-      if (mountedRef.current) setEnriching(false)
+      setError(getErrorMessage(err, 'Enrichment failed.'))
     }
-  }
-
-  const startClusterPolling = (sessionId, onDone) => {
-    stopClusterPolling()
-    clusterPollRef.current = setInterval(async () => {
-      try {
-        const progress = await getProgress(sessionId)
-        if (!mountedRef.current) return
-        setClusterProgress(progress)
-        if (progress.step === 'done') {
-          stopClusterPolling()
-          if (onDone) onDone(progress)
-        } else if (progress.step === 'error') {
-          stopClusterPolling()
-          if (mountedRef.current) setClusterError(progress.message || 'Clustering failed.')
-        }
-      } catch {
-        stopClusterPolling()
-      }
-    }, 1000)
   }
 
   const handleCluster = async (mode) => {
-    if (!selectedSessionId) return
     if (mode !== 'base' && !enrichmentReady) {
       setClusterError(MISSING_ENRICHMENT_MESSAGE)
       return
     }
     if (hasValidationErrors) return
-
     setClusterError(null)
     setClusterResult(null)
-    setClustering(true)
-    setClusterProgress({ step: 'starting', progress: 0, message: 'Starting clustering...' })
-
-    const payload = {
-      session_id: Number(selectedSessionId),
-      embedding_mode: mode,
-      similarity_threshold: Number(clusterOptions.similarity_threshold),
-      enable_embedding_comparison: mode === 'base' ? false : Boolean(clusterOptions.enable_embedding_comparison),
-      run_ablation: Boolean(clusterOptions.run_ablation),
-    }
+    setNotice(null)
+    setClusterMode(mode)
+    const payload = { embedding_mode: mode, sim_threshold: Number(clusterOptions.sim_threshold) }
     if (clusterOptions.min_cluster_size !== '') payload.min_cluster_size = Number(clusterOptions.min_cluster_size)
     if (clusterOptions.min_samples !== '') payload.min_samples = Number(clusterOptions.min_samples)
-
     try {
-      // POST /cluster returns 202 immediately — pipeline runs in background.
-      // We start polling for progress, then fetch the real session result on completion.
-      await clusterSession(payload)
-      if (!mountedRef.current) return
-
-      startClusterPolling(selectedSessionId, async (doneProgress) => {
-        if (!mountedRef.current) return
-        setClusterResult({
-          total_clusters: doneProgress.total_clusters,
-          noise_count: doneProgress.noise_count,
-          embedding_mode: doneProgress.embedding_mode || mode,
-          embedding_comparison: doneProgress.embedding_comparison || null,
-          ablation_report: doneProgress.ablation_report || null,
-        })
-        localStorage.setItem(`reqcluster:lastEmbeddingMode:${selectedSessionId}`, doneProgress.embedding_mode || mode)
-        setNotice(`${mode} clustering completed.`)
-        setClustering(false)
-      })
+      setClusterJobId((await startClustering(sessionId, payload)).id)
     } catch (err) {
-      stopClusterPolling()
-      if (mountedRef.current) {
-        setClusterError(getErrorMessage(err, 'Clustering failed.'))
-        setClustering(false)
-      }
+      setClusterError(getErrorMessage(err, 'Clustering failed.'))
     }
-  }
-
-  if (loadingSessions) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader size={24} className="animate-spin text-brand-400" />
-      </div>
-    )
-  }
-
-  if (!sessions.length) {
-    return (
-      <div className="p-8 max-w-3xl">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-white">Enrichment</h1>
-          <p className="text-gray-400 mt-1">Upload a requirements file first.</p>
-        </div>
-        <Link to="/" className="btn-primary inline-flex items-center gap-2">
-          <Database size={15} />
-          Upload Requirements
-        </Link>
-      </div>
-    )
   }
 
   return (
@@ -386,15 +161,15 @@ export default function EnrichmentPage() {
           <p className="text-gray-400 max-w-3xl">
             Run LLM enrichment, inspect domain context, then cluster with base, enriched, or hybrid embeddings.
             Base clustering is the Phase 1 behavior. Hybrid uses the original requirement plus LLM-enriched context.
-            Local runs the real on-device model (qwen2.5:3b); Mock is an offline stand-in for testing only.
+            Local runs the real on-device model; Mock is an offline stand-in for testing only.
           </p>
         </div>
         <div className="flex gap-2">
-          <Link to={`/scatter/${selectedSessionId}`} className="btn-secondary text-sm flex items-center gap-2">
+          <Link to={`/s/${sessionId}/scatter`} className="btn-secondary text-sm flex items-center gap-2">
             <Activity size={14} />
             Scatter
           </Link>
-          <Link to={`/graph/${selectedSessionId}`} className="btn-secondary text-sm flex items-center gap-2">
+          <Link to={`/s/${sessionId}/graph`} className="btn-secondary text-sm flex items-center gap-2">
             <Network size={14} />
             Graph
           </Link>
@@ -402,103 +177,35 @@ export default function EnrichmentPage() {
       </div>
 
       {error && <Alert text={error} tone="red" />}
+      {resultsQ.error && <Alert text={getErrorMessage(resultsQ.error, 'Failed to load enrichment results.')} tone="red" />}
       {notice && <Alert text={notice} tone="emerald" icon={CheckCircle} />}
 
       <div className="grid lg:grid-cols-[380px_minmax(0,1fr)] gap-6">
         <div className="space-y-6">
           <section className="card p-4 space-y-4">
-            <h2 className="text-sm font-semibold text-gray-200">Session And Provider</h2>
-            <div>
-              <label htmlFor="session-select" className="block text-xs font-medium text-gray-400 mb-1.5">Session</label>
-              <select
-                id="session-select"
-                value={selectedSessionId}
-                onChange={e => setSelectedSessionId(e.target.value)}
-                className="input text-sm w-full"
-              >
-                {sessions.map(session => (
-                  <option key={session.id} value={session.id}>
-                    {session.name || session.filename} - {session.total_requirements} requirements
-                  </option>
-                ))}
-              </select>
-              {selectedSession && <p className="text-xs text-gray-500 mt-1">{selectedSession.filename}</p>}
-            </div>
-
+            <h2 className="text-sm font-semibold text-gray-200">Provider</h2>
             <SelectControl
               id="provider-name"
               label="Provider"
-              value={enrichmentOptions.provider_name}
-              onChange={value => updateEnrichmentOption('provider_name', value)}
+              value={provider}
+              onChange={setProvider}
               options={[
+                ['', 'Server default'],
                 ['local', 'Local LLM (on-device)'],
-                ['openai_compatible', 'Cloud LLM'],
+                ['openai', 'Cloud LLM'],
                 ['mock', 'Mock (testing only)'],
               ]}
             />
-            <SelectControl
-              id="enrichment-mode"
-              label="Recommended embedding mode"
-              value={enrichmentOptions.embedding_mode}
-              onChange={value => updateEnrichmentOption('embedding_mode', value)}
-              options={[
-                ['hybrid', 'hybrid'],
-                ['enriched', 'enriched'],
-              ]}
-            />
-
-            <div className="grid grid-cols-3 gap-3">
-              <NumberControl
-                id="batch-size"
-                label="Batch"
-                min={1}
-                max={64}
-                value={enrichmentOptions.batch_size}
-                error={validation.batch_size}
-                onChange={value => updateEnrichmentOption('batch_size', clampNumber(value, 1, 64))}
-              />
-              <NumberControl
-                id="max-concurrency"
-                label="Concurrency"
-                min={1}
-                max={16}
-                value={enrichmentOptions.max_concurrency}
-                error={validation.max_concurrency}
-                onChange={value => updateEnrichmentOption('max_concurrency', clampNumber(value, 1, 16))}
-              />
-              <NumberControl
-                id="timeout-seconds"
-                label="Timeout"
-                min={1}
-                max={120}
-                value={enrichmentOptions.timeout_seconds}
-                error={validation.timeout_seconds}
-                onChange={value => updateEnrichmentOption('timeout_seconds', clampNumber(value, 1, 120))}
-              />
-            </div>
-
-            <Toggle label="Force refresh" checked={enrichmentOptions.force_refresh} onChange={value => updateEnrichmentOption('force_refresh', value)} />
-            <Toggle label="Use file cache" checked={enrichmentOptions.use_cache} onChange={value => updateEnrichmentOption('use_cache', value)} />
-            <Toggle label="Fail fast" checked={enrichmentOptions.fail_fast} onChange={value => updateEnrichmentOption('fail_fast', value)} />
-
             <div className="flex gap-2 pt-2">
-              <button
-                type="button"
-                onClick={handleStartEnrichment}
-                disabled={enriching || hasValidationErrors}
-                className="btn-primary flex items-center gap-2"
-              >
+              <button type="button" onClick={handleStartEnrichment} disabled={enriching} className="btn-primary flex items-center gap-2">
                 {enriching ? <Loader size={15} className="animate-spin" /> : <Sparkles size={15} />}
                 Start Enrichment
               </button>
-              <button type="button" onClick={() => loadStatus()} className="btn-secondary text-sm flex items-center gap-2">
-                <RefreshCw size={14} />
-                Refresh Status
-              </button>
             </div>
+            {enriching && <JobProgress job={enrichJob.job} onCancel={enrichJob.cancel} title="Enriching" />}
           </section>
 
-          <EnrichmentStatusCard status={status} loading={loadingStatus || enriching} />
+          <EnrichmentStatusCard status={status} loading={resultsQ.loading || enriching} />
 
           <section className="card p-4 space-y-4">
             <h2 className="text-sm font-semibold text-gray-200">Clustering Controls</h2>
@@ -509,9 +216,9 @@ export default function EnrichmentPage() {
                 min={0}
                 max={1}
                 step={0.05}
-                value={clusterOptions.similarity_threshold}
-                error={validation.similarity_threshold}
-                onChange={value => updateClusterOption('similarity_threshold', Number(value))}
+                value={clusterOptions.sim_threshold}
+                error={validation.sim_threshold}
+                onChange={value => updateClusterOption('sim_threshold', Number(value))}
               />
               <OptionalNumberControl
                 id="min-cluster-size"
@@ -531,9 +238,6 @@ export default function EnrichmentPage() {
               />
             </div>
 
-            <Toggle label="Embedding comparison" checked={clusterOptions.enable_embedding_comparison} onChange={value => updateClusterOption('enable_embedding_comparison', value)} />
-            <Toggle label="Run ablation" checked={clusterOptions.run_ablation} onChange={value => updateClusterOption('run_ablation', value)} />
-
             {!enrichmentReady && (
               <p className="text-xs text-amber-300">{MISSING_ENRICHMENT_MESSAGE}</p>
             )}
@@ -545,44 +249,21 @@ export default function EnrichmentPage() {
               <ClusterButton mode="enriched" loading={clustering} disabled={!enrichmentReady} onClick={() => handleCluster('enriched')} />
             </div>
 
-            {clusterProgress && (
-              <div className="bg-gray-950/50 border border-gray-800 rounded-lg p-3">
-                <div className="flex items-center justify-between text-xs text-gray-400 mb-2">
-                  <span>{clusterProgress.step}</span>
-                  <span>{clusterProgress.progress ?? 0}%</span>
-                </div>
-                <div className="h-1.5 bg-gray-800 rounded-full overflow-hidden">
-                  <div className="h-full bg-brand-500" style={{ width: `${clusterProgress.progress ?? 0}%` }} />
-                </div>
-                {clusterProgress.message && <p className="text-xs text-gray-500 mt-2">{clusterProgress.message}</p>}
-              </div>
-            )}
+            {clustering && <JobProgress job={clusterJob.job} onCancel={clusterJob.cancel} title="Clustering" />}
           </section>
         </div>
 
         <div className="space-y-6 min-w-0">
-          <DomainVocabularyTags terms={vocabularyForDisplay} />
+          <DomainVocabularyTags terms={vocabulary} />
 
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-gray-200">Enrichment Results</h2>
-            <button type="button" onClick={() => loadResults()} className="btn-secondary text-sm flex items-center gap-2">
-              {loadingResults ? <Loader size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+            <button type="button" onClick={resultsQ.reload} className="btn-secondary text-sm flex items-center gap-2">
+              {resultsQ.loading ? <Loader size={14} className="animate-spin" /> : <RefreshCw size={14} />}
               Load Results
             </button>
           </div>
           <EnrichmentResultsTable results={results} requirements={requirements} />
-
-          {qualityReport?.aggregate && (
-            <div className="card p-4">
-              <h2 className="text-sm font-semibold text-gray-200 mb-3">Quality Summary</h2>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <Metric label="Succeeded" value={qualityReport.succeeded ?? 0} />
-                <Metric label="Failed" value={qualityReport.failed ?? 0} />
-                <Metric label="Mean risk" value={qualityReport.aggregate.mean_hallucination_risk_score ?? '-'} />
-                <Metric label="Mean confidence" value={qualityReport.aggregate.mean_adjusted_confidence_score ?? '-'} />
-              </div>
-            </div>
-          )}
 
           {clusterResult && (
             <section className="space-y-4">
@@ -593,16 +274,14 @@ export default function EnrichmentPage() {
                       <CheckCircle size={16} />
                       Clustering Complete
                     </div>
-                    <p className="text-sm text-gray-400 mt-1">
-                      {clusterResult.total_clusters} clusters, {clusterResult.noise_count} noise points using {clusterResult.embedding_mode || 'selected'} mode.
-                    </p>
+                    <p className="text-sm text-gray-400 mt-1">Using {clusterResult.embedding_mode} embeddings.</p>
                   </div>
                   <div className="flex gap-2">
-                    <Link to={`/scatter/${selectedSessionId}`} className="btn-primary text-sm flex items-center gap-2">
+                    <Link to={`/s/${sessionId}/scatter`} className="btn-primary text-sm flex items-center gap-2">
                       Scatter
                       <ChevronRight size={14} />
                     </Link>
-                    <Link to={`/graph/${selectedSessionId}`} className="btn-secondary text-sm">Graph</Link>
+                    <Link to={`/s/${sessionId}/graph`} className="btn-secondary text-sm">Graph</Link>
                   </div>
                 </div>
               </div>
@@ -610,8 +289,6 @@ export default function EnrichmentPage() {
               <AblationReportPanel report={clusterResult.ablation_report} />
             </section>
           )}
-
-
         </div>
       </div>
     </div>
@@ -663,15 +340,6 @@ function OptionalNumberControl({ id, label, value, onChange, error, min }) {
   )
 }
 
-function Toggle({ label, checked, onChange }) {
-  return (
-    <label className="flex items-center justify-between gap-3 text-sm text-gray-400">
-      <span>{label}</span>
-      <input type="checkbox" checked={checked} onChange={e => onChange(e.target.checked)} className="rounded accent-brand-500" />
-    </label>
-  )
-}
-
 function ClusterButton({ mode, loading, disabled, onClick }) {
   const title = disabled ? MISSING_ENRICHMENT_MESSAGE : `Run ${mode} clustering`
   return (
@@ -685,14 +353,5 @@ function ClusterButton({ mode, loading, disabled, onClick }) {
       {loading ? <Loader size={15} className="animate-spin" /> : mode === 'base' ? <Play size={15} /> : <GitCompare size={15} />}
       Run {mode.charAt(0).toUpperCase() + mode.slice(1)} Clustering
     </button>
-  )
-}
-
-function Metric({ label, value }) {
-  return (
-    <div className="bg-gray-950/50 border border-gray-800 rounded-lg p-3">
-      <div className="text-lg font-semibold text-white">{typeof value === 'number' ? value.toFixed(3) : value}</div>
-      <div className="text-xs text-gray-500">{label}</div>
-    </div>
   )
 }

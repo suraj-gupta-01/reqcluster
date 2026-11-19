@@ -1,51 +1,40 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { Loader, Info } from 'lucide-react'
-import { getRequirements, getClusters, getFeedbackQueue } from '../utils/api.js'
+import { getRequirements, getClusters, getFeedback } from '../api/endpoints.js'
+import { useApi } from '../hooks/useApi.js'
+import { useSession } from '../state/SessionContext.jsx'
+import { getErrorMessage } from '../utils/format.js'
+import SessionGate from '../components/SessionGate.jsx'
 import { getClusterColor } from '../utils/colors.js'
 
 export default function ScatterPage() {
-  const { sessionId } = useParams()
+  return <SessionGate><Scatter /></SessionGate>
+}
+
+function Scatter() {
+  const { sessionId, session } = useSession()
   const navigate = useNavigate()
   const plotRef = useRef(null)
 
-  const [requirements, setRequirements] = useState([])
-  const [clusters, setClusters] = useState([])
-  const [corrections, setCorrections] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const reqQ = useApi(async (o) => {
+    const items = []
+    for (let page = 1; ; page++) {
+      const r = await getRequirements(sessionId, { page, page_size: 1000 }, o)
+      items.push(...r.items)
+      if (items.length >= r.total || r.items.length === 0) return { items }
+    }
+  }, [sessionId])
+  const clustersQ = useApi((o) => getClusters(sessionId, o), [sessionId])
+  const fbQ = useApi((o) => getFeedback(sessionId, undefined, o), [sessionId])
+  const requirements = useMemo(() => (reqQ.data?.items || []).filter(r => r.x != null), [reqQ.data])
+  const clusters = useMemo(() => clustersQ.data || [], [clustersQ.data])
+  const corrections = useMemo(() => fbQ.data || [], [fbQ.data])
+  const loading = reqQ.loading || clustersQ.loading
+  const error = reqQ.error || clustersQ.error
   const [selected, setSelected] = useState(null)
   const [filterCluster, setFilterCluster] = useState('all')
   const [showNoise, setShowNoise] = useState(true)
-  const [viewMode, setViewMode] = useState('latest')
-  const [latestMode, setLatestMode] = useState('latest')
-
-  useEffect(() => {
-    let cancelled = false
-    const load = async () => {
-      try {
-        const [reqs, clus, queue] = await Promise.all([
-          getRequirements(parseInt(sessionId)),
-          getClusters(parseInt(sessionId)),
-          getFeedbackQueue(parseInt(sessionId)),
-        ])
-        if (!cancelled) {
-          setRequirements(reqs)
-          setClusters(clus)
-          setCorrections(queue)
-          const storedMode = localStorage.getItem(`reqcluster:lastEmbeddingMode:${sessionId}`)
-          setLatestMode(storedMode || 'latest')
-          setViewMode(storedMode || 'latest')
-        }
-      } catch {
-        if (!cancelled) setError('Failed to load data.')
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
-    }
-    load()
-    return () => { cancelled = true }
-  }, [sessionId])
 
   const correctionMap = useMemo(() => {
     const map = {}
@@ -69,7 +58,7 @@ export default function ScatterPage() {
       // Group by cluster
       const clusterMap = {}
       requirements.forEach(r => {
-        const cid = r.cluster_id ?? -1
+        const cid = r.is_noise ? -1 : (r.cluster_id ?? -1)
         if (!clusterMap[cid]) clusterMap[cid] = []
         clusterMap[cid].push(r)
       })
@@ -111,22 +100,20 @@ export default function ScatterPage() {
           type: 'scattergl',
           mode: 'markers',
           name,
-          x: reqs.map(r => r.umap_x),
-          y: reqs.map(r => r.umap_y),
+          x: reqs.map(r => r.x),
+          y: reqs.map(r => r.y),
           text: reqs.map(r => r.req_id),
           customdata: reqs.map(r => ({
             id: r.id,
             req_id: r.req_id,
             text: r.text,
-            module: r.module,
             cluster_id: r.cluster_id,
-            prob: r.membership_prob,
+            prob: r.probability,
             correction: correctionMap[r.id] || null,
           })),
           hovertemplate:
             '<b>%{customdata.req_id}</b><br>' +
             '%{customdata.text}<br>' +
-            '<i>Module: %{customdata.module}</i><br>' +
             '<i>Cluster: %{customdata.cluster_id}</i><br>' +
             '<i>Membership: %{customdata.prob:.2f}</i>' +
             '<extra></extra>',
@@ -213,9 +200,8 @@ export default function ScatterPage() {
     </div>
   )
 
-  if (error) return <div className="p-8 text-red-400">{error}</div>
-
-  const beforeAfterUnavailable = viewMode !== 'latest' && viewMode !== latestMode
+  if (error) return <div className="p-8 text-red-400">{getErrorMessage(error, 'Failed to load data.')}</div>
+  if (session?.total_clusters === 0) return <div className="p-8 text-gray-400 text-sm">All requirements were classified as noise (0 clusters). Re-run clustering with a smaller min_cluster_size.</div>
 
   return (
     <div className="p-6 h-screen flex flex-col gap-4">
@@ -223,27 +209,11 @@ export default function ScatterPage() {
       <div className="flex items-center justify-between flex-shrink-0">
         <div>
           <h1 className="text-xl font-bold text-white">UMAP Scatter Plot</h1>
-          <div className="flex items-center gap-2 mt-2">
-            <span className="badge bg-gray-800 text-gray-400">Latest mode: {latestMode}</span>
-            <span className="text-xs text-gray-600">Latest clustering result only</span>
-          </div>
           <p className="text-sm text-gray-400 mt-0.5">
             {requirements.length} requirements · click a point to inspect
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <label htmlFor="scatter-view-mode" className="text-sm text-gray-400">View</label>
-          <select
-            id="scatter-view-mode"
-            value={viewMode}
-            onChange={e => setViewMode(e.target.value)}
-            className="input text-sm py-1.5"
-          >
-            <option value="latest">Latest result</option>
-            <option value="base">Base</option>
-            <option value="enriched">Enriched</option>
-            <option value="hybrid">Hybrid</option>
-          </select>
           <select
             value={filterCluster}
             onChange={e => setFilterCluster(e.target.value)}
@@ -266,13 +236,6 @@ export default function ScatterPage() {
         </div>
       </div>
 
-      {beforeAfterUnavailable && (
-        <div className="card p-3 border-amber-900/30 bg-amber-950/10 text-sm text-amber-300">
-          Before/after embedding visualization requires both base and enriched/hybrid clustering results.
-          The backend currently persists the latest clustering result only. Re-run clustering from Enrichment with the selected mode to update this view.
-        </div>
-      )}
-
       {/* Main content */}
       <div className="flex gap-4 flex-1 min-h-0">
         {/* Plot */}
@@ -289,10 +252,6 @@ export default function ScatterPage() {
             </div>
             <p className="text-sm text-gray-200 leading-relaxed">{selected.text}</p>
             <div className="space-y-2 text-xs">
-              <div className="flex justify-between">
-                <span className="text-gray-500">Module</span>
-                <span className="text-gray-300">{selected.module || '-'}</span>
-              </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">Cluster</span>
                 <span className="flex items-center gap-1.5">
@@ -322,14 +281,14 @@ export default function ScatterPage() {
                 </div>
                 <p className="italic mb-1">"{selected.correction.comments || 'No comment'}"</p>
                 <div className="text-[10px] opacity-60">
-                  By: {selected.correction.applied_by} (Conf: {Math.round(selected.correction.confidence_score * 100)}%)
+                  By: {selected.correction.applied_by} (Conf: {Math.round(selected.correction.confidence * 100)}%)
                 </div>
               </div>
             )}
 
             {selected.cluster_id !== -1 && (
               <button
-                onClick={() => navigate(`/cluster/${sessionId}/${selected.cluster_id}`)}
+                onClick={() => navigate(`/s/${sessionId}/clusters/${selected.cluster_id}`)}
                 className="btn-secondary text-xs py-1.5 mt-auto"
               >
                 View Cluster →

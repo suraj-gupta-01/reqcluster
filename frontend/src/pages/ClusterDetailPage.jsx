@@ -1,7 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { ChevronLeft, Loader, Tag } from 'lucide-react'
-import { getClusterDetail, getClusters, submitFeedback } from '../utils/api.js'
+import { getClusterDetail, getClusters, submitFeedback } from '../api/endpoints.js'
+import { useApi } from '../hooks/useApi.js'
+import { useSession } from '../state/SessionContext.jsx'
+import { getErrorMessage } from '../utils/format.js'
+import SessionGate from '../components/SessionGate.jsx'
 import { getClusterColor } from '../utils/colors.js'
 import MoveToClusterModal from '../components/MoveToClusterModal.jsx'
 
@@ -19,13 +23,20 @@ function MembershipBar({ prob }) {
 }
 
 export default function ClusterDetailPage() {
-  const { sessionId, clusterId } = useParams()
+  return <SessionGate><ClusterDetail /></SessionGate>
+}
+
+function ClusterDetail() {
+  const { clusterId } = useParams()
+  const { sessionId, reloadSession } = useSession()
   const navigate = useNavigate()
 
-  const [detail, setDetail] = useState(null)
-  const [allClusters, setAllClusters] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const detailQ = useApi((o) => getClusterDetail(sessionId, clusterId, o), [sessionId, clusterId])
+  const clustersQ = useApi((o) => getClusters(sessionId, o), [sessionId])
+  const detail = detailQ.data
+  const allClusters = clustersQ.data || []
+  const loading = (detailQ.loading && !detail) || (clustersQ.loading && !clustersQ.data)
+  const error = detailQ.error || clustersQ.error
   const [search, setSearch] = useState('')
   const [sortBy, setSortBy] = useState('prob_desc')
 
@@ -35,52 +46,22 @@ export default function ClusterDetailPage() {
   const handleReassignSubmit = async (payload) => {
     if (!selectedRequirement) return
     try {
-      await submitFeedback({
-        session_id: parseInt(sessionId, 10),
-        requirement_id: selectedRequirement.id,
-        ...payload
-      })
-      // Reload cluster detail and all clusters
-      const [d, clus] = await Promise.all([
-        getClusterDetail(parseInt(sessionId), parseInt(clusterId)),
-        getClusters(parseInt(sessionId)),
-      ])
-      setDetail(d)
-      setAllClusters(clus)
+      await submitFeedback(sessionId, { requirement_id: selectedRequirement.id, ...payload })
+      detailQ.reload()
+      clustersQ.reload()
+      reloadSession()
       setIsModalOpen(false)
       setSelectedRequirement(null)
     } catch (err) {
-      alert(err?.response?.data?.detail || 'Failed to reassign cluster.')
+      alert(getErrorMessage(err, 'Failed to reassign cluster.'))
     }
   }
-
-  useEffect(() => {
-    let cancelled = false
-    const load = async () => {
-      try {
-        const [d, clus] = await Promise.all([
-          getClusterDetail(parseInt(sessionId), parseInt(clusterId)),
-          getClusters(parseInt(sessionId)),
-        ])
-        if (!cancelled) {
-          setDetail(d)
-          setAllClusters(clus)
-        }
-      } catch {
-        if (!cancelled) setError('Failed to load cluster.')
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
-    }
-    load()
-    return () => { cancelled = true }
-  }, [sessionId, clusterId])
 
   const filtered = (detail?.requirements || [])
     .filter(r => !search || r.text.toLowerCase().includes(search.toLowerCase()) || r.req_id?.includes(search))
     .sort((a, b) => {
-      if (sortBy === 'prob_desc') return (b.membership_prob ?? 0) - (a.membership_prob ?? 0)
-      if (sortBy === 'prob_asc') return (a.membership_prob ?? 0) - (b.membership_prob ?? 0)
+      if (sortBy === 'prob_desc') return (b.probability ?? 0) - (a.probability ?? 0)
+      if (sortBy === 'prob_asc') return (a.probability ?? 0) - (b.probability ?? 0)
       if (sortBy === 'id') return (a.req_id || '').localeCompare(b.req_id || '')
       return 0
     })
@@ -90,9 +71,9 @@ export default function ClusterDetailPage() {
       <Loader size={24} className="animate-spin text-brand-400" />
     </div>
   )
-  if (error) return <div className="p-8 text-red-400">{error}</div>
+  if (error) return <div className="p-8 text-red-400">{getErrorMessage(error, 'Failed to load cluster.')}</div>
 
-  const cluster = detail?.cluster
+  const cluster = detail
   const color = getClusterColor(cluster?.cluster_id)
 
   // Navigate to prev/next cluster
@@ -104,7 +85,7 @@ export default function ClusterDetailPage() {
     <div className="p-8">
       {/* Back nav */}
       <Link
-        to={`/overview/${sessionId}`}
+        to={`/s/${sessionId}/overview`}
         className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-300 mb-6 transition-colors"
       >
         <ChevronLeft size={14} />
@@ -135,7 +116,7 @@ export default function ClusterDetailPage() {
           <div className="flex gap-2">
             {prevCluster && (
               <button
-                onClick={() => navigate(`/cluster/${sessionId}/${prevCluster.cluster_id}`)}
+                onClick={() => navigate(`/s/${sessionId}/clusters/${prevCluster.cluster_id}`)}
                 className="btn-secondary text-xs py-1 px-3"
               >
                 ← Previous
@@ -143,7 +124,7 @@ export default function ClusterDetailPage() {
             )}
             {nextCluster && (
               <button
-                onClick={() => navigate(`/cluster/${sessionId}/${nextCluster.cluster_id}`)}
+                onClick={() => navigate(`/s/${sessionId}/clusters/${nextCluster.cluster_id}`)}
                 className="btn-secondary text-xs py-1 px-3"
               >
                 Next →
@@ -208,20 +189,10 @@ export default function ClusterDetailPage() {
                   <span className="font-mono text-xs text-gray-500 mt-0.5 flex-shrink-0 w-20">{r.req_id}</span>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-gray-200 leading-relaxed">{r.text}</p>
-                    {(r.module || r.section) && (
-                      <div className="flex gap-2 mt-1.5">
-                        {r.module && (
-                          <span className="badge bg-gray-800 text-gray-400">{r.module}</span>
-                        )}
-                        {r.section && (
-                          <span className="badge bg-gray-800/60 text-gray-500">{r.section}</span>
-                        )}
-                      </div>
-                    )}
                   </div>
                   <div className="flex items-center gap-4 flex-shrink-0">
                     <div className="w-28 pt-1">
-                      <MembershipBar prob={r.membership_prob} />
+                      <MembershipBar prob={r.probability} />
                     </div>
                     <button
                       type="button"

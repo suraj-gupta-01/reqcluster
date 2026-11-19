@@ -1,7 +1,10 @@
-import { useState, useEffect } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { Layers, Hash, AlertTriangle, ChevronRight, Loader, Tag, Sparkles, Wrench } from 'lucide-react'
-import { getSession, getClusters, getEnrichmentStatus, getSuggestions } from '../utils/api.js'
+import { getClusters, getEnrichment, getSuggestions } from '../api/endpoints.js'
+import { useApi } from '../hooks/useApi.js'
+import { useSession } from '../state/SessionContext.jsx'
+import { getErrorMessage } from '../utils/format.js'
+import SessionGate from '../components/SessionGate.jsx'
 import { getClusterColor } from '../utils/colors.js'
 
 const PROVIDER_LABELS = {
@@ -30,7 +33,7 @@ function ClusterRow({ cluster, sessionId }) {
 
   return (
     <div
-      onClick={() => navigate(`/cluster/${sessionId}/${cluster.cluster_id}`)}
+      onClick={() => navigate(`/s/${sessionId}/clusters/${cluster.cluster_id}`)}
       className="flex items-center gap-4 px-4 py-3 rounded-lg hover:bg-gray-800 cursor-pointer transition-colors group"
     >
       {/* Color dot */}
@@ -71,60 +74,36 @@ function ClusterRow({ cluster, sessionId }) {
   )
 }
 
-export default function OverviewPage({ onStatusChange }) {
-  const { sessionId } = useParams()
-  const [session, setSession] = useState(null)
-  const [clusters, setClusters] = useState([])
-  const [enrichmentStatus, setEnrichmentStatus] = useState(null)
-  const [refinementSuggestions, setRefinementSuggestions] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+export default function OverviewPage() {
+  return <SessionGate><Overview /></SessionGate>
+}
 
-  useEffect(() => {
-    let cancelled = false
-    // Reset per-session state on navigation so a previous session's clusters never
-    // bleed into the one being viewed.
-    setSession(null)
-    setClusters([])
-    setEnrichmentStatus(null)
-    setRefinementSuggestions([])
-    setError(null)
-    setLoading(true)
-    const load = async () => {
-      try {
-        const [sess, clus] = await Promise.all([
-          getSession(parseInt(sessionId)),
-          getClusters(parseInt(sessionId)),
-        ])
-        getEnrichmentStatus(parseInt(sessionId))
-          .then(status => { if (!cancelled) setEnrichmentStatus(status) })
-          .catch(() => { })
-        getSuggestions(parseInt(sessionId))
-          .then(sugs => { if (!cancelled) setRefinementSuggestions(sugs) })
-          .catch(() => { })
-        if (!cancelled) {
-          setSession(sess)
-          setClusters(clus)
-          onStatusChange?.(sess.status)
-        }
-      } catch {
-        if (!cancelled) setError('Failed to load session data.')
-      } finally {
-        if (!cancelled) setLoading(false)
+function Overview() {
+  const { sessionId, session } = useSession()
+  const clustersQ = useApi((o) => getClusters(sessionId, o), [sessionId])
+  const enrichQ = useApi((o) => getEnrichment(sessionId, o), [sessionId])
+  const sugsQ = useApi((o) => getSuggestions(sessionId, undefined, o), [sessionId])
+  const clusters = clustersQ.data || []
+  const refinementSuggestions = sugsQ.data || []
+  const enr = enrichQ.data || []
+  const enrichmentStatus = enr.length
+    ? {
+        total: enr.length,
+        succeeded: enr.filter(e => e.status === 'succeeded').length,
+        warnings: enr.flatMap(e => e.warnings || []),
+        provider: enr[0].provider,
+        status: 'available',
       }
-    }
-    load()
-    return () => { cancelled = true }
-  }, [sessionId, onStatusChange])
+    : null
 
-  if (loading) return (
+  if (clustersQ.loading && !clustersQ.data) return (
     <div className="flex items-center justify-center h-64">
       <Loader size={24} className="animate-spin text-brand-400" />
     </div>
   )
 
-  if (error) return (
-    <div className="p-8 text-red-400">{error}</div>
+  if (clustersQ.error) return (
+    <div className="p-8 text-red-400">{getErrorMessage(clustersQ.error, 'Failed to load session data.')}</div>
   )
 
   const noiseCount = session?.noise_count || 0
@@ -135,7 +114,7 @@ export default function OverviewPage({ onStatusChange }) {
     <div className="p-8">
       {/* Header */}
       <div className="mb-6">
-        <div className="text-xs text-gray-500 mb-1 font-mono">{session?.filename}</div>
+        <div className="text-xs text-gray-500 mb-1 font-mono">{session?.name}</div>
         <h1 className="text-2xl font-bold text-white">Cluster Overview</h1>
         <p className="text-gray-400 mt-1">
           {session?.status === 'done'
@@ -159,24 +138,24 @@ export default function OverviewPage({ onStatusChange }) {
 
       {/* Quick links */}
       <div className="flex gap-3 mb-8">
-        <Link to={`/scatter/${sessionId}`} className="btn-secondary flex items-center gap-2 text-sm">
+        <Link to={`/s/${sessionId}/scatter`} className="btn-secondary flex items-center gap-2 text-sm">
           <span>Scatter Plot</span>
           <ChevronRight size={14} />
         </Link>
-        <Link to={`/graph/${sessionId}`} className="btn-secondary flex items-center gap-2 text-sm">
+        <Link to={`/s/${sessionId}/graph`} className="btn-secondary flex items-center gap-2 text-sm">
           <span>Similarity Graph</span>
           <ChevronRight size={14} />
         </Link>
-        <Link to={`/requirements/${sessionId}`} className="btn-secondary flex items-center gap-2 text-sm">
+        <Link to={`/s/${sessionId}/requirements`} className="btn-secondary flex items-center gap-2 text-sm">
           <span>All Requirements</span>
           <ChevronRight size={14} />
         </Link>
-        <Link to="/enrichment" className="btn-secondary flex items-center gap-2 text-sm">
+        <Link to={`/s/${sessionId}/enrichment`} className="btn-secondary flex items-center gap-2 text-sm">
           <Sparkles size={14} />
           <span>Enrichment</span>
           <ChevronRight size={14} />
         </Link>
-        <Link to="/refinement" className="btn-secondary flex items-center gap-2 text-sm">
+        <Link to={`/s/${sessionId}/refinement`} className="btn-secondary flex items-center gap-2 text-sm">
           <Wrench size={14} />
           <span>Refinement</span>
           <ChevronRight size={14} />
@@ -237,9 +216,9 @@ export default function OverviewPage({ onStatusChange }) {
             </div>
             <div>
               <div className="text-lg font-semibold text-emerald-400">
-                {refinementSuggestions.filter(s => s.status === 'applied').length}
+                {refinementSuggestions.filter(s => s.status === 'accepted').length}
               </div>
-              <div className="text-xs text-gray-500">Applied</div>
+              <div className="text-xs text-gray-500">Accepted</div>
             </div>
             <div>
               <div className="text-lg font-semibold text-red-400">
@@ -260,11 +239,11 @@ export default function OverviewPage({ onStatusChange }) {
         <div className="p-2 divide-y divide-gray-800/50">
           {clusters.length === 0 ? (
             <div className="text-center py-8 text-gray-500 text-sm">
-              No clusters found. Try adjusting parameters and re-running.
+              {totalClusters === 0 ? 'All requirements were classified as noise (0 clusters). ' : ''}No clusters found. Try lowering min_cluster_size on the Upload page and re-running.
             </div>
           ) : (
             clusters.map((c) => (
-              <ClusterRow key={c.id} cluster={c} sessionId={sessionId} />
+              <ClusterRow key={c.cluster_id} cluster={c} sessionId={sessionId} />
             ))
           )}
         </div>

@@ -1,39 +1,30 @@
-import { useState, useEffect, useRef } from 'react'
-import { useParams } from 'react-router-dom'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { Loader, Info, Sliders } from 'lucide-react'
-import { getGraph, getClusters } from '../utils/api.js'
+import { getGraph, getClusters } from '../api/endpoints.js'
+import { useApi } from '../hooks/useApi.js'
+import { useSession } from '../state/SessionContext.jsx'
+import { getErrorMessage } from '../utils/format.js'
+import SessionGate from '../components/SessionGate.jsx'
 import { getClusterColor } from '../utils/colors.js'
 
 export default function GraphPage() {
-  const { sessionId } = useParams()
+  return <SessionGate><Graph /></SessionGate>
+}
+
+function Graph() {
+  const { sessionId } = useSession()
   const plotRef = useRef(null)
 
-  const [graphData, setGraphData] = useState(null)
-  const [clusters, setClusters] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const graphQ = useApi((o) => getGraph(sessionId, o), [sessionId])
+  const clustersQ = useApi((o) => getClusters(sessionId, o), [sessionId])
+  const graphData = graphQ.data
+  const clusters = useMemo(() => clustersQ.data || [], [clustersQ.data])
+  const loading = graphQ.loading || clustersQ.loading
+  const error = graphQ.error || clustersQ.error
   const [selected, setSelected] = useState(null)
   const [minWeight, setMinWeight] = useState(0.65)
   const [showLabels, setShowLabels] = useState(false)
-
-  useEffect(() => {
-    let cancelled = false
-    const load = async () => {
-      try {
-        const [graph, clus] = await Promise.all([
-          getGraph(parseInt(sessionId)),
-          getClusters(parseInt(sessionId)),
-        ])
-        if (!cancelled) { setGraphData(graph); setClusters(clus) }
-      } catch {
-        if (!cancelled) setError('Failed to load graph data.')
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
-    }
-    load()
-    return () => { cancelled = true }
-  }, [sessionId])
+  const nodeById = useMemo(() => new Map((graphData?.nodes || []).map(n => [n.id, n])), [graphData])
 
   useEffect(() => {
     if (!graphData || !plotRef.current) return
@@ -51,9 +42,9 @@ export default function GraphPage() {
       // Edge traces
       const edgeX = [], edgeY = []
       filteredEdges.forEach(edge => {
-        const src = nodes[edge.source]
-        const tgt = nodes[edge.target]
-        if (!src || !tgt) return
+        const src = nodeById.get(edge.source)
+        const tgt = nodeById.get(edge.target)
+        if (!src || !tgt || src.x == null || tgt.x == null) return
         edgeX.push(src.x, tgt.x, null)
         edgeY.push(src.y, tgt.y, null)
       })
@@ -68,7 +59,7 @@ export default function GraphPage() {
       // Node traces grouped by cluster
       const clusterMap = {}
       nodes.forEach(node => {
-        const cid = node.cluster_id
+        const cid = node.cluster_id ?? -1
         if (!clusterMap[cid]) clusterMap[cid] = []
         clusterMap[cid].push(node)
       })
@@ -83,13 +74,13 @@ export default function GraphPage() {
           name: label,
           x: nodeList.map(n => n.x),
           y: nodeList.map(n => n.y),
-          text: showLabels ? nodeList.map(n => n.node_id) : [],
+          text: showLabels ? nodeList.map(n => n.req_id) : [],
           textposition: 'top center',
           textfont: { size: 8, color: '#9ca3af' },
           customdata: nodeList.map(n => ({
-            req_id: n.node_id,
-            text: n.requirement_text,
-            cluster_id: n.cluster_id,
+            req_id: n.req_id,
+            text: n.text,
+            cluster_id: n.cluster_id ?? -1,
           })),
           hovertemplate:
             '<b>%{customdata.req_id}</b><br>' +
@@ -138,7 +129,7 @@ export default function GraphPage() {
     }
     draw()
     return () => { disposed = true }
-  }, [graphData, clusters, minWeight, showLabels])
+  }, [graphData, clusters, nodeById, minWeight, showLabels])
 
   // Purge Plotly (frees the WebGL context + listeners) only on unmount.
   useEffect(() => {
@@ -157,7 +148,8 @@ export default function GraphPage() {
       <Loader size={24} className="animate-spin text-brand-400" />
     </div>
   )
-  if (error) return <div className="p-8 text-red-400">{error}</div>
+  if (error) return <div className="p-8 text-red-400">{getErrorMessage(error, 'Failed to load graph data.')}</div>
+  if (!graphData?.nodes?.length) return <div className="p-8 text-gray-400 text-sm">No graph nodes. All requirements may be noise or clustering produced no data.</div>
 
   const nodeCount = graphData?.nodes?.length || 0
   const allEdges = graphData?.edges || []

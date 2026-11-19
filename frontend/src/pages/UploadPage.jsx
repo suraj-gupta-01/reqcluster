@@ -1,64 +1,26 @@
 
 
 import { useState, useRef, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { Upload, FileText, CheckCircle, AlertCircle, Loader, ChevronRight, Settings, X, BookOpen, Sparkles, Wrench, Workflow, Brain, Network, Activity } from 'lucide-react'
-import { uploadRequirements, runClustering, getProgress, getSession } from '../utils/api.js'
-
-const STEP_ORDER = ['embedding', 'umap', 'clustering', 'labeling', 'graph', 'done']
-const STEP_LABELS = {
-  embedding: 'Generating Embeddings',
-  umap: 'UMAP Reduction',
-  clustering: 'HDBSCAN Clustering',
-  labeling: 'c-TF-IDF Labeling',
-  graph: 'Building Similarity Graph',
-  done: 'Complete',
-}
-
-function ProgressStep({ step, currentStep, message }) {
-  const steps = STEP_ORDER.slice(0, -1)
-  const currentIdx = steps.indexOf(currentStep)
-  const thisIdx = steps.indexOf(step)
-
-  let state = 'pending'
-  if (currentStep === 'done') state = 'done'
-  else if (thisIdx < currentIdx) state = 'done'
-  else if (thisIdx === currentIdx) state = 'active'
-
-  return (
-    <div className={`flex items-center gap-3 py-2 transition-all ${state === 'pending' ? 'opacity-30' : ''}`}>
-      <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold
-        ${state === 'done' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
-        : state === 'active' ? 'bg-brand-600/30 text-brand-400 border border-brand-500/50'
-        : 'bg-gray-800 text-gray-600 border border-gray-700'}`}>
-        {state === 'done' ? '✓' : thisIdx + 1}
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className={`text-sm font-medium ${state === 'active' ? 'text-white' : state === 'done' ? 'text-emerald-400' : 'text-gray-500'}`}>
-          {STEP_LABELS[step]}
-        </div>
-        {state === 'active' && message && (
-          <div className="text-xs text-gray-500 mt-0.5 truncate">{message}</div>
-        )}
-      </div>
-      {state === 'active' && <Loader size={14} className="animate-spin text-brand-400 flex-shrink-0" />}
-    </div>
-  )
-}
+import { uploadSession, startClustering, listSessions } from '../api/endpoints.js'
+import { useApi } from '../hooks/useApi.js'
+import { useJob } from '../hooks/useJob.js'
+import { getErrorMessage, formatTimestamp } from '../utils/format.js'
+import JobProgress from '../components/JobProgress.jsx'
 
 export default function UploadPage({ onSessionCreated }) {
   const navigate = useNavigate()
   const fileInputRef = useRef(null)
-  const pollRef = useRef(null)
 
   const [dragOver, setDragOver] = useState(false)
   const [file, setFile] = useState(null)
   const [uploadResult, setUploadResult] = useState(null)
   const [phase, setPhase] = useState('idle') // idle | uploading | uploaded | clustering | done | error
   const [error, setError] = useState(null)
-  const [progress, setProgress] = useState({ step: 'idle', progress: 0, message: '' })
+  const [jobId, setJobId] = useState(null)
   const [showParams, setShowParams] = useState(false)
-  const [params, setParams] = useState({ min_cluster_size: '', min_samples: 3, similarity_threshold: 0.65 })
+  const [params, setParams] = useState({ min_cluster_size: '', min_samples: 3, sim_threshold: 0.5, top_k: 10, embedding_mode: 'base' })
 
   const validateAndSetFile = useCallback((f) => {
     if (!f.name.match(/\.(csv|xlsx|xls)$/i)) {
@@ -78,73 +40,61 @@ export default function UploadPage({ onSessionCreated }) {
     if (dropped) validateAndSetFile(dropped)
   }, [validateAndSetFile])
 
+  const sessions = useApi((o) => listSessions(o), [])
+
   const handleUpload = async () => {
     if (!file) return
     setPhase('uploading')
     setError(null)
     try {
-      const result = await uploadRequirements(file)
+      const result = await uploadSession(file)
       setUploadResult(result)
       setPhase('uploaded')
-      onSessionCreated?.(result.session_id, 'uploaded')
+      onSessionCreated?.(result.session.id, 'uploaded')
+      sessions.reload()
     } catch (err) {
-      setError(err.response?.data?.detail || 'Upload failed.')
+      setError(getErrorMessage(err, 'Upload failed.'))
       setPhase('error')
     }
   }
 
-  const startPolling = (sessionId) => {
-    if (pollRef.current) clearInterval(pollRef.current)
-    pollRef.current = setInterval(async () => {
-      try {
-        const prog = await getProgress(sessionId)
-        setProgress(prog)
-        if (prog.step === 'done' || prog.step === 'error') {
-          clearInterval(pollRef.current)
-          if (prog.step === 'done') {
-            const session = await getSession(sessionId)
-            onSessionCreated?.(sessionId, session.status)
-            setPhase('done')
-          } else {
-            setError(prog.message)
-            setPhase('error')
-          }
-        }
-      } catch {
-        clearInterval(pollRef.current)
-      }
-    }, 800)
-  }
+  const sid = uploadResult?.session.id
+  const { job, cancel } = useJob(jobId, (j) => {
+    if (j.status === 'succeeded') {
+      onSessionCreated?.(sid, 'done')
+      setPhase('done')
+    } else {
+      setError(j.status === 'cancelled' ? 'Clustering cancelled.' : j.error || 'Clustering failed.')
+      setPhase('uploaded')
+    }
+    setJobId(null)
+  })
 
   const handleCluster = async () => {
     if (!uploadResult) return
     setPhase('clustering')
-    setProgress({ step: 'embedding', progress: 0, message: 'Starting pipeline...' })
+    setError(null)
     try {
       const payload = {
-        session_id: uploadResult.session_id,
         min_samples: params.min_samples,
-        similarity_threshold: params.similarity_threshold,
+        sim_threshold: params.sim_threshold,
+        top_k: params.top_k,
+        embedding_mode: params.embedding_mode,
       }
       if (params.min_cluster_size) payload.min_cluster_size = parseInt(params.min_cluster_size)
-      startPolling(uploadResult.session_id)
-      await runClustering(payload)
+      setJobId((await startClustering(sid, payload)).id)
     } catch (err) {
-      clearInterval(pollRef.current)
-      setError(err.response?.data?.detail || 'Clustering failed.')
-      setPhase('error')
+      setError(getErrorMessage(err, 'Clustering failed.'))
+      setPhase('uploaded')
     }
   }
 
-  const goToOverview = () => navigate(`/overview/${uploadResult.session_id}`)
+  const goToOverview = () => navigate(`/s/${sid}/overview`)
 
   const reset = () => {
-    if (pollRef.current) clearInterval(pollRef.current)
     setFile(null); setUploadResult(null); setPhase('idle')
-    setError(null); setProgress({ step: 'idle', progress: 0, message: '' })
+    setError(null); setJobId(null)
   }
-
-  const overallPct = phase === 'done' ? 100 : phase === 'clustering' ? progress.progress : phase === 'uploaded' ? 0 : 0
 
   return (
     <div className="p-8 max-w-6xl animate-fade-up">
@@ -218,20 +168,13 @@ export default function UploadPage({ onSessionCreated }) {
           {uploadResult && phase !== 'idle' && (
             <div className="card p-4 flex gap-6">
               <div>
-                <div className="text-2xl font-bold text-white">{uploadResult.total_requirements}</div>
+                <div className="text-2xl font-bold text-white">{uploadResult.session.total_requirements}</div>
                 <div className="text-xs text-gray-500 mt-0.5">Requirements</div>
               </div>
-              {uploadResult.duplicates_removed > 0 && (
-                <div>
-                  <div className="text-2xl font-bold text-amber-400">{uploadResult.duplicates_removed}</div>
-                  <div className="text-xs text-gray-500 mt-0.5">Duplicates removed</div>
-                </div>
-              )}
-              {uploadResult.empty_removed > 0 && (
-                <div>
-                  <div className="text-2xl font-bold text-red-400">{uploadResult.empty_removed}</div>
-                  <div className="text-xs text-gray-500 mt-0.5">Empty removed</div>
-                </div>
+              {uploadResult.ingest_report.warnings.length > 0 && (
+                <ul className="text-xs text-amber-400 space-y-1 self-center">
+                  {uploadResult.ingest_report.warnings.map((w, i) => <li key={i}>{w}</li>)}
+                </ul>
               )}
             </div>
           )}
@@ -267,11 +210,28 @@ export default function UploadPage({ onSessionCreated }) {
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-400 mb-1.5">Similarity Threshold</label>
-                    <input type="number" min="0.5" max="0.99" step="0.05"
-                      value={params.similarity_threshold}
-                      onChange={e => setParams(p => ({ ...p, similarity_threshold: parseFloat(e.target.value) || 0.65 }))}
+                    <input type="number" min="0" max="1" step="0.05"
+                      value={params.sim_threshold}
+                      onChange={e => setParams(p => ({ ...p, sim_threshold: parseFloat(e.target.value) || 0.5 }))}
                       className="input text-sm w-full" />
                     <p className="text-xs text-gray-600 mt-1">For edge filtering in graph</p>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-400 mb-1.5">Top K</label>
+                    <input type="number" min="1"
+                      value={params.top_k}
+                      onChange={e => setParams(p => ({ ...p, top_k: parseInt(e.target.value) || 10 }))}
+                      className="input text-sm w-full" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-400 mb-1.5">Embedding Mode</label>
+                    <select value={params.embedding_mode}
+                      onChange={e => setParams(p => ({ ...p, embedding_mode: e.target.value }))}
+                      className="input text-sm w-full">
+                      <option value="base">base</option>
+                      <option value="enriched">enriched</option>
+                      <option value="hybrid">hybrid</option>
+                    </select>
                   </div>
                 </div>
               )}
@@ -279,25 +239,7 @@ export default function UploadPage({ onSessionCreated }) {
           )}
 
           {/* Pipeline progress */}
-          {phase === 'clustering' && (
-            <div className="card p-5">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-sm font-medium text-gray-300">Pipeline Running</span>
-                <span className="text-sm font-mono text-brand-400">{overallPct}%</span>
-              </div>
-              <div className="w-full h-1.5 bg-gray-800 rounded-full overflow-hidden mb-5">
-                <div className="h-full bg-brand-500 rounded-full transition-all duration-500"
-                  style={{ width: `${overallPct}%` }} />
-              </div>
-              <div className="divide-y divide-gray-800/50">
-                {STEP_ORDER.slice(0, -1).map(step => (
-                  <ProgressStep key={step} step={step}
-                    currentStep={progress.step}
-                    message={progress.message} />
-                ))}
-              </div>
-            </div>
-          )}
+          {phase === 'clustering' && <JobProgress job={job} onCancel={cancel} title="Pipeline Running" />}
 
           {/* Done state */}
           {phase === 'done' && (
@@ -334,6 +276,7 @@ export default function UploadPage({ onSessionCreated }) {
                   <span>Run Clustering Pipeline</span>
                   <ChevronRight size={15} />
                 </button>
+                <button onClick={goToOverview} className="btn-secondary text-sm">Open Overview</button>
                 <button onClick={reset} className="btn-secondary text-sm">Reset</button>
               </div>
             )}
@@ -341,6 +284,24 @@ export default function UploadPage({ onSessionCreated }) {
               <button onClick={reset} className="btn-secondary">Start Over</button>
             )}
           </div>
+
+          {/* Existing sessions */}
+          {sessions.data?.length > 0 && (
+            <div className="mt-8">
+              <p className="text-[11px] font-mono uppercase tracking-[0.18em] text-gray-500 mb-3">Sessions</p>
+              <div className="card divide-y divide-gray-800/50">
+                {sessions.data.map(s => (
+                  <Link key={s.id} to={`/s/${s.id}/overview`}
+                    className="flex items-center justify-between px-4 py-2.5 text-sm text-gray-300 hover:bg-gray-800">
+                    <span className="truncate">{s.name}</span>
+                    <span className="text-xs text-gray-500 flex-shrink-0 ml-4">
+                      {s.total_requirements} reqs · {s.status} · {formatTimestamp(s.created_at)}
+                    </span>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Format guide */}
           {phase === 'idle' && !file && (

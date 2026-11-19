@@ -1,5 +1,5 @@
 import { AlertTriangle, CheckCircle, Clock, Loader, XCircle } from 'lucide-react'
-import { formatTimestamp } from '../utils/api.js'
+import { formatTimestamp } from '../utils/format.js'
 
 const PROVIDER_LABELS = {
   mock: 'Mock',
