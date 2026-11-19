@@ -8,14 +8,12 @@ export default function MoveToClusterModal({
   onSubmit,
 }) {
   const [targetClusterId, setTargetClusterId] = useState('')
-  const [confidence, setConfidence] = useState(100)
   const [comments, setComments] = useState('')
   const [analystName, setAnalystName] = useState('')
 
   useEffect(() => {
     if (isOpen && requirement) {
       setTargetClusterId(requirement.cluster_id !== null ? String(requirement.cluster_id) : '-1')
-      setConfidence(100)
       setComments('')
       
       const cachedName = localStorage.getItem('analystName') || ''
@@ -34,7 +32,6 @@ export default function MoveToClusterModal({
     const newClusterVal = targetClusterId === '-1' ? -1 : parseInt(targetClusterId, 10)
     onSubmit({
       new_cluster_id: newClusterVal,
-      confidence_score: confidence / 100,
       comments: comments.trim(),
       applied_by: analystName.trim() || 'Expert Analyst',
     })
@@ -83,28 +80,6 @@ export default function MoveToClusterModal({
                     </option>
                   ))}
               </select>
-            </div>
-
-            {/* Confidence Slider */}
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <label className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                  Confidence Rating
-                </label>
-                <span className="text-sm font-medium text-brand-400">{confidence}%</span>
-              </div>
-              <input
-                type="range"
-                min="50"
-                max="100"
-                value={confidence}
-                onChange={(e) => setConfidence(parseInt(e.target.value, 10))}
-                className="w-full h-1.5 rounded-lg bg-slate-800 accent-brand-500 cursor-pointer focus:outline-none"
-              />
-              <div className="flex justify-between text-[10px] text-slate-500">
-                <span>50% (Uncertain)</span>
-                <span>100% (Certain)</span>
-              </div>
             </div>
 
             {/* Analyst Name */}

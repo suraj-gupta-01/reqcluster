@@ -1,75 +1,75 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
-import { Brain, Loader, Sparkles, AlertTriangle, TrendingUp, Gauge, PencilLine } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { Link } from 'react-router-dom'
+import { Brain, Sparkles, AlertTriangle, TrendingUp, Gauge, PencilLine } from 'lucide-react'
 import {
-  getSessions, getUncertaintyQueue, runConstrainedClustering, getQualityHistory,
-  getClusters, submitFeedback, getErrorMessage,
-} from '../utils/api.js'
+  getUncertainty, startRecluster, getQuality, getClusters, submitFeedback,
+} from '../api/endpoints.js'
+import { useApi } from '../hooks/useApi.js'
+import { useJob } from '../hooks/useJob.js'
+import { useSession } from '../state/SessionContext.jsx'
+import { getErrorMessage, isConflict } from '../utils/format.js'
 import { getClusterColor } from '../utils/colors.js'
 import MoveToClusterModal from '../components/MoveToClusterModal.jsx'
+import JobProgress from '../components/JobProgress.jsx'
+
+const EMPTY = []
+const CONFLICT_MSG = 'Data changed (another edit or a running clustering job). Refresh and try again.'
 
 export default function ActiveLearningPage() {
   const chartRef = useRef(null)
-  const [sessions, setSessions] = useState([])
-  const [selected, setSelected] = useState(null)
-  const [queue, setQueue] = useState([])
-  const [history, setHistory] = useState([])
-  const [clusters, setClusters] = useState([])
+  const { sessionId: selected, reloadSession } = useSession()
   const [modalReq, setModalReq] = useState(null)
-  const [loadingSessions, setLoadingSessions] = useState(true)
-  const [running, setRunning] = useState(false)
-  const [error, setError] = useState(null)
+  const [jobId, setJobId] = useState(null)
+  const [actionError, setActionError] = useState(null)
+  const [conflict, setConflict] = useState(false)
   const [notice, setNotice] = useState(null)
 
-  useEffect(() => {
-    getSessions()
-      .then(list => {
-        const done = list.filter(s => s.status === 'done')
-        setSessions(done)
-        if (done.length && !selected) setSelected(done[0].id)
-      })
-      .catch(() => setError('Failed to load sessions.'))
-      .finally(() => setLoadingSessions(false))
-  }, [])
+  const { data, error: loadError, reload } = useApi(async (o) => {
+    if (!selected) return null
+    const [queue, history, clusters] = await Promise.all([
+      getUncertainty(selected, 25, o), getQuality(selected, o), getClusters(selected, o),
+    ])
+    return { queue, history, clusters }
+  }, [selected])
+  const queue = data?.queue || []
+  const history = data?.history ?? EMPTY
+  const clusters = data?.clusters || []
+  const error = actionError || (loadError && getErrorMessage(loadError, 'Failed to load active-learning data.'))
+  const running = jobId != null
 
-  const load = useCallback(async (sid) => {
-    try {
-      const [q, h, c] = await Promise.all([
-        getUncertaintyQueue(sid, 25), getQualityHistory(sid), getClusters(sid),
-      ])
-      setQueue(q.queue || [])
-      setHistory(h.history || [])
-      setClusters(c || [])
-      setError(null)
-    } catch (err) {
-      setError(getErrorMessage(err, 'Failed to load active-learning data.'))
-    }
-  }, [])
+  const refresh = () => { setConflict(false); setActionError(null); reload(); reloadSession() }
+
+  const { job, cancel } = useJob(jobId, (j) => {
+    setJobId(null)
+    if (j.status === 'succeeded') setNotice('Constrained re-clustering finished.')
+    else if (j.status === 'failed') setActionError(j.error || 'Constrained re-clustering failed.')
+    reload(); reloadSession()
+  })
 
   const handleReassign = async (payload) => {
     if (!selected || !modalReq) return
     try {
-      await submitFeedback({ session_id: selected, requirement_id: modalReq.id, ...payload })
+      await submitFeedback(selected, { requirement_id: modalReq.id, ...payload })
       setModalReq(null)
       setNotice('Correction submitted. Approve it in the Review Queue, then apply constraints.')
-      await load(selected)
+      reload()
     } catch (err) {
-      setError(getErrorMessage(err, 'Failed to submit correction.'))
+      setModalReq(null)
+      if (isConflict(err)) setConflict(true)
+      else setActionError(getErrorMessage(err, 'Failed to submit correction.'))
     }
   }
 
-  useEffect(() => { if (selected) load(selected) }, [selected, load])
-
   const handleRecluster = async () => {
     if (!selected) return
-    setRunning(true); setError(null); setNotice(null)
+    setActionError(null); setNotice(null); setConflict(false)
     try {
-      const res = await runConstrainedClustering(selected)
-      const moved = res.constraints.points_moved_must_link + res.constraints.points_moved_cannot_link
-      setNotice(`Iteration ${res.iteration}: applied ${res.constraints.must_link_pairs} must-link and ${res.constraints.cannot_link_pairs} cannot-link constraints, moved ${moved} requirement(s).`)
-      await load(selected)
+      const j = await startRecluster(selected)
+      setJobId(j.id)
     } catch (err) {
-      setError(getErrorMessage(err, 'Constrained re-clustering failed.'))
-    } finally { setRunning(false) }
+      if (isConflict(err)) setConflict(true)
+      else setActionError(getErrorMessage(err, 'Constrained re-clustering failed.'))
+    }
   }
 
   // Quality history line chart.
@@ -80,10 +80,10 @@ export default function ActiveLearningPage() {
     const draw = async () => {
       const Plotly = (await import('plotly.js-dist-min')).default
       if (disposed || !el) return
-      const x = history.map(h => `#${h.iteration}`)
+      const x = history.map(h => `#${h.revision}`)
       const traces = [
         { x, y: history.map(h => h.silhouette), name: 'Silhouette', type: 'scatter', mode: 'lines+markers', line: { color: '#2fbcaa', width: 2 }, yaxis: 'y' },
-        { x, y: history.map(h => h.noise_rate), name: 'Noise rate', type: 'scatter', mode: 'lines+markers', line: { color: '#f59e0b', width: 2 }, yaxis: 'y2' },
+        { x, y: history.map(h => h.noise_count), name: 'Noise count', type: 'scatter', mode: 'lines+markers', line: { color: '#f59e0b', width: 2 }, yaxis: 'y2' },
       ]
       const layout = {
         paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
@@ -91,7 +91,7 @@ export default function ActiveLearningPage() {
         margin: { l: 44, r: 44, t: 16, b: 36 },
         xaxis: { gridcolor: 'rgba(255,255,255,0.05)' },
         yaxis: { title: 'Silhouette', gridcolor: 'rgba(255,255,255,0.05)', titlefont: { color: '#2fbcaa' } },
-        yaxis2: { title: 'Noise rate', overlaying: 'y', side: 'right', titlefont: { color: '#f59e0b' }, showgrid: false },
+        yaxis2: { title: 'Noise count', overlaying: 'y', side: 'right', titlefont: { color: '#f59e0b' }, showgrid: false },
         legend: { orientation: 'h', y: 1.15, font: { size: 10 } },
       }
       Plotly.react(el, traces, layout, { responsive: true, displaylogo: false, displayModeBar: false })
@@ -119,22 +119,23 @@ export default function ActiveLearningPage() {
           </p>
         </div>
         <button onClick={handleRecluster} disabled={!selected || running} className="btn-primary text-sm">
-          {running ? <><Loader size={14} className="animate-spin" /> Re-clustering…</> : <><Sparkles size={14} /> Apply constraints</>}
+          <Sparkles size={14} /> Apply constraints
         </button>
       </div>
 
-      <div className="card p-4 mb-6">
-        <label className="text-xs text-gray-500 block mb-1.5">Session</label>
-        {loadingSessions ? (
-          <div className="flex items-center gap-2 text-gray-400 text-sm"><Loader size={14} className="animate-spin" /> Loading…</div>
-        ) : sessions.length === 0 ? (
-          <div className="text-sm text-gray-500">No completed sessions. Run clustering first.</div>
-        ) : (
-          <select value={selected || ''} onChange={e => setSelected(parseInt(e.target.value))} className="input text-sm w-full md:w-96">
-            {sessions.map(s => <option key={s.id} value={s.id}>#{s.id} - {s.filename} ({s.total_requirements} reqs)</option>)}
-          </select>
-        )}
-      </div>
+      {!selected && (
+        <div className="card p-4 mb-6 text-sm">
+          <Link to="/" className="text-brand-400 hover:underline">Select or upload a session first</Link>
+        </div>
+      )}
+      {running && <div className="mb-4"><JobProgress job={job} onCancel={cancel} title="Re-clustering" /></div>}
+      {conflict && (
+        <div className="card p-3 mb-4 border-amber-900/30 flex items-center gap-3">
+          <AlertTriangle size={14} className="text-amber-400 flex-shrink-0" />
+          <p className="text-sm text-amber-300/80 flex-1">{CONFLICT_MSG}</p>
+          <button onClick={refresh} className="btn-secondary text-xs py-1 px-3">Refresh</button>
+        </div>
+      )}
 
       {notice && <div className="card p-3 mb-4 border-brand-900/30"><p className="text-sm text-brand-300/90">{notice}</p></div>}
       {error && (
@@ -154,7 +155,7 @@ export default function ActiveLearningPage() {
             {queue.length === 0 ? (
               <div className="p-8 text-center text-gray-500 text-sm">No data. Select a clustered session.</div>
             ) : queue.map(item => (
-              <div key={item.index} className="px-4 py-3 flex items-center gap-3 group">
+              <div key={item.requirement_id} className="px-4 py-3 flex items-center gap-3 group">
                 <span className="font-mono text-xs text-gray-400 w-16 flex-shrink-0">{item.req_id}</span>
                 <p className="text-sm text-gray-300 flex-1 truncate">{item.text}</p>
                 <div className="flex items-center gap-1.5 flex-shrink-0">

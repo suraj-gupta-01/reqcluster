@@ -1,11 +1,15 @@
 import { useState, useEffect, useMemo } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Loader, Search, ChevronRight, ArrowUpDown, Sparkles, AlertTriangle, ChevronDown } from 'lucide-react'
-import { getRequirements, getClusters, getEnrichmentResults, submitFeedback, getSession } from '../utils/api.js'
+import { getRequirements, getClusters, getEnrichment, submitFeedback } from '../api/endpoints.js'
+import { useApi } from '../hooks/useApi.js'
+import { useSession } from '../state/SessionContext.jsx'
+import { getErrorMessage, isConflict } from '../utils/format.js'
 import { getClusterColor } from '../utils/colors.js'
 import MoveToClusterModal from '../components/MoveToClusterModal.jsx'
 
 const PAGE_SIZE = 50
+const EMPTY = []
 
 function MembershipDot({ prob }) {
   const pct = (prob ?? 0) * 100
@@ -21,16 +25,8 @@ function MembershipDot({ prob }) {
 }
 
 export default function RequirementsPage() {
-  const { sessionId } = useParams()
+  const { sessionId, session, reloadSession } = useSession()
   const navigate = useNavigate()
-
-  const [requirements, setRequirements] = useState([])
-  const [clusters, setClusters] = useState([])
-  const [enrichmentRows, setEnrichmentRows] = useState([])
-  const [session, setSession] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [requirementsLoading, setRequirementsLoading] = useState(true)
-  const [error, setError] = useState(null)
 
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
@@ -39,110 +35,55 @@ export default function RequirementsPage() {
   const [sortField, setSortField] = useState('req_id')
   const [sortDir, setSortDir] = useState('asc')
   const [page, setPage] = useState(1)
-  const [totalMatched, setTotalMatched] = useState(0)
   const [expandedEnrichment, setExpandedEnrichment] = useState({})
-  const [reloadTrigger, setReloadTrigger] = useState(0)
+  const [moveError, setMoveError] = useState(null)
+  const [conflict, setConflict] = useState(false)
 
   const [selectedRequirement, setSelectedRequirement] = useState(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
 
-  const handleReassignSubmit = async (payload) => {
-    if (!selectedRequirement) return
-    try {
-      await submitFeedback({
-        session_id: parseInt(sessionId, 10),
-        requirement_id: selectedRequirement.id,
-        ...payload
-      })
-      setIsModalOpen(false)
-      setSelectedRequirement(null)
-      setReloadTrigger(prev => prev + 1)
-    } catch (err) {
-      alert(err?.response?.data?.detail || 'Failed to reassign cluster.')
-    }
-  }
-
   // Debounce search input
   useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedSearch(search)
-    }, 300)
+    const handler = setTimeout(() => setDebouncedSearch(search), 300)
     return () => clearTimeout(handler)
   }, [search])
 
-  // Load static session and cluster metadata
-  useEffect(() => {
-    let cancelled = false
-    const loadMetadata = async () => {
-      try {
-        const [sessionData, clusData] = await Promise.all([
-          getSession(parseInt(sessionId, 10)),
-          getClusters(parseInt(sessionId, 10)),
-        ])
-        getEnrichmentResults(parseInt(sessionId, 10))
-          .then(rows => { if (!cancelled) setEnrichmentRows(rows) })
-          .catch(() => { })
-        if (!cancelled) {
-          setSession(sessionData)
-          setClusters(clusData)
-        }
-      } catch {
-        if (!cancelled) setError('Failed to load session details.')
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
+  const { data: clustersData, reload: reloadClusters } = useApi(
+    (o) => (sessionId ? getClusters(sessionId, o) : Promise.resolve([])), [sessionId])
+  const { data: enrichmentRows } = useApi(
+    (o) => (sessionId ? getEnrichment(sessionId, o).catch(() => []) : Promise.resolve([])), [sessionId])
+  const clusters = clustersData ?? EMPTY
+
+  const query = { page, page_size: PAGE_SIZE, sort: sortField, dir: sortDir }
+  if (filterCluster !== 'all' && filterCluster !== '-1') query.cluster_id = filterCluster
+  if (filterCluster === '-1' || filterNoise === 'noise') query.noise = true
+  else if (filterNoise === 'clustered') query.noise = false
+  if (debouncedSearch) query.search = debouncedSearch
+
+  const { data: reqPage, error, loading: requirementsLoading, reload } = useApi(
+    (o) => (sessionId ? getRequirements(sessionId, query, o) : Promise.resolve({ items: [], total: 0 })),
+    [sessionId, page, filterCluster, filterNoise, sortField, sortDir, debouncedSearch])
+  const requirements = reqPage?.items || []
+  const totalMatched = reqPage?.total || 0
+
+  const refresh = () => {
+    setConflict(false); setMoveError(null)
+    reload(); reloadClusters(); reloadSession()
+  }
+
+  const handleReassignSubmit = async (payload) => {
+    if (!selectedRequirement) return
+    try {
+      await submitFeedback(sessionId, { requirement_id: selectedRequirement.id, ...payload })
+      setIsModalOpen(false)
+      setSelectedRequirement(null)
+      refresh()
+    } catch (err) {
+      setIsModalOpen(false)
+      if (isConflict(err)) setConflict(true)
+      else setMoveError(getErrorMessage(err, 'Failed to reassign cluster.'))
     }
-    loadMetadata()
-    return () => { cancelled = true }
-  }, [sessionId, reloadTrigger])
-
-  // Load paginated requirements page
-  useEffect(() => {
-    let cancelled = false
-    const loadRequirements = async () => {
-      setRequirementsLoading(true)
-      try {
-        const params = {
-          page,
-          page_size: PAGE_SIZE,
-          sort_field: sortField,
-          sort_dir: sortDir,
-        }
-
-        let targetCluster = null
-        if (filterCluster !== 'all') {
-          if (filterCluster === '-1') {
-            params.is_noise = true
-          } else {
-            targetCluster = parseInt(filterCluster, 10)
-          }
-        }
-
-        if (filterNoise === 'noise') {
-          params.is_noise = true
-        } else if (filterNoise === 'clustered') {
-          params.is_noise = false
-        }
-
-        if (debouncedSearch) {
-          params.search = debouncedSearch
-        }
-
-        const reqs = await getRequirements(parseInt(sessionId, 10), targetCluster, params)
-        if (!cancelled) {
-          setRequirements(reqs)
-          setTotalMatched(reqs.totalCount ?? reqs.length)
-        }
-      } catch (err) {
-        console.error(err)
-        if (!cancelled) setError('Failed to load requirements.')
-      } finally {
-        if (!cancelled) setRequirementsLoading(false)
-      }
-    }
-    loadRequirements()
-    return () => { cancelled = true }
-  }, [sessionId, page, filterCluster, filterNoise, sortField, sortDir, debouncedSearch, reloadTrigger])
+  }
 
   const clusterLabelMap = useMemo(() => {
     const m = {}
@@ -152,7 +93,7 @@ export default function RequirementsPage() {
 
   const enrichmentMap = useMemo(() => {
     const map = {}
-    enrichmentRows.forEach(row => { map[row.requirement_id] = row })
+    ;(enrichmentRows || []).forEach(row => { map[row.req_id] = row })
     return map
   }, [enrichmentRows])
 
@@ -173,12 +114,17 @@ export default function RequirementsPage() {
     </button>
   )
 
-  if (loading) return (
-    <div className="flex items-center justify-center h-64">
-      <Loader size={24} className="animate-spin text-brand-400" />
+  if (!sessionId) return (
+    <div className="p-8 text-gray-400">
+      <Link to="/" className="text-brand-400 hover:underline">Select or upload a session first</Link>
     </div>
   )
-  if (error) return <div className="p-8 text-red-400">{error}</div>
+  if (error) return (
+    <div className="p-8 text-red-400">
+      {getErrorMessage(error, 'Failed to load requirements.')}{' '}
+      <button onClick={reload} className="btn-secondary text-xs py-1 px-3">Retry</button>
+    </div>
+  )
 
   return (
     <div className="p-6 flex flex-col gap-4 h-screen">
@@ -186,9 +132,19 @@ export default function RequirementsPage() {
       <div className="flex-shrink-0">
         <h1 className="text-xl font-bold text-white">Requirements</h1>
         <p className="text-sm text-gray-400 mt-0.5">
-          {totalMatched} of {session?.total_requirements || 0} requirements
+          {totalMatched} of {session?.total_requirements ?? 0} requirements
         </p>
       </div>
+
+      {(conflict || moveError) && (
+        <div className="flex-shrink-0 card p-3 border-amber-900/30 flex items-center gap-3">
+          <AlertTriangle size={14} className="text-amber-400 flex-shrink-0" />
+          <p className="text-sm text-amber-300/80 flex-1">
+            {conflict ? 'Data changed (another edit or a running clustering job). Refresh and try again.' : moveError}
+          </p>
+          {conflict && <button onClick={refresh} className="btn-secondary text-xs py-1 px-3">Refresh</button>}
+        </div>
+      )}
 
       {/* Filters */}
       <div className="flex gap-3 flex-shrink-0 flex-wrap">
@@ -234,14 +190,11 @@ export default function RequirementsPage() {
                 <th className="text-left px-4 py-3">
                   {renderSortHeader('text', 'Requirement Text')}
                 </th>
-                <th className="text-left px-4 py-3 w-32">
-                  {renderSortHeader('module', 'Module')}
-                </th>
                 <th className="text-left px-4 py-3 w-48">
                   {renderSortHeader('cluster_id', 'Cluster')}
                 </th>
                 <th className="text-left px-4 py-3 w-32">
-                  {renderSortHeader('membership_prob', 'Membership')}
+                  {renderSortHeader('probability', 'Membership')}
                 </th>
                 <th className="w-40 px-4 py-3 text-right">Actions</th>
               </tr>
@@ -249,7 +202,7 @@ export default function RequirementsPage() {
             <tbody className="divide-y divide-gray-800/50">
               {requirementsLoading ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-12">
+                  <td colSpan={5} className="text-center py-12">
                     <div className="flex items-center justify-center gap-2 text-gray-500">
                       <Loader size={16} className="animate-spin text-brand-400" />
                       <span>Loading requirements...</span>
@@ -258,13 +211,13 @@ export default function RequirementsPage() {
                 </tr>
               ) : paginated.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-12 text-gray-500">
+                  <td colSpan={5} className="text-center py-12 text-gray-500">
                     No requirements match your filters.
                   </td>
                 </tr>
               ) : paginated.map(r => {
                 const color = getClusterColor(r.cluster_id)
-                const clusterLabel = r.is_noise
+                const clusterLabel = r.is_noise || r.cluster_id == null
                   ? 'Noise'
                   : (clusterLabelMap[r.cluster_id] || `Cluster ${r.cluster_id}`)
                 const enrichment = enrichmentMap[r.req_id]
@@ -273,15 +226,12 @@ export default function RequirementsPage() {
                 return (
                   <tr key={r.id}
                     className="hover:bg-gray-800/40 transition-colors group cursor-pointer"
-                    onClick={() => !r.is_noise && navigate(`/cluster/${sessionId}/${r.cluster_id}`)}>
+                    onClick={() => !r.is_noise && r.cluster_id != null && navigate(`/s/${sessionId}/clusters/${r.cluster_id}`)}>
                     <td className="px-4 py-3">
                       <span className="font-mono text-xs text-gray-400">{r.req_id}</span>
                     </td>
                     <td className="px-4 py-3">
                       <p className="text-gray-200 leading-relaxed line-clamp-2">{r.text}</p>
-                      {r.section && (
-                        <span className="text-xs text-gray-600 mt-0.5 block">{r.section}</span>
-                      )}
                       {enrichment && (
                         <div className="mt-2">
                           <button
@@ -334,13 +284,6 @@ export default function RequirementsPage() {
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      {r.module ? (
-                        <span className="badge bg-gray-800 text-gray-400">{r.module}</span>
-                      ) : (
-                        <span className="text-gray-700">-</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full flex-shrink-0"
                           style={{ backgroundColor: color }} />
@@ -350,7 +293,7 @@ export default function RequirementsPage() {
                     <td className="px-4 py-3">
                       {r.is_noise
                         ? <span className="text-xs text-gray-600">-</span>
-                        : <MembershipDot prob={r.membership_prob} />
+                        : <MembershipDot prob={r.probability} />
                       }
                     </td>
                     <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
@@ -367,7 +310,7 @@ export default function RequirementsPage() {
                         </button>
                         <button
                           type="button"
-                          onClick={() => navigate(`/cluster/${sessionId}/${r.cluster_id}`)}
+                          onClick={() => navigate(`/s/${sessionId}/clusters/${r.cluster_id}`)}
                           className={`p-1 rounded hover:bg-slate-800 text-slate-500 hover:text-slate-300 transition-colors ${r.is_noise ? 'invisible' : ''}`}
                         >
                           <ChevronRight size={14} />

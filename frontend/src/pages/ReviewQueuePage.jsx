@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import React, { useState } from 'react'
+import { Link } from 'react-router-dom'
 import {
   Inbox,
-  Loader,
   AlertTriangle,
   CheckCircle,
   XCircle,
@@ -12,100 +11,59 @@ import {
   FileCode,
 } from 'lucide-react'
 import {
-  getSessions,
-  getFeedbackQueue,
+  getFeedback,
   reviewFeedback,
   getConstraints,
-  getFeedbackExportUrl,
-  getErrorMessage,
+  feedbackExportUrl,
   getClusters,
   getRequirements,
-} from '../utils/api.js'
+} from '../api/endpoints.js'
+import { useApi } from '../hooks/useApi.js'
+import { useSession } from '../state/SessionContext.jsx'
+import { getErrorMessage, isConflict } from '../utils/format.js'
+
+const CONFLICT_MSG = 'Data changed (another edit or a running clustering job). Refresh and try again.'
 
 export default function ReviewQueuePage() {
-  const { sessionId } = useParams()
-  const navigate = useNavigate()
-  const selectedSession = sessionId ? parseInt(sessionId, 10) : null
+  const { sessionId } = useSession()
+  const selectedSession = sessionId
 
-  const [sessions, setSessions] = useState([])
-  const [loadingSessions, setLoadingSessions] = useState(true)
-
-  const [queue, setQueue] = useState([])
-  const [constraintsInfo, setConstraintsInfo] = useState({ constraint_pairs: [], conflicts: [], has_conflicts: false })
-  const [clusterInfo, setClusterInfo] = useState({})
-  const [reqMap, setReqMap] = useState({})
   const [expandedId, setExpandedId] = useState(null)
-
   const [activeTab, setActiveTab] = useState('pending') // pending, history
   const [reviewingId, setReviewingId] = useState(null)
-  const [error, setError] = useState(null)
+  const [actionError, setActionError] = useState(null)
+  const [conflict, setConflict] = useState(false)
   const [exportOpen, setExportOpen] = useState(false)
 
-  // Load done sessions
-  useEffect(() => {
-    getSessions()
-      .then((list) => {
-        const done = list.filter((s) => s.status === 'done')
-        setSessions(done)
-        if (done.length > 0 && !selectedSession) {
-          navigate(`/review-queue/${done[0].id}`, { replace: true })
-        }
-      })
-      .catch(() => setError('Failed to load sessions.'))
-      .finally(() => setLoadingSessions(false))
-  }, [selectedSession, navigate])
+  const { data, error: loadError, reload } = useApi(async (o) => {
+    if (!sessionId) return null
+    const [queue, constraints, clusters, reqs] = await Promise.all([
+      getFeedback(sessionId, undefined, o),
+      getConstraints(sessionId, o),
+      getClusters(sessionId, o),
+      getRequirements(sessionId, { page_size: 1000 }, o),
+    ])
+    return { queue, constraints, clusters, reqs: reqs.items }
+  }, [sessionId])
 
-  // Load queue, constraints, clusters, and requirement mappings
-  const loadQueueData = useCallback(async (sessionId) => {
-    try {
-      const [queueData, constraintsData, clustersData, reqsData] = await Promise.all([
-        getFeedbackQueue(sessionId),
-        getConstraints(sessionId),
-        getClusters(sessionId),
-        getRequirements(sessionId),
-      ])
+  const queue = data?.queue || []
+  const constraintsInfo = data?.constraints || { constraint_pairs: [], conflicts: [] }
+  const clusterInfo = Object.fromEntries((data?.clusters || []).map((c) => [c.cluster_id, c.label]))
+  const reqMap = Object.fromEntries((data?.reqs || []).map((r) => [r.id, r]))
+  const error = actionError || (loadError && getErrorMessage(loadError, 'Failed to load queue details.'))
 
-      setQueue(queueData)
-      setConstraintsInfo(constraintsData)
+  const refresh = () => { setConflict(false); setActionError(null); reload() }
 
-      const cMap = {}
-      clustersData.forEach((c) => {
-        cMap[c.cluster_id] = c.label
-      })
-      setClusterInfo(cMap)
-
-      const rMap = {}
-      reqsData.forEach((r) => {
-        rMap[r.id] = r
-      })
-      setReqMap(rMap)
-      setError(null)
-    } catch (err) {
-      setError(getErrorMessage(err, 'Failed to load queue details.'))
-    }
-  }, [])
-
-  useEffect(() => {
-    if (selectedSession) {
-      loadQueueData(selectedSession)
-    }
-  }, [selectedSession, loadQueueData])
-
-  // Approve / Reject handlers
   const handleReview = async (feedbackId, status) => {
     if (!selectedSession) return
     setReviewingId(feedbackId)
-    setError(null)
+    setActionError(null); setConflict(false)
     try {
-      await reviewFeedback({
-        session_id: selectedSession,
-        feedback_id: feedbackId,
-        status,
-      })
-      // Reload queue data after review
-      await loadQueueData(selectedSession)
+      await reviewFeedback(selectedSession, feedbackId, status === 'approved' ? 'approve' : 'reject')
+      reload()
     } catch (err) {
-      setError(getErrorMessage(err, `Failed to ${status} correction.`))
+      if (isConflict(err)) setConflict(true)
+      else setActionError(getErrorMessage(err, `Failed to ${status} correction.`))
     } finally {
       setReviewingId(null)
     }
@@ -145,14 +103,14 @@ export default function ReviewQueuePage() {
             {exportOpen && (
               <div className="absolute right-0 mt-2 w-48 bg-slate-900 border border-slate-700/80 rounded-lg shadow-xl overflow-hidden z-30">
                 <a
-                  href={getFeedbackExportUrl(selectedSession, 'csv')}
+                  href={feedbackExportUrl(selectedSession, 'csv')}
                   onClick={() => setExportOpen(false)}
                   className="flex items-center gap-2 px-4 py-3 text-sm text-slate-300 hover:bg-slate-800 hover:text-slate-100 transition-colors border-b border-slate-800"
                 >
                   <FileSpreadsheet size={14} className="text-emerald-400" /> Export as CSV
                 </a>
                 <a
-                  href={getFeedbackExportUrl(selectedSession, 'json')}
+                  href={feedbackExportUrl(selectedSession, 'json')}
                   onClick={() => setExportOpen(false)}
                   className="flex items-center gap-2 px-4 py-3 text-sm text-slate-300 hover:bg-slate-800 hover:text-slate-100 transition-colors"
                 >
@@ -164,31 +122,11 @@ export default function ReviewQueuePage() {
         )}
       </div>
 
-      {/* Session selector */}
-      <div className="card p-4 mb-6">
-        <div>
-          <label className="text-xs text-gray-500 block mb-1">Session</label>
-          {loadingSessions ? (
-            <div className="flex items-center gap-2 text-gray-400 text-sm">
-              <Loader size={14} className="animate-spin" /> Loading sessions...
-            </div>
-          ) : sessions.length === 0 ? (
-            <div className="text-sm text-gray-500">No completed sessions found. Run clustering first.</div>
-          ) : (
-            <select
-              value={selectedSession || ''}
-              onChange={(e) => navigate(`/review-queue/${e.target.value}`)}
-              className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 w-full md:w-96 focus:outline-none focus:ring-1 focus:ring-brand-500"
-            >
-              {sessions.map((s) => (
-                <option key={s.id} value={s.id}>
-                  #{s.id} - {s.filename} ({s.total_requirements} reqs, {s.total_clusters} clusters)
-                </option>
-              ))}
-            </select>
-          )}
+      {!selectedSession && (
+        <div className="card p-4 mb-6 text-sm">
+          <Link to="/" className="text-brand-400 hover:underline">Select or upload a session first</Link>
         </div>
-      </div>
+      )}
 
       {/* Metrics Banner */}
       {selectedSession && (
@@ -226,8 +164,16 @@ export default function ReviewQueuePage() {
         </div>
       )}
 
+      {conflict && (
+        <div className="card p-3 mb-4 border-amber-900/30 bg-amber-950/10 flex items-center gap-3">
+          <AlertTriangle size={14} className="text-amber-400 flex-shrink-0" />
+          <p className="text-sm text-amber-300/80 flex-1">{CONFLICT_MSG}</p>
+          <button onClick={refresh} className="btn-secondary text-xs py-1 px-3">Refresh</button>
+        </div>
+      )}
+
       {/* Conflict Validation Section */}
-      {selectedSession && constraintsInfo.has_conflicts && (
+      {selectedSession && constraintsInfo.conflicts.length > 0 && (
         <div className="card p-4 mb-6 border-red-900/40 bg-red-950/10">
           <div className="flex items-center gap-2 mb-2">
             <AlertTriangle size={16} className="text-red-400" />
@@ -236,20 +182,12 @@ export default function ReviewQueuePage() {
             </h2>
           </div>
           <div className="space-y-2">
-            {constraintsInfo.conflicts.map((conflict, index) => (
+            {constraintsInfo.conflicts.map((cf, index) => (
               <div
                 key={index}
                 className="p-3 text-xs bg-slate-950/50 rounded border border-red-900/20 text-red-200/80 space-y-1.5"
               >
-                <div>{conflict.message}</div>
-                <div className="flex flex-col gap-1 pl-2 border-l border-red-900/30 text-gray-400">
-                  <div>
-                    <span className="text-red-400 font-semibold">{conflict.requirement_a_label}:</span> "{conflict.requirement_a_text}"
-                  </div>
-                  <div>
-                    <span className="text-red-400 font-semibold">{conflict.requirement_b_label}:</span> "{conflict.requirement_b_text}"
-                  </div>
-                </div>
+                <div>Requirements {reqMap[cf.a]?.req_id ?? cf.a} and {reqMap[cf.b]?.req_id ?? cf.b} have both {cf.kinds.join(' and ')} constraints.</div>
               </div>
             ))}
           </div>
@@ -320,13 +258,13 @@ export default function ReviewQueuePage() {
                       >
                         {/* Requirement ID */}
                         <td className="px-4 py-3 text-sm text-slate-200 font-semibold whitespace-nowrap">
-                          {req.req_id || `REQ-${req.id || item.requirement_id}`}
+                          {item.req_id}
                           <span className="text-[10px] text-gray-500 block">Click to view text</span>
                         </td>
                         {/* Source Cluster */}
                         <td className="px-4 py-3 text-sm text-gray-400 truncate max-w-[120px]">
-                          {item.previous_cluster_id !== null && item.previous_cluster_id !== -1
-                            ? clusterInfo[item.previous_cluster_id] || `Cluster ${item.previous_cluster_id}`
+                          {item.old_cluster_id !== null && item.old_cluster_id !== -1
+                            ? clusterInfo[item.old_cluster_id] || `Cluster ${item.old_cluster_id}`
                             : 'Noise / Unclustered'}
                         </td>
                         {/* Target Cluster */}
@@ -337,7 +275,7 @@ export default function ReviewQueuePage() {
                         </td>
                         {/* Confidence */}
                         <td className="px-4 py-3 text-center text-sm font-semibold text-slate-300">
-                          {Math.round(item.confidence_score * 100)}%
+                          {Math.round(item.confidence * 100)}%
                         </td>
                         {/* Comments & Analyst */}
                         <td className="px-4 py-3 text-sm text-gray-400 max-w-[200px] truncate">
@@ -397,12 +335,7 @@ export default function ReviewQueuePage() {
                               <p className="text-slate-200 leading-relaxed italic">
                                 "{req.text || 'N/A'}"
                               </p>
-                              {req.module && (
-                                <div className="text-xs text-gray-500">
-                                  Module: {req.module} {req.section ? `| Section: ${req.section}` : ''}
-                                </div>
-                              )}
-                              {item.comments && (
+                                                            {item.comments && (
                                 <div className="mt-3 p-3 bg-slate-950 rounded border border-slate-800 text-xs text-gray-400 space-y-1">
                                   <div className="font-semibold text-slate-300">Correction annotation:</div>
                                   <p>"{item.comments}"</p>
