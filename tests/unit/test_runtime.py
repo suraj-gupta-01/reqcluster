@@ -42,3 +42,13 @@ def test_warm_up_reducer_runs_reduce_off_thread(monkeypatch):
     monkeypatch.setattr(reduce, "reduce", lambda X, seed: seen.append((X.shape, seed)))
     runtime.warm_up_reducer(5).join(10)
     assert seen == [((40, 16), 5)]
+
+
+def test_configure_process_keeps_numba_default_cache(monkeypatch):
+    # An empty per-home NUMBA_CACHE_DIR forced a full UMAP recompile (~90 s vs ~20 s) on every
+    # fresh home/volume; numba's default cache next to the installed packages persists.
+    monkeypatch.delenv("NUMBA_CACHE_DIR", raising=False)
+    runtime.configure_process(get_settings())
+    import os
+
+    assert "NUMBA_CACHE_DIR" not in os.environ

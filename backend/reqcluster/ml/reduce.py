@@ -26,7 +26,7 @@ def reduce(X: np.ndarray, seed: int) -> tuple[np.ndarray, np.ndarray]:
 
 
 def _umap(X: np.ndarray, seed: int, n: int) -> tuple[np.ndarray, np.ndarray]:
-    import umap  # lazy: slow import, caller sets NUMBA_CACHE_DIR first
+    import umap  # lazy: slow import
 
     # No PCA50 before UMAP: on raw cosine embeddings ARI rises uav2k .934->.987, uav10k .908->.958,
     # multidomain .636->.649, and 10k is faster (findings/exp/pca_threshold.py, 3 seeds).

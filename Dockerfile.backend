@@ -20,6 +20,10 @@ RUN uv sync --frozen --no-dev $EXTRAS
 # Bake the SBERT model so first start needs no network.
 RUN uv run --no-sync python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')"
 
+# Warm numba's on-disk JIT cache (beside the installed umap/pynndescent) so a fresh container's
+# first clustering job skips the ~70 s recompile.
+RUN uv run --no-sync python -c "import numpy as np; from reqcluster.ml.reduce import reduce; reduce(np.random.default_rng(0).standard_normal((60, 384)).astype('float32'), 0)"
+
 # Test suites and torch C++ headers are dead weight at runtime.
 RUN find /app/.venv/lib -type d \( -name tests -o -name test \) -path "*site-packages*" -prune -exec rm -rf {} + \
     && rm -rf /app/.venv/lib/python3.12/site-packages/torch/include

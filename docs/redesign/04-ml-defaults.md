@@ -7,7 +7,7 @@ Overrides earlier amendments where they conflict.
 - Reduce: PCA(50, randomized, seed) -> UMAP(n_components=10, metric="cosine", n_neighbors=min(80, max(15, n // 100)), min_dist=0.0, n_epochs=200, random_state=seed). Use `init="random"` when n < 20; keep the default (spectral) init otherwise unless tests show instability.
 - Clusterer: HDBSCAN(min_cluster_size=max(5, n // 50), min_samples=3, cluster_selection_method="eom").
 - 2D view: UMAP(2) fitted on the 10D output (amendment 1).
-- Numba JIT cache: set `NUMBA_CACHE_DIR={home}/cache/numba` before importing umap. This saves ~35 s on cold start.
+- Numba JIT cache: do NOT set `NUMBA_CACHE_DIR` (superseded 2026-11-19). An empty per-home cache dir forces a full UMAP recompile (85-100 s vs 20 s with numba's default cache); the Docker build warms the default cache.
 - Measured at 10k rows on a quiet CPU: ~78 s total (encode 54 s, UMAP 23 s, HDBSCAN 1.2 s), versus ~150 s for legacy. ARI 0.911 (legacy 0.904).
 
 ## Optional modes (config, not default)
