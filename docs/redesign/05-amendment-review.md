@@ -59,3 +59,12 @@ At 10k the 10-D UMAP took 31.5 s raw vs 53.1 s with PCA in the same run. Absolut
 
 ## I. Small uploads are unstable
 On a 64-row set, float noise of ~1e-6 (GPU vs CPU encoding) flips UMAP+HDBSCAN between 2 and 4 clusters (ARI .1 to .5). Legacy's .503 baseline on aerospace was a lucky draw. Experiment: `findings/exp/small_n.py`.
+Tried and rejected (2026-11-19): ward + silhouette k for uploads under 200 rows. It is fully stable under float noise and wins on random subsets of large datasets (many groups of ~3), but loses on naturally small datasets, which look like real uploads (`findings/exp/small_k.py`, ARI):
+| case | UMAP+HDBSCAN | best ward cap |
+|---|---|---|
+| aerospace 64 (8 groups) | .442 | .314 |
+| bit_control 100 (8 groups) | .198 | .246 |
+| dependency_gold 397 (5 groups) | .187 | .157 |
+| multidomain random 60 (20 groups) | .157 | .399 |
+| uav random 150 (16 groups) | .678 | .808 |
+Decision: keep UMAP+HDBSCAN everywhere. Known limit: results are deterministic per machine and device, but GPU and CPU encodings can give different clusters on small inputs. Pin `REQCLUSTER_EMBEDDING_DEVICE=cpu` when cross-machine reproducibility matters.
