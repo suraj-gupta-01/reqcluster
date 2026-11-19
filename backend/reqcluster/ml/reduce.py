@@ -29,6 +29,9 @@ def reduce(X: np.ndarray, seed: int) -> tuple[np.ndarray, np.ndarray]:
 # numba pairwise pass (<4096 rows) / NN-descent. Faster up to the 50k upload cap: 35k rows
 # reduce 220 s -> 118 s (kNN itself 18.6 s). Blocks shrink above 20k to cap the matmul buffer.
 EXACT_KNN_MAX = 50_000
+# Below this UMAP's own (also exact) pairwise path is as fast and steadier on tiny sets
+# (aerospace 64 rows, 5 seeds: ARI .488+-.01 own vs .442+-.046 BLAS; equal on 100/371 rows).
+EXACT_KNN_MIN = 1_000
 
 
 def _exact_knn(X: np.ndarray, nn: int):
@@ -51,7 +54,8 @@ def _umap(X: np.ndarray, seed: int, n: int) -> tuple[np.ndarray, np.ndarray]:
     x10 = umap.UMAP(
         n_components=10, metric="cosine", n_neighbors=nn, min_dist=0.0, n_epochs=200,
         init="random", random_state=seed, compatibility_layout=True,
-        precomputed_knn=_exact_knn(X, nn) if n <= EXACT_KNN_MAX else (None, None, None),
+        precomputed_knn=(_exact_knn(X, nn) if EXACT_KNN_MIN <= n <= EXACT_KNN_MAX
+                         else (None, None, None)),
     ).fit_transform(X)
     # viz only: 100 epochs at 10k rows 28.9s -> 5.4s (vs 200); clustering uses x10
     xy = umap.UMAP(
