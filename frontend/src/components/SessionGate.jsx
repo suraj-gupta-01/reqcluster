@@ -24,8 +24,15 @@ export default function SessionGate({ children }) {
   if (!session) return (
     <div className="flex items-center justify-center h-64"><Loader size={24} className="animate-spin text-brand-400" /></div>
   )
-  if (jobId) return <div className="p-8 max-w-xl"><JobProgress job={job} onCancel={cancel} title="Clustering" /></div>
-  if (session.status === 'done') return children
+  if (jobId && !(session.revision > 0)) return <div className="p-8 max-w-xl"><JobProgress job={job} onCancel={cancel} title="Clustering" /></div>
+  const shown = session.status === 'done' || session.revision > 0
+  if (shown) {
+    const lj = session.last_job
+    const banner = session.status === 'error'
+      ? `Last run ${lj?.status ?? 'failed'}${lj?.error ? `: ${lj.error}` : ''}; showing revision ${session.revision}`
+      : active ? `Re-clustering… showing revision ${session.revision}${job ? ` (${Math.round((job.progress ?? 0) * 100)}%)` : ''}` : null
+    return <>{banner && <div className="px-4 py-2 text-xs text-amber-300/90 bg-amber-900/20 border-b border-amber-900/30">{banner}</div>}{children}</>
+  }
 
   const run = async () => {
     setErr(null)

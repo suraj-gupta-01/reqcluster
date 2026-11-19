@@ -41,7 +41,7 @@ export default function ActiveLearningPage() {
 
   const { job, cancel } = useJob(jobId, (j) => {
     setJobId(null)
-    if (j.status === 'succeeded') setNotice('Constrained re-clustering finished.')
+    if (j.status === 'succeeded') setNotice(`Constrained re-clustering finished${j.result?.moved != null ? `; ${j.result.moved} requirements moved` : ''}.`)
     else if (j.status === 'failed') setActionError(j.error || 'Constrained re-clustering failed.')
     reload(); reloadSession()
   })
@@ -51,7 +51,7 @@ export default function ActiveLearningPage() {
     try {
       await submitFeedback(selected, { requirement_id: modalReq.id, ...payload })
       setModalReq(null)
-      setNotice('Correction submitted. Approve it in the Review Queue, then apply constraints.')
+      setNotice('Correction applied. Use Apply constraints to re-cluster with all current constraints.')
       reload()
     } catch (err) {
       setModalReq(null)
@@ -115,7 +115,8 @@ export default function ActiveLearningPage() {
           </div>
           <p className="text-gray-400 text-sm max-w-xl">
             Review the least-certain assignments, then fold your accepted corrections back into the
-            clustering as must-link / cannot-link constraints.
+            clustering as must-link / cannot-link constraints. A submitted move applies immediately;
+            "Apply constraints" re-clusters using all current constraints (pending and approved).
           </p>
         </div>
         <button onClick={handleRecluster} disabled={!selected || running} className="btn-primary text-sm">

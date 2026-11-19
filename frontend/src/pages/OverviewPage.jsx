@@ -26,10 +26,9 @@ function StatCard({ icon: Icon, label, value, color = 'text-white' }) {
   )
 }
 
-function ClusterRow({ cluster, sessionId }) {
+function ClusterRow({ cluster, sessionId, maxSize }) {
   const navigate = useNavigate()
   const color = getClusterColor(cluster.cluster_id)
-  const maxSize = 40 // for bar scaling
 
   return (
     <div
@@ -61,7 +60,7 @@ function ClusterRow({ cluster, sessionId }) {
           <div
             className="h-full rounded-full"
             style={{
-              width: `${Math.min(100, (cluster.size / maxSize) * 100)}%`,
+              width: `${Math.min(100, (cluster.size / Math.max(1, maxSize)) * 100)}%`,
               backgroundColor: color,
             }}
           />
@@ -243,7 +242,7 @@ function Overview() {
             </div>
           ) : (
             clusters.map((c) => (
-              <ClusterRow key={c.cluster_id} cluster={c} sessionId={sessionId} />
+              <ClusterRow key={c.cluster_id} cluster={c} sessionId={sessionId} maxSize={Math.max(0, ...clusters.map(x => x.size))} />
             ))
           )}
         </div>

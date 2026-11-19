@@ -32,7 +32,7 @@ export default function RequirementsPage() {
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [filterCluster, setFilterCluster] = useState('all')
   const [filterNoise, setFilterNoise] = useState('all') // all | noise | clustered
-  const [sortField, setSortField] = useState('req_id')
+  const [sortField, setSortField] = useState('ordinal')
   const [sortDir, setSortDir] = useState('asc')
   const [page, setPage] = useState(1)
   const [expandedEnrichment, setExpandedEnrichment] = useState({})

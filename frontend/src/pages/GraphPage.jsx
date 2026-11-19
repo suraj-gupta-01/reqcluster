@@ -50,7 +50,7 @@ function Graph() {
       })
 
       const edgeTrace = {
-        type: 'scatter', mode: 'lines',
+        type: 'scattergl', mode: 'lines',
         x: edgeX, y: edgeY,
         line: { width: 0.6, color: 'rgba(20,160,143,0.22)' },
         hoverinfo: 'none', showlegend: false,
@@ -69,7 +69,7 @@ function Graph() {
         const color = getClusterColor(cid)
         const label = cid === -1 ? 'Noise' : (clusterLabelMap[cid] || `Cluster ${cid}`)
         return {
-          type: 'scatter',
+          type: 'scattergl',
           mode: showLabels ? 'markers+text' : 'markers',
           name: label,
           x: nodeList.map(n => n.x),
