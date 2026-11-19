@@ -5,21 +5,21 @@ from __future__ import annotations
 import json
 from pathlib import Path
 import re
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any
 
 
 _REQ_ID_PATTERN = re.compile(r"\b(?:REQ|SR|FR|SYS|R)[-_ ]?\d{1,5}\b", re.IGNORECASE)
 
 
 def extract_expected_reference_edges(
-    requirements: List[Dict[str, Any]],
-) -> Set[Tuple[str, str]]:
+    requirements: list[dict[str, Any]],
+) -> set[tuple[str, str]]:
     """Construct expected reference edges from requirement text mentions.
-    
+
     Returns a set of (source_req_id, target_req_id) pairs where source is mentioned
     in target's text (meaning source is a prerequisite/reference for target).
     """
-    id_map: Dict[str, str] = {}
+    id_map: dict[str, str] = {}
     for r in requirements:
         req_id = str(r.get("req_id") or "").strip()
         if req_id:
@@ -28,7 +28,7 @@ def extract_expected_reference_edges(
             norm = re.sub(r"[-_ ]", "", req_id.upper())
             id_map[norm] = req_id
 
-    expected_edges: Set[Tuple[str, str]] = set()
+    expected_edges: set[tuple[str, str]] = set()
 
     for r in requirements:
         target_id = str(r.get("req_id") or "").strip()
@@ -47,7 +47,7 @@ def extract_expected_reference_edges(
     return expected_edges
 
 
-def load_expected_data_edges(edges_path: Optional[Path | str]) -> Set[Tuple[str, str]]:
+def load_expected_data_edges(edges_path: Path | str | None) -> set[tuple[str, str]]:
     """Load ground-truth data/flow edges from an optional .edges.json file."""
     if not edges_path:
         return set()
@@ -57,9 +57,9 @@ def load_expected_data_edges(edges_path: Optional[Path | str]) -> Set[Tuple[str,
         return set()
 
     try:
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             data = json.load(f)
-            edges: Set[Tuple[str, str]] = set()
+            edges: set[tuple[str, str]] = set()
             for item in data:
                 src = str(item.get("source") or "").strip()
                 tgt = str(item.get("target") or "").strip()
@@ -71,11 +71,11 @@ def load_expected_data_edges(edges_path: Optional[Path | str]) -> Set[Tuple[str,
 
 
 def extract_inferred_edges(
-    dep_response: Dict[str, Any],
-) -> Tuple[Set[Tuple[str, str]], Set[Tuple[str, str]]]:
+    dep_response: dict[str, Any],
+) -> tuple[set[tuple[str, str]], set[tuple[str, str]]]:
     """Extract inferred reference and data/other edges from GET /api/dependencies."""
-    inferred_ref: Set[Tuple[str, str]] = set()
-    inferred_data: Set[Tuple[str, str]] = set()
+    inferred_ref: set[tuple[str, str]] = set()
+    inferred_data: set[tuple[str, str]] = set()
 
     # Check rationale dependencies
     rationale = dep_response.get("rationale") or {}
@@ -106,9 +106,9 @@ def extract_inferred_edges(
 
 
 def compute_precision_recall_f1(
-    inferred: Set[Tuple[str, str]],
-    expected: Set[Tuple[str, str]],
-) -> Dict[str, float]:
+    inferred: set[tuple[str, str]],
+    expected: set[tuple[str, str]],
+) -> dict[str, float]:
     """Compute precision, recall, and F1 given inferred and expected edge sets."""
     if not expected:
         return {
@@ -137,10 +137,10 @@ def compute_precision_recall_f1(
 
 
 def evaluate_dependency_metrics(
-    requirements: List[Dict[str, Any]],
-    dep_response: Dict[str, Any],
-    edges_path: Optional[Path | str] = None,
-) -> Dict[str, Any]:
+    requirements: list[dict[str, Any]],
+    dep_response: dict[str, Any],
+    edges_path: Path | str | None = None,
+) -> dict[str, Any]:
     """Compute precision/recall/F1 for reference and data edges."""
     expected_ref = extract_expected_reference_edges(requirements)
     expected_data = load_expected_data_edges(edges_path)
@@ -149,7 +149,7 @@ def evaluate_dependency_metrics(
 
     ref_scores = compute_precision_recall_f1(inferred_ref, expected_ref)
 
-    result: Dict[str, Any] = {
+    result: dict[str, Any] = {
         "reference_precision": ref_scores["precision"],
         "reference_recall": ref_scores["recall"],
         "reference_f1": ref_scores["f1"],

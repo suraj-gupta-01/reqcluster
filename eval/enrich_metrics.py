@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any
 
 
 def evaluate_enrichment_metrics(
-    enrichment_results: List[Dict[str, Any]],
-) -> Dict[str, Any]:
+    enrichment_results: list[dict[str, Any]],
+) -> dict[str, Any]:
     """Aggregate enrichment quality report metrics across all requirements."""
     total = len(enrichment_results)
     if total == 0:
@@ -23,15 +23,15 @@ def evaluate_enrichment_metrics(
     succeeded_count = len(succeeded_rows)
     parse_success_rate = round(succeeded_count / total, 4)
 
-    hallucination_scores: List[float] = []
-    confidence_scores: List[float] = []
-    lexical_overlaps: List[float] = []
-    domain_coverages: List[float] = []
+    hallucination_scores: list[float] = []
+    confidence_scores: list[float] = []
+    lexical_overlaps: list[float] = []
+    domain_coverages: list[float] = []
     warning_count = 0
 
     for r in succeeded_rows:
         qr = r.get("quality_report") or {}
-        
+
         h_score = qr.get("hallucination_risk_score")
         if h_score is not None:
             hallucination_scores.append(float(h_score))
@@ -54,7 +54,7 @@ def evaluate_enrichment_metrics(
         if warnings:
             warning_count += 1
 
-    def _mean(values: List[float]) -> float:
+    def _mean(values: list[float]) -> float:
         return round(sum(values) / len(values), 4) if values else 0.0
 
     return {

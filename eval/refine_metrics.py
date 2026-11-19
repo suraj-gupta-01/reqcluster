@@ -4,14 +4,14 @@ from __future__ import annotations
 
 from collections import Counter
 from itertools import combinations
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any
 
 
 def build_cluster_label_distribution(
-    requirements: List[Dict[str, Any]],
-) -> Dict[int, Counter]:
+    requirements: list[dict[str, Any]],
+) -> dict[int, Counter]:
     """Map each non-noise cluster_id to its ground-truth module distribution."""
-    cluster_dist: Dict[int, Counter] = {}
+    cluster_dist: dict[int, Counter] = {}
     for r in requirements:
         cid = r.get("cluster_id")
         if cid is None or int(cid) == -1:
@@ -25,10 +25,10 @@ def build_cluster_label_distribution(
 
 
 def evaluate_refinement_metrics(
-    requirements: List[Dict[str, Any]],
-    suggestions_data: Dict[str, Any] | List[Dict[str, Any]],
+    requirements: list[dict[str, Any]],
+    suggestions_data: dict[str, Any] | list[dict[str, Any]],
     impurity_threshold: float = 0.90,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Score merge/split refinement suggestions against ground truth labels."""
     cluster_dist = build_cluster_label_distribution(requirements)
     if not cluster_dist:
@@ -41,8 +41,8 @@ def evaluate_refinement_metrics(
         }
 
     # Extract dominant labels and impurity status
-    dominant_labels: Dict[int, str] = {}
-    impure_clusters: Set[int] = set()
+    dominant_labels: dict[int, str] = {}
+    impure_clusters: set[int] = set()
 
     for cid, counter in cluster_dist.items():
         total = sum(counter.values())
@@ -55,15 +55,15 @@ def evaluate_refinement_metrics(
             impure_clusters.add(cid)
 
     # Find all eligible merge pairs (sharing dominant label)
-    eligible_merge_pairs: Set[Tuple[int, int]] = set()
+    eligible_merge_pairs: set[tuple[int, int]] = set()
     clusters = sorted(dominant_labels.keys())
     for c1, c2 in combinations(clusters, 2):
         if dominant_labels[c1] == dominant_labels[c2]:
             eligible_merge_pairs.add((c1, c2))
 
     # Parse suggestions
-    merge_suggestions: List[Dict[str, Any]] = []
-    split_suggestions: List[Dict[str, Any]] = []
+    merge_suggestions: list[dict[str, Any]] = []
+    split_suggestions: list[dict[str, Any]] = []
 
     if isinstance(suggestions_data, list):
         for s in suggestions_data:
@@ -83,9 +83,12 @@ def evaluate_refinement_metrics(
         c_b = s.get("cluster_b_id")
         if c_a is not None and c_b is not None:
             ca_int, cb_int = int(c_a), int(c_b)
-            if ca_int in dominant_labels and cb_int in dominant_labels:
-                if dominant_labels[ca_int] == dominant_labels[cb_int]:
-                    correct_merges += 1
+            if (
+                ca_int in dominant_labels
+                and cb_int in dominant_labels
+                and dominant_labels[ca_int] == dominant_labels[cb_int]
+            ):
+                correct_merges += 1
 
     # Score splits
     correct_splits = 0

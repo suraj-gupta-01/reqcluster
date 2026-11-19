@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 import json
 from pathlib import Path
 import subprocess
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .config import DatasetConfig, ToleranceConfig
 
@@ -20,8 +20,7 @@ def get_current_git_commit() -> str:
         res = subprocess.run(
             ["git", "rev-parse", "--short", "HEAD"],
             cwd=str(REPO_ROOT),
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            capture_output=True,
             text=True,
             check=True,
         )
@@ -33,7 +32,7 @@ def get_current_git_commit() -> str:
 def get_baseline_path(
     dataset_name: str,
     provider: str = "mock",
-    dir_path: Optional[Path | str] = None,
+    dir_path: Path | str | None = None,
 ) -> Path:
     base_dir = Path(dir_path).resolve() if dir_path else DEFAULT_BASELINES_DIR
     # Standard format: <dataset>_<provider>.json
@@ -43,8 +42,8 @@ def get_baseline_path(
 def load_baseline(
     dataset_name: str,
     provider: str = "mock",
-    dir_path: Optional[Path | str] = None,
-) -> Optional[Dict[str, Any]]:
+    dir_path: Path | str | None = None,
+) -> dict[str, Any] | None:
     """Load baseline dictionary if it exists."""
     path = get_baseline_path(dataset_name, provider, dir_path)
     if not path.exists():
@@ -56,7 +55,7 @@ def load_baseline(
             return None
 
     try:
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             return json.load(f)
     except Exception:
         return None
@@ -65,9 +64,9 @@ def load_baseline(
 def save_baseline(
     dataset_name: str,
     provider: str,
-    metrics: Dict[str, Any],
-    commit: Optional[str] = None,
-    dir_path: Optional[Path | str] = None,
+    metrics: dict[str, Any],
+    commit: str | None = None,
+    dir_path: Path | str | None = None,
 ) -> Path:
     """Write metrics as a golden baseline for a dataset and provider."""
     path = get_baseline_path(dataset_name, provider, dir_path)
@@ -76,7 +75,7 @@ def save_baseline(
     data = {
         "dataset": dataset_name,
         "provider": provider,
-        "created_at": datetime.now(timezone.utc).isoformat(),
+        "created_at": datetime.now(UTC).isoformat(),
         "commit": commit or get_current_git_commit(),
         "metrics": metrics,
     }
@@ -89,10 +88,10 @@ def save_baseline(
 
 def evaluate_metric_gate(
     metric_name: str,
-    actual: Optional[float | int],
-    baseline: Optional[float | int],
+    actual: float | int | None,
+    baseline: float | int | None,
     tol: ToleranceConfig,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Check a single metric against floor and delta tolerances."""
     if actual is None:
         return {
@@ -161,9 +160,9 @@ def evaluate_metric_gate(
 
 def evaluate_dataset_gating(
     dataset_config: DatasetConfig,
-    actual_metrics: Dict[str, Any],
-    baseline_payload: Optional[Dict[str, Any]],
-) -> List[Dict[str, Any]]:
+    actual_metrics: dict[str, Any],
+    baseline_payload: dict[str, Any] | None,
+) -> list[dict[str, Any]]:
     """Evaluate all metrics for a dataset against registry tolerances."""
     baseline_metrics = baseline_payload.get("metrics", {}) if baseline_payload else {}
     results = []

@@ -43,3 +43,4 @@ frontend/dist/
 .gpuvenv/
 
 var/
+eval/results/

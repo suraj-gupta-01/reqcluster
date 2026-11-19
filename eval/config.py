@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Literal
 import yaml
 
 
@@ -14,12 +14,12 @@ DEFAULT_REGISTRY_PATH = REPO_ROOT / "eval" / "datasets.yaml"
 
 @dataclass
 class ToleranceConfig:
-    floor: Optional[float] = None
-    delta: Optional[float] = None
+    floor: float | None = None
+    delta: float | None = None
     lower_is_better: bool = False
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> ToleranceConfig:
+    def from_dict(cls, data: dict[str, Any]) -> ToleranceConfig:
         return cls(
             floor=float(data["floor"]) if "floor" in data and data["floor"] is not None else None,
             delta=float(data["delta"]) if "delta" in data and data["delta"] is not None else None,
@@ -33,11 +33,11 @@ class DatasetConfig:
     path: Path
     suite: Literal["fast", "stress"] = "fast"
     ground_truth: str = "module"
-    edges: Optional[Path] = None
-    tolerances: Dict[str, ToleranceConfig] = field(default_factory=dict)
+    edges: Path | None = None
+    tolerances: dict[str, ToleranceConfig] = field(default_factory=dict)
 
     @classmethod
-    def from_dict(cls, name: str, data: Dict[str, Any], root: Path = REPO_ROOT) -> DatasetConfig:
+    def from_dict(cls, name: str, data: dict[str, Any], root: Path = REPO_ROOT) -> DatasetConfig:
         raw_path = Path(data["path"])
         path = raw_path if raw_path.is_absolute() else (root / raw_path).resolve()
 
@@ -62,7 +62,7 @@ class DatasetConfig:
 
 @dataclass
 class RegistryConfig:
-    datasets: Dict[str, DatasetConfig]
+    datasets: dict[str, DatasetConfig]
 
     @classmethod
     def from_yaml(cls, path: Path | str = DEFAULT_REGISTRY_PATH) -> RegistryConfig:
@@ -70,7 +70,7 @@ class RegistryConfig:
         if not file_path.exists():
             raise FileNotFoundError(f"Dataset registry not found at: {file_path}")
 
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             data = yaml.safe_load(f) or {}
 
         root = file_path.parent.parent
@@ -84,8 +84,8 @@ class RegistryConfig:
 def resolve_datasets(
     registry: RegistryConfig,
     suite: str = "fast",
-    dataset_name: Optional[str] = None,
-) -> List[DatasetConfig]:
+    dataset_name: str | None = None,
+) -> list[DatasetConfig]:
     """Filter registry datasets by suite or exact name."""
     if dataset_name:
         if dataset_name not in registry.datasets:

@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -13,8 +13,8 @@ DEFAULT_RESULTS_DIR = REPO_ROOT / "eval" / "results"
 
 
 def format_terminal_report(
-    run_meta: Dict[str, Any],
-    dataset_results: List[Dict[str, Any]],
+    run_meta: dict[str, Any],
+    dataset_results: list[dict[str, Any]],
 ) -> str:
     """Format a clean, aligned tabular report optimized for terminal viewing."""
     raw_ts = str(run_meta.get("timestamp", ""))
@@ -90,12 +90,12 @@ def format_terminal_report(
 
 
 def build_markdown_report(
-    run_meta: Dict[str, Any],
-    dataset_results: List[Dict[str, Any]],
+    run_meta: dict[str, Any],
+    dataset_results: list[dict[str, Any]],
     drift_summary: str = "",
 ) -> str:
     """Construct a readable Markdown report from evaluation results."""
-    timestamp = run_meta.get("timestamp", datetime.now(timezone.utc).isoformat())
+    timestamp = run_meta.get("timestamp", datetime.now(UTC).isoformat())
     commit = run_meta.get("commit", "unknown")
     model_mode = run_meta.get("model", "real")
     provider = run_meta.get("provider", "mock")
@@ -160,14 +160,14 @@ def build_markdown_report(
 
 def save_report(
     report_content: str,
-    run_meta: Optional[Dict[str, Any]] = None,
-    dataset_results: Optional[List[Dict[str, Any]]] = None,
-    timestamp_str: Optional[str] = None,
-    out_dir: Optional[Path | str] = None,
+    run_meta: dict[str, Any] | None = None,
+    dataset_results: list[dict[str, Any]] | None = None,
+    timestamp_str: str | None = None,
+    out_dir: Path | str | None = None,
 ) -> Path:
     """Save markdown and structured JSON report into eval/results/<timestamp>/."""
     base_dir = Path(out_dir).resolve() if out_dir else DEFAULT_RESULTS_DIR
-    ts = timestamp_str or datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    ts = timestamp_str or datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
     target_dir = base_dir / ts
     target_dir.mkdir(parents=True, exist_ok=True)
 

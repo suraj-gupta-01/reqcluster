@@ -2,22 +2,22 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_DRIFT_FILE = REPO_ROOT / "eval" / "drift.json"
 
 
-def load_drift_history(file_path: Optional[Path | str] = None) -> List[Dict[str, Any]]:
+def load_drift_history(file_path: Path | str | None = None) -> list[dict[str, Any]]:
     path = Path(file_path).resolve() if file_path else DEFAULT_DRIFT_FILE
     if not path.exists():
         return []
     try:
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             data = json.load(f)
             return data.get("runs", [])
     except Exception:
@@ -28,16 +28,16 @@ def append_drift_entry(
     dataset: str,
     provider: str,
     model: str,
-    metrics: Dict[str, Any],
+    metrics: dict[str, Any],
     commit: str = "",
-    file_path: Optional[Path | str] = None,
+    file_path: Path | str | None = None,
 ) -> None:
     path = Path(file_path).resolve() if file_path else DEFAULT_DRIFT_FILE
     path.parent.mkdir(parents=True, exist_ok=True)
 
     runs = load_drift_history(path)
     entry = {
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": datetime.now(UTC).isoformat(),
         "commit": commit or "unknown",
         "dataset": dataset,
         "provider": provider,
@@ -54,9 +54,9 @@ def append_drift_entry(
 
 
 def format_drift_table(
-    dataset_name: Optional[str] = None,
+    dataset_name: str | None = None,
     n: int = 10,
-    file_path: Optional[Path | str] = None,
+    file_path: Path | str | None = None,
 ) -> str:
     """Format drift history into an aligned ASCII table for terminal inspection."""
     runs = load_drift_history(file_path)
@@ -96,14 +96,14 @@ def format_drift_table(
         model = str(r.get("model", "real"))[:5]
         m = r.get("metrics", {})
 
-        def _fmt(val, is_pct=False, decimals=2):
+        def _fmt(val, is_pct=False, decimals=2, frac=False):
             if val is None or val == "":
                 return "-"
             try:
                 fval = float(val)
+                if frac:  # 0..1 fractions (recall, parse rate); *_pct fields are already percents
+                    fval *= 100.0
                 if is_pct:
-                    if fval <= 1.0 and fval > 0.0:
-                        fval = fval * 100.0
                     return f"{fval:.{decimals}f}%"
                 return f"{fval:.{decimals}f}"
             except Exception:
@@ -112,8 +112,8 @@ def format_drift_table(
         acc = _fmt(m.get("accuracy_pct"), is_pct=True, decimals=2)
         ari = _fmt(m.get("ari"), decimals=4)
         noise = _fmt(m.get("noise_pct"), is_pct=True, decimals=2)
-        ref_rec = _fmt(m.get("reference_recall"), is_pct=True, decimals=1)
-        parse_suc = _fmt(m.get("parse_success_rate"), is_pct=True, decimals=1)
+        ref_rec = _fmt(m.get("reference_recall"), is_pct=True, decimals=1, frac=True)
+        parse_suc = _fmt(m.get("parse_success_rate"), is_pct=True, decimals=1, frac=True)
 
         lines.append(
             f" {ts:<19}  {ds:<14}  {commit:<7}  {model:<5}  "

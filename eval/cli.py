@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import argparse
-from datetime import datetime, timezone
+import contextlib
+from datetime import datetime, UTC
 import logging
 from pathlib import Path
 import sys
-from typing import List, Optional
 
 from .baselines import (
     evaluate_dataset_gating,
@@ -31,15 +31,11 @@ logger = logging.getLogger("eval")
 
 # Ensure stdout/stderr handles unicode without crashing on Windows cp1252
 if hasattr(sys.stdout, "reconfigure"):
-    try:
+    with contextlib.suppress(Exception):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-    except Exception:
-        pass
 if hasattr(sys.stderr, "reconfigure"):
-    try:
+    with contextlib.suppress(Exception):
         sys.stderr.reconfigure(encoding="utf-8", errors="replace")
-    except Exception:
-        pass
 
 
 def run_eval_command(args: argparse.Namespace) -> int:
@@ -47,7 +43,7 @@ def run_eval_command(args: argparse.Namespace) -> int:
     datasets = resolve_datasets(registry, suite=args.suite, dataset_name=args.dataset)
 
     commit = get_current_git_commit()
-    timestamp = datetime.now(timezone.utc).isoformat()
+    timestamp = datetime.now(UTC).isoformat()
     run_meta = {
         "timestamp": timestamp,
         "commit": commit,
@@ -55,7 +51,7 @@ def run_eval_command(args: argparse.Namespace) -> int:
         "provider": args.provider,
     }
 
-    print(f"\n[RUN] Running ReqCluster Evaluation Harness")
+    print("\n[RUN] Running ReqCluster Evaluation Harness")
     print(f"      Suite: {args.suite} | Model: {args.model} | Provider: {args.provider} | Commit: {commit}\n")
 
     dataset_results = []
@@ -189,7 +185,7 @@ def report_command(args: argparse.Namespace) -> int:
     json_path = latest_dir / "report.json"
     if json_path.exists():
         try:
-            with open(json_path, "r", encoding="utf-8") as f:
+            with open(json_path, encoding="utf-8") as f:
                 data = json.load(f)
             meta = data.get("meta", {})
             datasets = data.get("datasets", [])
@@ -203,13 +199,13 @@ def report_command(args: argparse.Namespace) -> int:
     # Fallback to reading markdown file
     latest_report = latest_dir / "report.md"
     if latest_report.exists():
-        with open(latest_report, "r", encoding="utf-8") as f:
+        with open(latest_report, encoding="utf-8") as f:
             print("\n" + f.read() + "\n")
 
     return 0
 
 
-def main(argv: Optional[List[str]] = None) -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="python -m eval",
         description="ReqCluster Evaluation Harness & Regression Guard Suite",

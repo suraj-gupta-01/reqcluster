@@ -1,112 +1,64 @@
-"""Hermetic execution environment and FastAPI TestClient runner."""
+"""Hermetic execution environment: new FastAPI app in a TestClient with an isolated home."""
 
 from __future__ import annotations
 
 from contextlib import contextmanager
-import hashlib
 import os
 from pathlib import Path
 import shutil
-import sys
 import tempfile
-from typing import Any, Generator, Optional
-import numpy as np
+from typing import Any
+from collections.abc import Generator
 
-# Ensure root and backend are on sys.path
-REPO_ROOT = Path(__file__).resolve().parent.parent
-BACKEND_DIR = REPO_ROOT / "backend"
+_ENV_KEYS = (
+    "REQCLUSTER_HOME",
+    "DATABASE_URL",
+    "REQCLUSTER_JOB_WORKERS",
+    "REQCLUSTER_EMBEDDING_BACKEND",
+    "REQCLUSTER_LLM_PROVIDER",
+)
 
-if str(REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(REPO_ROOT))
-if str(BACKEND_DIR) not in sys.path:
-    sys.path.insert(0, str(BACKEND_DIR))
 
+def _reset_backend() -> None:
+    from reqcluster import db, jobs
+    from reqcluster.config import get_settings
 
-class MockEncoder:
-    """Deterministic dummy sentence encoder for fast smoke checks."""
-
-    def __init__(self, model_name: str = "mock-encoder", **kwargs):
-        self.model_name = model_name
-
-    def encode(
-        self,
-        sentences: list[str],
-        batch_size: int = 32,
-        show_progress_bar: bool = False,
-        convert_to_numpy: bool = True,
-        normalize_embeddings: bool = True,
-        **kwargs,
-    ) -> np.ndarray:
-        vectors = []
-        for text in sentences:
-            digest = hashlib.sha256(str(text).encode("utf-8")).digest()
-            seed = int.from_bytes(digest[:8], "big", signed=False)
-            rng = np.random.default_rng(seed)
-            vec = rng.standard_normal(384).astype(np.float32)
-            norm = np.linalg.norm(vec)
-            if norm > 0:
-                vec = vec / norm
-            vectors.append(vec)
-        return np.vstack(vectors).astype(np.float32)
+    get_settings.cache_clear()
+    db.reset()
+    jobs.reset_runner()
 
 
 @contextmanager
 def hermetic_client(
     model_mode: str = "real",
     provider: str = "mock",
+    home: Path | None = None,
 ) -> Generator[Any, None, None]:
-    """Boot FastAPI inside TestClient with an isolated temp SQLite DB and cache."""
-    temp_dir = tempfile.mkdtemp(prefix="reqcluster-eval-")
-    temp_path = Path(temp_dir)
-    db_path = temp_path / "eval.db"
-    cache_path = temp_path / "embeddings"
-    cache_path.mkdir(parents=True, exist_ok=True)
+    """Boot the app with env pointing at a fresh home; jobs run inline (0 workers)."""
+    temp_dir = None if home else tempfile.mkdtemp(prefix="reqcluster-eval-")
+    home_path = Path(home) if home else Path(temp_dir)
+    home_path.mkdir(parents=True, exist_ok=True)
 
-    # Save original environment state
-    old_env = dict(os.environ)
-    os.environ["DATABASE_URL"] = f"sqlite:///{db_path.as_posix()}"
+    saved = {k: os.environ.get(k) for k in _ENV_KEYS}
+    os.environ.pop("DATABASE_URL", None)
+    os.environ["REQCLUSTER_HOME"] = str(home_path)
+    os.environ["REQCLUSTER_JOB_WORKERS"] = "0"
+    os.environ["REQCLUSTER_EMBEDDING_BACKEND"] = "mock" if model_mode == "mock" else "torch"
     os.environ["REQCLUSTER_LLM_PROVIDER"] = provider
-    os.environ["REQCLUSTER_SQLITE_OK"] = "1"
-    os.environ.pop("REDIS_URL", None)
 
-    # Import backend modules after setting DATABASE_URL
-    import core.embeddings
-    import models.database
-    from api import routes
-    from main import app
     from fastapi.testclient import TestClient
+    from reqcluster.app import create_app
 
-    # Save original cache dir and model
-    orig_cache_dir = core.embeddings.CACHE_DIR
-    orig_model = core.embeddings._model
-
-    core.embeddings.CACHE_DIR = str(cache_path)
-
-    if model_mode == "mock":
-        core.embeddings._model = MockEncoder()
-
-    # Create tables in the isolated temp database
-    models.database.Base.metadata.create_all(bind=models.database.engine)
-
+    _reset_backend()
     try:
-        with TestClient(app) as client:
+        with TestClient(create_app()) as client:
             yield client
     finally:
-        # Cleanup monkeypatches & engine
-        core.embeddings.CACHE_DIR = orig_cache_dir
-        core.embeddings._model = orig_model
-
-        try:
-            models.database.engine.dispose()
-        except Exception:
-            pass
-
-        # Restore environment
-        os.environ.clear()
-        os.environ.update(old_env)
-
-        # Remove temp directory
-        try:
+        _reset_backend()
+        for k, v in saved.items():
+            if v is None:
+                os.environ.pop(k, None)
+            else:
+                os.environ[k] = v
+        if temp_dir:
             shutil.rmtree(temp_dir, ignore_errors=True)
-        except Exception:
-            pass

@@ -50,7 +50,7 @@ datasets:
         delta: 2.0
         lower_is_better: true
       ari:
-        floor: 0.85
+        floor: 0.90
         delta: -0.05
       v_measure:
         floor: 0.90
@@ -73,6 +73,9 @@ datasets:
     suite: stress
     ground_truth: module
     tolerances:
+      ari:
+        floor: 0.89
+        delta: -0.05
       accuracy_pct:
         floor: 94.0
         delta: -2.0
@@ -100,7 +103,7 @@ datasets:
     ground_truth: module
     tolerances:
       ari:
-        floor: 0.20
+        floor: 0.62
         delta: -0.10
       parse_success_rate:
         floor: 0.90
@@ -123,6 +126,9 @@ datasets:
     suite: stress
     ground_truth: module
     tolerances:
+      ari:
+        floor: 0.32
+        delta: -0.10
       parse_success_rate:
         floor: 0.80
         delta: -0.05
