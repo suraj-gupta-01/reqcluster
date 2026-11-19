@@ -40,3 +40,22 @@ export async function request(path, { method = 'GET', body, query, signal, raw =
 
 // Plain links cannot send X-API-Key, so downloads only work when the API needs no key.
 export const downloadUrl = (path, query) => buildUrl(path, query)
+
+export async function download(path, filename, query) {
+  const headers = {}
+  if (API_KEY) headers['X-API-Key'] = API_KEY
+  const res = await fetch(buildUrl(path, query), { headers })
+  if (!res.ok) {
+    let env = null
+    try { env = await res.json() } catch { /* non-JSON error body */ }
+    throw new ApiError(res.status, env?.error ?? 'http_error', env?.message ?? res.statusText)
+  }
+  const url = URL.createObjectURL(await res.blob())
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  a.remove()
+  URL.revokeObjectURL(url)
+}

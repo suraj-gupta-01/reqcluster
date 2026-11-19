@@ -1,127 +1,86 @@
-import { useState, useEffect, useCallback } from 'react'
-import { Wrench, Loader, GitMerge, Scissors, Clock, AlertTriangle, RefreshCw } from 'lucide-react'
-import {
-  getSessions,
-  generateSuggestions,
-  getSuggestions,
-  applySuggestion,
-  getAuditLog,
-  getClusters,
-  getErrorMessage,
-  formatTimestamp,
-} from '../utils/api.js'
+import { useState, useMemo } from 'react'
+import { Link } from 'react-router-dom'
+import { Wrench, GitMerge, Scissors, Clock, AlertTriangle, RefreshCw } from 'lucide-react'
+import { startSuggestions, getSuggestions, decideSuggestion, getAudit, getClusters } from '../api/endpoints.js'
+import { useApi } from '../hooks/useApi.js'
+import { useJob } from '../hooks/useJob.js'
+import { useSession } from '../state/SessionContext.jsx'
+import { getErrorMessage, formatTimestamp, isConflict } from '../utils/format.js'
 import SuggestionCard from '../components/SuggestionCard.jsx'
+import JobProgress from '../components/JobProgress.jsx'
 
 export default function RefinementPage() {
-  const [sessions, setSessions] = useState([])
-  const [selectedSession, setSelectedSession] = useState(null)
+  const { sessionId } = useSession()
   const [activeTab, setActiveTab] = useState('merge')
-
-  const [mergeSuggestions, setMergeSuggestions] = useState([])
-  const [splitSuggestions, setSplitSuggestions] = useState([])
-  const [coherenceScores, setCoherenceScores] = useState([])
-  const [auditLog, setAuditLog] = useState([])
-  const [clusterInfo, setClusterInfo] = useState({})
-
-  const [generating, setGenerating] = useState(false)
+  const [jobId, setJobId] = useState(null)
   const [applyingId, setApplyingId] = useState(null)
   const [error, setError] = useState(null)
-  const [loadingSessions, setLoadingSessions] = useState(true)
+  const [conflict, setConflict] = useState(false)
 
-  // Load sessions
-  useEffect(() => {
-    getSessions()
-      .then(list => {
-        const doneSessions = list.filter(s => s.status === 'done')
-        setSessions(doneSessions)
-        if (doneSessions.length > 0 && !selectedSession) {
-          setSelectedSession(doneSessions[0].id)
-        }
-      })
-      .catch(() => setError('Failed to load sessions.'))
-      .finally(() => setLoadingSessions(false))
-  }, [])
+  const sugg = useApi((o) => (sessionId ? getSuggestions(sessionId, undefined, o) : Promise.resolve([])), [sessionId])
+  const auditApi = useApi((o) => (sessionId ? getAudit(sessionId, o) : Promise.resolve([])), [sessionId])
+  const clustersApi = useApi((o) => (sessionId ? getClusters(sessionId, o) : Promise.resolve([])), [sessionId])
 
-  // Load existing suggestions when session changes
-  const loadSuggestions = useCallback(async (sessionId) => {
-    try {
-      const [all, audit, clusters] = await Promise.all([
-        getSuggestions(sessionId),
-        getAuditLog(sessionId),
-        getClusters(sessionId),
-      ])
-      setMergeSuggestions(all.filter(s => s.suggestion_type === 'merge'))
-      setSplitSuggestions(all.filter(s => s.suggestion_type === 'split'))
-      setAuditLog(audit)
+  const all = sugg.data || []
+  const mergeSuggestions = all.filter(s => s.kind === 'merge')
+  const splitSuggestions = all.filter(s => s.kind === 'split')
+  const auditLog = auditApi.data || []
+  const clusterInfo = useMemo(() => {
+    const info = {}
+    ;(clustersApi.data || []).forEach(c => {
+      info[c.cluster_id] = { label: c.label, keywords: c.keywords || [], size: c.size }
+    })
+    return info
+  }, [clustersApi.data])
 
-      const info = {}
-      clusters.forEach(c => {
-        info[c.cluster_id] = { label: c.label, keywords: c.keywords || [], size: c.size }
-      })
-      setClusterInfo(info)
-      setError(null)
-    } catch {
-      // No suggestions yet - that's fine
-    }
-  }, [])
+  const refresh = () => {
+    setConflict(false)
+    setError(null)
+    sugg.reload()
+    auditApi.reload()
+    clustersApi.reload()
+  }
 
-  useEffect(() => {
-    if (selectedSession) loadSuggestions(selectedSession)
-  }, [selectedSession, loadSuggestions])
+  const { job, cancel } = useJob(jobId, (j) => {
+    setJobId(null)
+    if (j.status === 'failed') setError(j.error || 'Failed to generate suggestions.')
+    refresh()
+  })
+  const generating = jobId != null
 
-  // Generate suggestions
   const handleGenerate = async () => {
-    if (!selectedSession) return
-    setGenerating(true)
     setError(null)
     try {
-      const result = await generateSuggestions({ session_id: selectedSession })
-      setMergeSuggestions(result.merge_suggestions || [])
-      setSplitSuggestions(result.split_suggestions || [])
-      setCoherenceScores(result.coherence_scores || [])
-      if (result.warnings?.length) {
-        setError(result.warnings.join(' '))
-      }
+      const j = await startSuggestions(sessionId, {})
+      setJobId(j.id)
     } catch (err) {
       setError(getErrorMessage(err, 'Failed to generate suggestions.'))
-    } finally {
-      setGenerating(false)
     }
   }
 
-  // Apply suggestion
-  const handleAccept = async (suggestionId) => {
+  const decide = (decision) => async (suggestionId) => {
     setApplyingId(suggestionId)
     setError(null)
+    setConflict(false)
     try {
-      await applySuggestion({
-        session_id: selectedSession,
-        suggestion_id: suggestionId,
-        action: 'accept',
-      })
-      await loadSuggestions(selectedSession)
+      await decideSuggestion(sessionId, suggestionId, decision)
+      refresh()
     } catch (err) {
-      setError(getErrorMessage(err, 'Failed to apply suggestion.'))
+      if (isConflict(err)) setConflict(true)
+      else setError(getErrorMessage(err, `Failed to ${decision} suggestion.`))
     } finally {
       setApplyingId(null)
     }
   }
+  const handleAccept = decide('accept')
+  const handleReject = decide('reject')
 
-  const handleReject = async (suggestionId) => {
-    setApplyingId(suggestionId)
-    setError(null)
-    try {
-      await applySuggestion({
-        session_id: selectedSession,
-        suggestion_id: suggestionId,
-        action: 'reject',
-      })
-      await loadSuggestions(selectedSession)
-    } catch (err) {
-      setError(getErrorMessage(err, 'Failed to reject suggestion.'))
-    } finally {
-      setApplyingId(null)
-    }
+  if (!sessionId) {
+    return (
+      <div className="p-8">
+        <Link to="/" className="text-brand-400 hover:underline">Select or upload a session first</Link>
+      </div>
+    )
   }
 
   const currentSuggestions = activeTab === 'merge' ? mergeSuggestions : activeTab === 'split' ? splitSuggestions : []
@@ -140,81 +99,33 @@ export default function RefinementPage() {
         </p>
       </div>
 
-      {/* Session selector */}
-      <div className="card p-4 mb-6">
-        <div className="flex items-center gap-4 flex-wrap">
-          <div className="flex-1 min-w-[200px]">
-            <label className="text-xs text-gray-500 block mb-1">Session</label>
-            {loadingSessions ? (
-              <div className="flex items-center gap-2 text-gray-400 text-sm">
-                <Loader size={14} className="animate-spin" /> Loading sessions...
-              </div>
-            ) : sessions.length === 0 ? (
-              <div className="text-sm text-gray-500">No completed sessions found. Run clustering first.</div>
-            ) : (
-              <select
-                value={selectedSession || ''}
-                onChange={e => setSelectedSession(parseInt(e.target.value))}
-                className="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 w-full focus:outline-none focus:ring-1 focus:ring-brand-500"
-              >
-                {sessions.map(s => (
-                  <option key={s.id} value={s.id}>
-                    #{s.id} - {s.filename} ({s.total_requirements} reqs, {s.total_clusters} clusters)
-                  </option>
-                ))}
-              </select>
-            )}
-          </div>
-
-          <button
-            onClick={handleGenerate}
-            disabled={!selectedSession || generating}
-            className="btn-primary flex items-center gap-2 text-sm px-5 py-2.5 disabled:opacity-50 mt-4 sm:mt-0"
-          >
-            {generating ? (
-              <>
-                <Loader size={14} className="animate-spin" />
-                Analyzing...
-              </>
-            ) : (
-              <>
-                <RefreshCw size={14} />
-                Analyze Clusters
-              </>
-            )}
-          </button>
-        </div>
+      <div className="card p-4 mb-6 flex items-center justify-between gap-4 flex-wrap">
+        <span className="text-sm text-gray-400">Session #{sessionId}</span>
+        <button
+          onClick={handleGenerate}
+          disabled={generating}
+          className="btn-primary flex items-center gap-2 text-sm px-5 py-2.5 disabled:opacity-50"
+        >
+          <RefreshCw size={14} />
+          Analyze Clusters
+        </button>
       </div>
+
+      {generating && <div className="mb-4"><JobProgress job={job} onCancel={cancel} title="Analyzing" /></div>}
+
+      {conflict && (
+        <div className="card p-3 mb-4 border-amber-900/30 bg-amber-950/10 flex items-center gap-2">
+          <AlertTriangle size={14} className="text-amber-400 flex-shrink-0" />
+          <p className="text-sm text-amber-300/80 flex-1">Data changed. Refresh and try again.</p>
+          <button onClick={refresh} className="btn-secondary text-sm">Refresh</button>
+        </div>
+      )}
 
       {/* Error */}
       {error && (
         <div className="card p-3 mb-4 border-amber-900/30 bg-amber-950/10 flex items-start gap-2">
           <AlertTriangle size={14} className="text-amber-400 mt-0.5 flex-shrink-0" />
           <p className="text-sm text-amber-300/80">{error}</p>
-        </div>
-      )}
-
-      {/* Coherence summary */}
-      {coherenceScores.length > 0 && (
-        <div className="card p-4 mb-6">
-          <h2 className="text-sm font-semibold text-gray-300 mb-3">Cluster Coherence Scores</h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-            {coherenceScores.map(cs => (
-              <div key={cs.cluster_id} className="bg-gray-800/40 rounded-lg p-3 border border-gray-700/30">
-                <div className="text-xs text-gray-500 truncate mb-1">
-                  {cs.top_keywords?.slice(0, 2).join(', ') || `Cluster ${cs.cluster_id}`}
-                </div>
-                <div className={`text-lg font-bold ${
-                  cs.coherence_score >= 0.8 ? 'text-emerald-400'
-                    : cs.coherence_score >= 0.6 ? 'text-amber-400'
-                      : 'text-red-400'
-                }`}>
-                  {cs.coherence_score.toFixed(3)}
-                </div>
-                <div className="text-xs text-gray-500">{cs.size} reqs</div>
-              </div>
-            ))}
-          </div>
         </div>
       )}
 
@@ -279,16 +190,16 @@ export default function RefinementPage() {
               {auditLog.map(entry => (
                 <div key={entry.id} className="px-4 py-3 flex items-center gap-3">
                   <div className={`w-2 h-2 rounded-full ${
-                    entry.action === 'applied' ? 'bg-emerald-400'
-                      : entry.action === 'rejected' ? 'bg-red-400'
+                    entry.action.includes('accept') || entry.action === 'applied' ? 'bg-emerald-400'
+                      : entry.action.includes('reject') ? 'bg-red-400'
                         : 'bg-gray-500'
                   }`} />
                   <div className="flex-1">
                     <div className="text-sm text-gray-200">
-                      Suggestion #{entry.suggestion_id} - <span className="font-medium capitalize">{entry.action}</span>
+                      {entry.details?.suggestion_id != null ? `Suggestion #${entry.details.suggestion_id} - ` : ''}<span className="font-medium capitalize">{entry.action}</span>
                     </div>
                     <div className="text-xs text-gray-500">
-                      {entry.created_at ? formatTimestamp(entry.created_at) : 'Unknown time'}
+                      {entry.created_at ? formatTimestamp(entry.created_at) : 'Unknown time'}{entry.actor ? ` · ${entry.actor}` : ''}
                     </div>
                   </div>
                 </div>

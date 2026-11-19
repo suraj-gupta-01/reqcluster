@@ -25,7 +25,7 @@ function ScoreBadge({ label, value, good }) {
 }
 
 export default function SuggestionCard({
-  suggestion,
+  suggestion: rawSuggestion,
   clusterInfo = {},
   onAccept,
   onReject,
@@ -33,8 +33,28 @@ export default function SuggestionCard({
 }) {
   const [expanded, setExpanded] = useState(false)
 
-  const isMerge = suggestion.suggestion_type === 'merge'
-  const isPending = suggestion.status === 'pending'
+  const raw = rawSuggestion
+  let suggestion
+  const pl = raw.payload || {}
+  const isMerge = raw.kind === 'merge'
+  const label = (id) => clusterInfo[id]?.label
+  // Flatten the API shape (payload + kind) into the fields the panels below read.
+  suggestion = {
+    ...pl,
+    id: raw.id,
+    status: raw.status,
+    rationale: raw.rationale,
+    suggestion_type: raw.kind,
+    cluster_a_id: pl.cluster_a,
+    cluster_b_id: pl.cluster_b,
+    cluster_a_label: label(pl.cluster_a),
+    cluster_b_label: label(pl.cluster_b),
+    cluster_id: pl.cluster_id,
+    cluster_label: label(pl.cluster_id),
+    similarity_score: pl.centroid_similarity,
+  }
+  const stale = raw.stale
+  const isPending = suggestion.status === 'pending' && !stale
 
   const Icon = isMerge ? GitMerge : Scissors
   const title = isMerge
@@ -64,8 +84,8 @@ export default function SuggestionCard({
           </div>
         </div>
 
-        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLORS[suggestion.status] || STATUS_COLORS.pending}`}>
-          {suggestion.status}
+        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLORS[stale ? 'stale' : suggestion.status] || STATUS_COLORS.pending}`}>
+          {stale ? 'stale' : suggestion.status}
         </span>
 
         {expanded ? <ChevronUp size={14} className="text-gray-500" /> : <ChevronDown size={14} className="text-gray-500" />}
@@ -117,12 +137,16 @@ export default function SuggestionCard({
             </div>
           )}
 
+          {stale && raw.status === 'pending' && (
+            <p className="text-xs text-gray-500">Clusters changed since this suggestion; regenerate.</p>
+          )}
+
           {/* Actions */}
-          {isPending && (
+          {(isPending || (stale && raw.status === 'pending')) && (
             <div className="flex gap-2 pt-2 border-t border-gray-800/50">
               <button
                 onClick={(e) => { e.stopPropagation(); onAccept?.(suggestion.id) }}
-                disabled={isApplying}
+                disabled={isApplying || stale}
                 className="btn-primary flex items-center gap-1.5 text-sm px-4 py-1.5 disabled:opacity-50"
               >
                 {isApplying ? <Loader size={14} className="animate-spin" /> : <Check size={14} />}
@@ -130,7 +154,7 @@ export default function SuggestionCard({
               </button>
               <button
                 onClick={(e) => { e.stopPropagation(); onReject?.(suggestion.id) }}
-                disabled={isApplying}
+                disabled={isApplying || stale}
                 className="btn-secondary flex items-center gap-1.5 text-sm px-4 py-1.5 disabled:opacity-50"
               >
                 <X size={14} />

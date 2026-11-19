@@ -1,6 +1,7 @@
 import { ChevronDown, ChevronUp, GitBranch, ArrowDownToLine, ArrowUpFromLine, Sparkles } from 'lucide-react'
 import { useState } from 'react'
-import { explainDependencyEdge, getErrorMessage } from '../utils/api.js'
+import { explainEdge } from '../api/endpoints.js'
+import { getErrorMessage } from '../utils/format.js'
 
 const TEXT_LIMIT = 420
 
@@ -174,10 +175,10 @@ function ExplainEdgeButton({ sessionId, item }) {
   const handleClick = async () => {
     setState({ status: 'loading', text: '', error: '' })
     try {
-      const data = await explainDependencyEdge(
-        sessionId, Number(item.edgeSource), Number(item.edgeTarget),
+      const data = await explainEdge(
+        sessionId, { source: Number(item.edgeSource), target: Number(item.edgeTarget) },
       )
-      setState({ status: 'done', text: data.explanation_text || '', error: '' })
+      setState({ status: 'done', text: data.explanation || '', error: '' })
     } catch (err) {
       setState({ status: 'error', text: '', error: getErrorMessage(err) })
     }

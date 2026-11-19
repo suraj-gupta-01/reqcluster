@@ -1,11 +1,15 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
+import { Link } from 'react-router-dom'
 import {
-  Workflow, Loader, RefreshCw, AlertTriangle, GitBranch, ArrowRight,
+  Workflow, RefreshCw, AlertTriangle, GitBranch, ArrowRight,
   Search, SlidersHorizontal, X, MousePointer2,
 } from 'lucide-react'
-import {
-  getSessions, generateDependencies, getDependencies, getErrorMessage,
-} from '../utils/api.js'
+import { startDependencies, getDependencies } from '../api/endpoints.js'
+import { useApi } from '../hooks/useApi.js'
+import { useJob } from '../hooks/useJob.js'
+import { useSession } from '../state/SessionContext.jsx'
+import { getErrorMessage, isConflict } from '../utils/format.js'
+import JobProgress from '../components/JobProgress.jsx'
 import { getClusterColor } from '../utils/colors.js'
 import DependencyNodeDetailsPanel from '../components/DependencyNodeDetailsPanel.jsx'
 
@@ -288,55 +292,39 @@ function ControlLabel({ children }) {
 
 export default function DependencyTreePage() {
   const plotRef = useRef(null)
-  const [sessions, setSessions] = useState([])
-  const [selected, setSelected] = useState(null)
-  const [data, setData] = useState(null)
-  const [loadingSessions, setLoadingSessions] = useState(true)
-  const [generating, setGenerating] = useState(false)
-  const [error, setError] = useState(null)
+  const { sessionId: selected } = useSession()
+  const [jobId, setJobId] = useState(null)
+  const [startError, setStartError] = useState(null)
   const [inspectedNodeId, setInspectedNodeId] = useState(null)
   const [viewMode, setViewMode] = useState('3D')
   const [filters, setFilters] = useState(defaultFiltersForData(null))
 
+  const tree = useApi((o) => (selected ? getDependencies(selected, o) : Promise.resolve(null)), [selected])
+  // 409 = no tree for the current clustering run yet; show the Generate button instead of an error.
+  const noTree = isConflict(tree.error)
+  const data = noTree ? null : tree.data
+  const error = startError || (tree.error && !noTree ? getErrorMessage(tree.error, 'Failed to load dependency tree.') : null)
+
   useEffect(() => {
-    getSessions()
-      .then(list => {
-        const done = list.filter(s => s.status === 'done')
-        setSessions(done)
-        if (done.length && !selected) setSelected(done[0].id)
-      })
-      .catch(() => setError('Failed to load sessions.'))
-      .finally(() => setLoadingSessions(false))
-  }, [selected])
+    setFilters(defaultFiltersForData(data))
+    setInspectedNodeId(null)
+  }, [data])
 
-  const load = useCallback(async (sid) => {
-    try {
-      const res = await getDependencies(sid)
-      setData(res)
-      setFilters(defaultFiltersForData(res))
-      setInspectedNodeId(null)
-      setError(null)
-    } catch {
-      setData(null)
-      setInspectedNodeId(null)
-    }
-  }, [])
-
-  useEffect(() => { if (selected) load(selected) }, [selected, load])
+  const { job, cancel } = useJob(jobId, (j) => {
+    setJobId(null)
+    if (j.status === 'failed') setStartError(j.error || 'Failed to generate dependency tree.')
+    tree.reload()
+  })
+  const generating = jobId != null
 
   const handleGenerate = async () => {
     if (!selected) return
-    setGenerating(true)
-    setError(null)
+    setStartError(null)
     try {
-      const res = await generateDependencies({ session_id: selected })
-      setData(res)
-      setFilters(defaultFiltersForData(res))
-      setInspectedNodeId(null)
+      const j = await startDependencies(selected, {})
+      setJobId(j.id)
     } catch (err) {
-      setError(getErrorMessage(err, 'Failed to generate dependency tree.'))
-    } finally {
-      setGenerating(false)
+      setStartError(getErrorMessage(err, 'Failed to generate dependency tree.'))
     }
   }
 
@@ -536,22 +524,16 @@ export default function DependencyTreePage() {
           </p>
         </div>
         <button onClick={handleGenerate} disabled={!selected || generating} className="btn-primary text-sm">
-          {generating ? <><Loader size={14} className="animate-spin" /> Analyzing...</> : <><RefreshCw size={14} /> Build dependency tree</>}
+          <RefreshCw size={14} /> Build dependency tree
         </button>
       </div>
 
-      <div className="card p-4 mb-4">
-        <ControlLabel>Session</ControlLabel>
-        {loadingSessions ? (
-          <div className="flex items-center gap-2 text-gray-400 text-sm"><Loader size={14} className="animate-spin" /> Loading...</div>
-        ) : sessions.length === 0 ? (
-          <div className="text-sm text-gray-500">No completed sessions. Run clustering first.</div>
-        ) : (
-          <select value={selected || ''} onChange={e => setSelected(parseInt(e.target.value))} className="input text-sm w-full md:w-96">
-            {sessions.map(s => <option key={s.id} value={s.id}>#{s.id} - {s.filename} ({s.total_requirements} reqs)</option>)}
-          </select>
-        )}
-      </div>
+      {!selected && (
+        <div className="card p-4 mb-4 text-sm">
+          <Link to="/" className="text-brand-400 hover:underline">Select or upload a session first</Link>
+        </div>
+      )}
+      {generating && <div className="mb-4"><JobProgress job={job} onCancel={cancel} title="Analyzing" /></div>}
 
       {error && (
         <div className="card p-3 mb-4 border-amber-900/30 flex items-start gap-2">

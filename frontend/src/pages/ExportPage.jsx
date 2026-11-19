@@ -1,6 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Download, Loader, FileCode, FileSpreadsheet, Boxes, Network, FileText } from 'lucide-react'
-import { getSessions, getExportUrl } from '../utils/api.js'
+import { download } from '../api/client.js'
+import { useSession } from '../state/SessionContext.jsx'
+import { getErrorMessage } from '../utils/format.js'
 
 const FORMATS = [
   {
@@ -28,23 +31,35 @@ const FORMATS = [
     desc: 'Flat requirements table with cluster assignments for spreadsheets and quick review.',
     accent: '#84cc16',
   },
+  {
+    key: 'feedback', icon: FileSpreadsheet, name: 'Feedback CSV',
+    desc: 'Reviewer feedback and constraints recorded for this session.',
+    accent: '#a78bfa',
+  },
 ]
 
-export default function ExportPage() {
-  const [sessions, setSessions] = useState([])
-  const [selected, setSelected] = useState(null)
-  const [loading, setLoading] = useState(true)
+const EXT = { sysml: 'xmi', jama: 'json', reqif: 'reqif' }
 
-  useEffect(() => {
-    getSessions()
-      .then(list => {
-        const done = list.filter(s => s.status === 'done')
-        setSessions(done)
-        if (done.length && !selected) setSelected(done[0].id)
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false))
-  }, [])
+export default function ExportPage() {
+  const { sessionId } = useSession()
+  const [busy, setBusy] = useState(null)
+  const [error, setError] = useState(null)
+
+  const handleDownload = async (key) => {
+    setBusy(key)
+    setError(null)
+    try {
+      if (key === 'feedback') {
+        await download(`/sessions/${sessionId}/feedback/export`, `session-${sessionId}-feedback.csv`, { format: 'csv' })
+      } else {
+        await download(`/sessions/${sessionId}/export/${key}`, `session-${sessionId}.${EXT[key] ?? key}`)
+      }
+    } catch (err) {
+      setError(getErrorMessage(err, 'Download failed.'))
+    } finally {
+      setBusy(null)
+    }
+  }
 
   return (
     <div className="p-8 max-w-6xl animate-fade-up">
@@ -59,18 +74,12 @@ export default function ExportPage() {
         </p>
       </div>
 
-      <div className="card p-4 mb-6">
-        <label className="text-xs text-gray-500 block mb-1.5">Session</label>
-        {loading ? (
-          <div className="flex items-center gap-2 text-gray-400 text-sm"><Loader size={14} className="animate-spin" /> Loading…</div>
-        ) : sessions.length === 0 ? (
-          <div className="text-sm text-gray-500">No completed sessions. Run clustering first.</div>
-        ) : (
-          <select value={selected || ''} onChange={e => setSelected(parseInt(e.target.value))} className="input text-sm w-full md:w-96">
-            {sessions.map(s => <option key={s.id} value={s.id}>#{s.id} - {s.filename} ({s.total_requirements} reqs)</option>)}
-          </select>
-        )}
-      </div>
+      {!sessionId && (
+        <div className="card p-4 mb-6 text-sm text-gray-500">
+          <Link to="/" className="text-brand-400 hover:underline">Select or upload a session first</Link>
+        </div>
+      )}
+      {error && <div className="card p-3 mb-4 text-sm text-amber-300/80">{error}</div>}
 
       <div className="grid sm:grid-cols-2 gap-4">
         {FORMATS.map(({ key, icon: Icon, name, desc, accent }) => (
@@ -83,14 +92,13 @@ export default function ExportPage() {
               <h2 className="text-base font-semibold text-white">{name}</h2>
             </div>
             <p className="text-sm text-gray-400 leading-relaxed flex-1">{desc}</p>
-            <a
-              href={selected ? getExportUrl(selected, key) : undefined}
-              onClick={e => { if (!selected) e.preventDefault() }}
-              className={`btn-secondary text-sm justify-center ${!selected ? 'opacity-40 pointer-events-none' : ''}`}
-              download
+            <button
+              onClick={() => handleDownload(key)}
+              disabled={!sessionId || busy === key}
+              className="btn-secondary text-sm justify-center disabled:opacity-40"
             >
-              <Download size={14} /> Download {name}
-            </a>
+              {busy === key ? <Loader size={14} className="animate-spin" /> : <Download size={14} />} Download {name}
+            </button>
           </div>
         ))}
       </div>
