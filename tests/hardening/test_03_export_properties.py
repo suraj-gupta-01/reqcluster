@@ -80,9 +80,9 @@ def test_exports_hold_for_hostile_text(sess, texts, label):
                         try:
                             float(cellv)
                         except ValueError:
-                            raise AssertionError(f"formula-injectable cell {cellv!r}")
+                            raise AssertionError(f"formula-injectable cell {cellv!r}") from None
             got = [row[ti] for row in body]
-            for g, w in zip(got, stored):
+            for g, w in zip(got, stored, strict=True):
                 assert g == w or g == "'" + w, (g, w)
 
 
