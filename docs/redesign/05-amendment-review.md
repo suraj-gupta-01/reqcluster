@@ -68,3 +68,6 @@ Tried and rejected (2026-11-19): ward + silhouette k for uploads under 200 rows.
 | multidomain random 60 (20 groups) | .157 | .399 |
 | uav random 150 (16 groups) | .678 | .808 |
 Decision: keep UMAP+HDBSCAN everywhere. Known limit: results are deterministic per machine and device, but GPU and CPU encodings can give different clusters on small inputs. Pin `REQCLUSTER_EMBEDDING_DEVICE=cpu` when cross-machine reproducibility matters.
+
+## J. Exact BLAS kNN fed to UMAP (2026-11-19)
+`reduce` passes exact cosine neighbours (blocked matmul, `ml/sampling.knn`) as `precomputed_knn` up to 20k rows, replacing UMAP's single-threaded numba pairwise pass (<4096 rows) / NN-descent. 3 seeds, ARI: adversarial .320 -> .311 (noise), multidomain .649 -> .679, uav2k .987 -> .991; reduce 1.5-1.7x faster (uav2k 6.6 -> 3.9 s warm). Also: numba cache is no longer redirected to `{home}` (empty dir forced a 85-100 s recompile; default cache 20 s).

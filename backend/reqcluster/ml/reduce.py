@@ -25,6 +25,21 @@ def reduce(X: np.ndarray, seed: int) -> tuple[np.ndarray, np.ndarray]:
         return _umap(X, seed, n)
 
 
+# Exact cosine kNN via blocked BLAS matmul (multi-threaded) instead of UMAP's single-threaded
+# numba pairwise pass (<4096 rows) or NN-descent; above this size NN-descent is cheaper.
+EXACT_KNN_MAX = 20_000
+
+
+def _exact_knn(X: np.ndarray, nn: int):
+    from . import sampling
+
+    idx, sim = sampling.knn(X, nn - 1)  # excludes self
+    n = len(X)
+    knn_i = np.hstack([np.arange(n)[:, None], idx]).astype(np.int32)
+    knn_d = np.hstack([np.zeros((n, 1), np.float32), np.clip(1.0 - sim, 0.0, 2.0)])
+    return knn_i, knn_d.astype(np.float32), None
+
+
 def _umap(X: np.ndarray, seed: int, n: int) -> tuple[np.ndarray, np.ndarray]:
     import umap  # lazy: slow import
 
@@ -34,6 +49,7 @@ def _umap(X: np.ndarray, seed: int, n: int) -> tuple[np.ndarray, np.ndarray]:
     x10 = umap.UMAP(
         n_components=10, metric="cosine", n_neighbors=nn, min_dist=0.0, n_epochs=200,
         init="random", random_state=seed, compatibility_layout=True,
+        precomputed_knn=_exact_knn(X, nn) if n <= EXACT_KNN_MAX else (None, None, None),
     ).fit_transform(X)
     # viz only: 100 epochs at 10k rows 28.9s -> 5.4s (vs 200); clustering uses x10
     xy = umap.UMAP(

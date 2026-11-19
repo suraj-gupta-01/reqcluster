@@ -111,3 +111,15 @@ def test_graph_keeps_edges_for_loose_group_under_small_budget():
     edges = graph.build(X, labels, threshold=0.3, k=5, max_edges=50)
     assert len(edges) <= 50
     assert any(a >= 24 and b >= 24 for a, b, _ in edges)
+
+
+def test_exact_knn_matches_brute_force_with_self_first():
+    from reqcluster.ml.reduce import _exact_knn
+
+    X = rand(120, d=32, seed=3)[0]
+    idx, dist, _ = _exact_knn(X, 15)
+    D = 1.0 - X @ X.T
+    assert idx.shape == dist.shape == (120, 15)
+    assert (idx[:, 0] == np.arange(120)).all() and np.allclose(dist[:, 0], 0)
+    for i in range(120):
+        assert np.allclose(np.sort(D[i])[:15], dist[i], atol=1e-5)  # ascending, exact
