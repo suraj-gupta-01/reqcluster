@@ -75,6 +75,7 @@ class RunRow(Base):
     n_clusters: Mapped[int] = mapped_column(Integer, default=0)
     noise_count: Mapped[int] = mapped_column(Integer, default=0)
     edit_seq: Mapped[int] = mapped_column(Integer, default=0)
+    max_cluster_id: Mapped[int] = mapped_column(Integer, default=-1)  # highest id ever used
     created_at: Mapped[datetime] = _ts(default=_now)
 
 

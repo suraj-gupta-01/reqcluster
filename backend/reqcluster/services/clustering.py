@@ -51,6 +51,25 @@ def start(sid: int, params: ClusteringParams) -> Job:
                                params.model_dump())
 
 
+def run_embeddings(sid: int, run: RunRow, warnings: list[str] | None = None) -> np.ndarray:
+    """Embeddings of the run's requirements (ordinal order) in the space it was clustered in."""
+    mode = (run.params or {}).get("embedding_mode", "base")
+    try:
+        texts = enrichment.texts_for_mode(sid, mode)
+    except errors.Conflict:
+        texts = enrichment.texts_for_mode(sid, "base")
+        if warnings is not None:
+            warnings.append(f"Enrichment is incomplete: used base text embeddings, not {mode}.")
+    return embeddings.embed(texts)
+
+
+def next_cluster_id(s, run: RunRow) -> int:
+    """Fresh cluster id, never one the run has used before (merged-away ids stay retired)."""
+    live = s.scalar(select(func.max(ClusterRow.cluster_id)).where(ClusterRow.run_id == run.id))
+    run.max_cluster_id = max(run.max_cluster_id, live if live is not None else -1) + 1
+    return run.max_cluster_id
+
+
 def _scaled(ctx: JobContext, lo: float, hi: float, step: str):
     return lambda frac, name=step: ctx.progress(lo + (hi - lo) * frac, name)
 
@@ -108,7 +127,8 @@ def _reports(ctx, sid, params, texts, emb, res, seed, threads) -> dict:
         p = params.model_copy(update={"embedding_mode": "enriched"}) \
             if params.embedding_mode == "base" else params
         out["ablation_report"] = asdict(analysis.run_ablation(
-            texts, enriched, p, embeddings.embed, seed, threads))
+            texts, enriched, p, embeddings.embed, seed, threads,
+            main=(params.embedding_mode, emb, res)))
     return json.loads(json.dumps(out, default=float))  # numpy scalars / int keys -> JSON-safe
 
 
@@ -122,7 +142,8 @@ def persist_run(sid, kind, params, req_ids, labels, probabilities, x10, xy, clus
                     or 0) + 1
         run = RunRow(session_id=sid, revision=revision, kind=kind, params=params,
                      metrics=metrics, warnings=warnings, durations=durations,
-                     reports=reports or {}, n_clusters=len(clusters), noise_count=n_noise)
+                     reports=reports or {}, n_clusters=len(clusters), noise_count=n_noise,
+                     max_cluster_id=int(labels.max()) if len(labels) else -1)
         s.add(run)
         s.flush()
         rid = run.id

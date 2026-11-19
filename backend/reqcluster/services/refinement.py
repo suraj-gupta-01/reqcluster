@@ -3,16 +3,15 @@ from datetime import datetime, UTC
 
 import numpy as np
 from pydantic import BaseModel, ConfigDict, Field
-from sqlalchemy import func, insert, select, update
+from sqlalchemy import insert, select, update
 
-from reqcluster import embeddings
 from reqcluster.config import get_settings
 from reqcluster.db import session_scope
 from reqcluster.domain import Job, ProviderName
 from reqcluster.errors import Conflict, NotFound, Stale
 from reqcluster.jobs import JobContext, get_runner
 from reqcluster.llm.gateway import get_gateway
-from reqcluster.llm.narrate import cluster_narrative
+from reqcluster.llm.narrate import cluster_narratives
 from reqcluster.ml import refine
 from reqcluster.models import (
     AssignmentRow,
@@ -23,6 +22,7 @@ from reqcluster.models import (
     SuggestionRow,
 )
 from reqcluster.services.assignments import reassign
+from reqcluster.services.clustering import next_cluster_id, run_embeddings
 from reqcluster.services.sessions import _current_run
 
 
@@ -46,6 +46,7 @@ class SuggestSummary(BaseModel):
     run_id: int
     n_merges: int
     n_splits: int
+    warnings: list[str] = []
 
 
 class SuggestionOut(BaseModel):
@@ -94,7 +95,8 @@ def _run(ctx: JobContext, sid: int, p: SuggestParams) -> SuggestSummary:
     req_ids = [r[0] for r in rows]
     labels = np.array([r[2] for r in rows], dtype=np.int64)
     ctx.progress(0.1, "embedding")
-    emb = embeddings.embed([r[1] for r in rows])
+    warnings: list[str] = []
+    emb = run_embeddings(sid, run, warnings)
     with np.load(get_settings().runs_dir / f"{rid}.npz") as z:
         x10 = z["x10"]
     ctx.check_cancel()
@@ -103,32 +105,30 @@ def _run(ctx: JobContext, sid: int, p: SuggestParams) -> SuggestSummary:
     splits = refine.suggest_splits(emb, x10, labels, p.top_n_splits, p.spread_threshold, seed,
                                   p.min_silhouette_delta)
 
-    gw = get_gateway()
-    out: list[dict] = []
+    items, pays = [], []
     for m in merges:
-        pay = dict(m.__dict__)
-        r = cluster_narrative(gw, "merge", p.provider,
-                              cluster_a_label=names.get(m.cluster_a, str(m.cluster_a)),
-                              cluster_b_label=names.get(m.cluster_b, str(m.cluster_b)),
-                              centroid_similarity=m.centroid_similarity,
-                              silhouette_delta=m.silhouette_delta,
-                              coherence_a=m.coherence_a, coherence_b=m.coherence_b)
-        out.append({"kind": "merge", "payload": pay, "rationale": str(r.output),
-                    "provider": r.provider})
+        pays.append(("merge", dict(m.__dict__)))
+        items.append({"kind": "merge",
+                      "cluster_a_label": names.get(m.cluster_a, str(m.cluster_a)),
+                      "cluster_b_label": names.get(m.cluster_b, str(m.cluster_b)),
+                      "centroid_similarity": m.centroid_similarity,
+                      "silhouette_delta": m.silhouette_delta,
+                      "coherence_a": m.coherence_a, "coherence_b": m.coherence_b})
     for sp in splits:
         members = np.where(labels == sp.cluster_id)[0]
         pay = dict(sp.__dict__)
         # sub_labels follow the member order above, so accept can apply them without re-running ML
         pay["assignment"] = {str(req_ids[i]): int(v) for i, v in zip(members, sp.sub_labels, strict=True)}
-        r = cluster_narrative(gw, "split", p.provider,
-                              cluster_label=names.get(sp.cluster_id, str(sp.cluster_id)),
-                              bimodality_score=sp.bimodality_score,
-                              bic_improvement=sp.bic_improvement,
-                              spread_score=sp.spread_score,
-                              sub_cluster_sizes=sp.sub_cluster_sizes)
-        out.append({"kind": "split", "payload": pay, "rationale": str(r.output),
-                    "provider": r.provider})
-        ctx.check_cancel()
+        pays.append(("split", pay))
+        items.append({"kind": "split",
+                      "cluster_label": names.get(sp.cluster_id, str(sp.cluster_id)),
+                      "bimodality_score": sp.bimodality_score,
+                      "bic_improvement": sp.bic_improvement, "spread_score": sp.spread_score,
+                      "sub_cluster_sizes": sp.sub_cluster_sizes})
+    results = cluster_narratives(get_gateway(), items, p.provider)
+    ctx.check_cancel()
+    out = [{"kind": k, "payload": pay, "rationale": str(r.output), "provider": r.provider}
+           for (k, pay), r in zip(pays, results, strict=True)]
 
     with session_scope() as s:
         # rejected, not deleted: sqlite reuses max ids, which would alias ids clients still hold
@@ -138,7 +138,8 @@ def _run(ctx: JobContext, sid: int, p: SuggestParams) -> SuggestSummary:
         if out:
             s.execute(insert(SuggestionRow),
                       [{"run_id": rid, "edit_seq": edit_seq, **o} for o in out])
-    return SuggestSummary(run_id=rid, n_merges=len(merges), n_splits=len(splits))
+    return SuggestSummary(run_id=rid, n_merges=len(merges), n_splits=len(splits),
+                         warnings=warnings)
 
 
 def list_suggestions(sid: int, status: str | None = None) -> list[SuggestionOut]:
@@ -178,8 +179,7 @@ def decide(sid: int, suggestion_id: int, accept: bool, actor: str = "") -> Sugge
                     AssignmentRow.run_id == run.id, AssignmentRow.cluster_id == b))
                 moves = {i: a for i in ids}
             else:
-                new = (s.scalar(select(func.max(ClusterRow.cluster_id))
-                                .where(ClusterRow.run_id == run.id)) or 0) + 1
+                new = next_cluster_id(s, run)
                 moves = {int(k): new for k, v in pay["assignment"].items() if v == 1}
             reassign(s, run, moves, action=f"suggestion_{row.kind}", actor=actor,
                      details={"suggestion_id": row.id})
@@ -210,7 +210,8 @@ class CoherenceOut(BaseModel):
 
 def coherence(sid: int) -> list[CoherenceOut]:
     with session_scope() as s:
-        run_id = _current_run(s, sid).id
+        run = _current_run(s, sid)
+        run_id = run.id
         rows = s.execute(select(RequirementRow.text, AssignmentRow.cluster_id)
                          .join(AssignmentRow, (AssignmentRow.requirement_id == RequirementRow.id)
                                & (AssignmentRow.run_id == run_id))
@@ -218,6 +219,6 @@ def coherence(sid: int) -> list[CoherenceOut]:
                          .order_by(RequirementRow.ordinal)).all()
         kws = {c.cluster_id: list(c.keywords or []) for c in s.scalars(
             select(ClusterRow).where(ClusterRow.run_id == run_id))}
-    X = embeddings.embed([r[0] for r in rows])
+    X = run_embeddings(sid, run)
     labels = np.array([r[1] for r in rows])
     return [CoherenceOut(**d) for d in refine.score_all_clusters(X, labels, kws)]

@@ -257,7 +257,7 @@ def _empty_variant(n: int, shape: list[int], durations: dict[str, float]) -> Var
 
 def _run_variant(name: str, texts: list[str], X: np.ndarray, params: ClusteringParams,
                  seed: int, threads: int, durations: dict[str, float],
-                 warnings: list[str]):
+                 warnings: list[str], res=None):
     n = len(texts)
     shape = [int(v) for v in X.shape]
     none = np.full(n, -1, dtype=np.int64)
@@ -271,9 +271,10 @@ def _run_variant(name: str, texts: list[str], X: np.ndarray, params: ClusteringP
         warnings.append(f"{name} clustering skipped because min_cluster_size exceeds requirement count.")
         return _empty_variant(n, shape, durations), none, None
 
-    t = time.perf_counter()
-    res = pipeline.run(X, texts, params, seed=seed, threads=threads)
-    durations["pipeline"] = elapsed_ms(t)
+    if res is None:
+        t = time.perf_counter()
+        res = pipeline.run(X, texts, params, seed=seed, threads=threads)
+        durations["pipeline"] = elapsed_ms(t)
     labels = res.labels
     k = len(L.cluster_ids(labels))
     noise = int((labels == -1).sum())
@@ -292,8 +293,12 @@ def _run_variant(name: str, texts: list[str], X: np.ndarray, params: ClusteringP
 def run_ablation(
     texts: Sequence[str], enriched: Sequence[str | None] | None, params: ClusteringParams,
     embed_fn: Callable[[list[str]], np.ndarray], seed: int, threads: int = 1,
+    main: tuple[str, np.ndarray, object] | None = None,
 ) -> AblationReport:
-    """Base-vs-target embedding ablation. params.embedding_mode picks the target mode."""
+    """Base-vs-target embedding ablation. params.embedding_mode picks the target mode.
+
+    `main` = (mode, embeddings, pipeline result) of an already finished run; the variant of that
+    mode reuses it instead of embedding and clustering again."""
     mode = params.embedding_mode
     if mode not in ("base", "enriched", "hybrid"):
         raise Invalid("Invalid embedding mode. Use base, enriched, or hybrid.")
@@ -310,15 +315,23 @@ def run_ablation(
 
     bd: dict[str, float] = {}
     td: dict[str, float] = {}
-    t = time.perf_counter()
-    base_X = np.asarray(embed_fn(build_embedding_texts(texts, None, "base")), dtype=np.float32)
-    bd["embedding"] = elapsed_ms(t)
-    t = time.perf_counter()
-    target_X = np.asarray(embed_fn(build_embedding_texts(texts, enriched, mode)), dtype=np.float32)
-    td["embedding"] = elapsed_ms(t)
+    reuse = {main[0]: main[1:]} if main else {}
 
-    base_r, base_l, base_10 = _run_variant("base", texts, base_X, params, seed, threads, bd, warnings)
-    tgt_r, tgt_l, tgt_10 = _run_variant(mode, texts, target_X, params, seed, threads, td, warnings)
+    def variant(name, ttexts, d):
+        t = time.perf_counter()
+        X, res = reuse.get(name, (None, None))
+        if X is None:
+            X = np.asarray(embed_fn(ttexts), dtype=np.float32)
+            d["embedding"] = elapsed_ms(t)
+        return X, res
+
+    base_X, base_res = variant("base", build_embedding_texts(texts, None, "base"), bd)
+    target_X, tgt_res = variant(mode, build_embedding_texts(texts, enriched, mode), td)
+
+    base_r, base_l, base_10 = _run_variant("base", texts, base_X, params, seed, threads, bd,
+                                           warnings, base_res)
+    tgt_r, tgt_l, tgt_10 = _run_variant(mode, texts, target_X, params, seed, threads, td,
+                                        warnings, tgt_res)
     cmp = compare_embeddings(base_X, target_X, base_l, tgt_l, base_10, tgt_10, seed=seed)
     warnings.extend(cmp.warnings)
     return AblationReport(mode, n, base_r, tgt_r, cmp, warnings)

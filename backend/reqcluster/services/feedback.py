@@ -8,7 +8,6 @@ import numpy as np
 from pydantic import BaseModel
 from sqlalchemy import delete, insert, select
 
-from reqcluster import embeddings
 from reqcluster.config import get_settings
 from reqcluster.db import session_scope
 from reqcluster.domain import Job
@@ -27,7 +26,12 @@ from reqcluster.models import (
     SessionRow,
 )
 from reqcluster.services.assignments import reassign
-from reqcluster.services.clustering import ClusteringSummary, persist_run
+from reqcluster.services.clustering import (
+    ClusteringSummary,
+    next_cluster_id,
+    persist_run,
+    run_embeddings,
+)
 from reqcluster.services.sessions import _current_run
 
 
@@ -173,7 +177,10 @@ def review(sid: int, feedback_id: int, approve: bool) -> FeedbackOut:
         if not approve:
             a = s.get(AssignmentRow, (run.id, fb.requirement_id))
             if a.cluster_id == fb.new_cluster_id:
-                reassign(s, run, {fb.requirement_id: fb.old_cluster_id}, action="feedback_reject",
+                back = fb.old_cluster_id
+                if back != -1 and s.get(ClusterRow, (run.id, back)) is None:
+                    back = next_cluster_id(s, run)  # old cluster was merged away: never revive its id
+                reassign(s, run, {fb.requirement_id: back}, action="feedback_reject",
                          actor=fb.applied_by, details={"feedback_id": fb.id})
             s.execute(delete(ConstraintRow).where(ConstraintRow.feedback_id == fb.id))
         return _out(s, fb, s.get(RequirementRow, fb.requirement_id).req_id)
@@ -249,7 +256,8 @@ def _recluster(ctx: JobContext, sid: int) -> ReclusterSummary:
     cannot = [(pos[a], pos[b]) for a, b, k, _ in cons if k == "cannot"]
 
     ctx.progress(0.1, "embedding")
-    X = embeddings.embed(texts)
+    warnings: list[str] = []
+    X = run_embeddings(sid, run, warnings)
     ctx.check_cancel()
     ctx.progress(0.6, "constraints")
     new, moved = C.apply(X, labels, must, cannot)
@@ -258,7 +266,7 @@ def _recluster(ctx: JobContext, sid: int) -> ReclusterSummary:
     clusters = keywords.label_clusters(texts, new)
     ctx.check_cancel()
     new_rid, revision = persist_run(sid, "constrained", params, pks, new, probs, x10, xy,
-                                    clusters, g or [], m, [], {}, constraints=cons)
+                                    clusters, g or [], m, warnings, {}, constraints=cons)
     return ReclusterSummary(run_id=new_rid, revision=revision, n_clusters=len(clusters),
-                             noise_count=int((new == -1).sum()), warnings=[], durations={},
+                             noise_count=int((new == -1).sum()), warnings=warnings, durations={},
                              metrics=m, moved=int(moved))
