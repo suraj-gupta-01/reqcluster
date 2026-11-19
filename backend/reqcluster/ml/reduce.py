@@ -45,6 +45,13 @@ def _exact_knn(X: np.ndarray, nn: int):
     return knn_i, knn_d.astype(np.float32), None
 
 
+def _viz_epochs(n: int) -> int:
+    # viz only (clustering uses x10). 35k rows, 3 seeds (findings/exp/umap_scale.py): 100 epochs
+    # 30.6 s -> 50 epochs 16.2 s (30 ep 10.8 s; reusing the 10-D kNN 12.9 s, no better than plain).
+    # 10-D options all rejected at 35k: n_epochs 100 ARI .948 -> .830, 140 -> .917, Adam 200 -> .368.
+    return 100 if n <= 20_000 else 50
+
+
 def _umap(X: np.ndarray, seed: int, n: int) -> tuple[np.ndarray, np.ndarray]:
     import umap  # lazy: slow import
 
@@ -60,6 +67,6 @@ def _umap(X: np.ndarray, seed: int, n: int) -> tuple[np.ndarray, np.ndarray]:
     # viz only: 100 epochs at 10k rows 28.9s -> 5.4s (vs 200); clustering uses x10
     xy = umap.UMAP(
         n_components=2, metric="euclidean", n_neighbors=min(15, n - 1), min_dist=0.1,
-        n_epochs=100, init="random", random_state=seed, compatibility_layout=True,
+        n_epochs=_viz_epochs(n), init="random", random_state=seed, compatibility_layout=True,
     ).fit_transform(x10)
     return x10.astype(np.float32), xy.astype(np.float32)

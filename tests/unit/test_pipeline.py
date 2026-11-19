@@ -145,3 +145,10 @@ def test_ward_no_noise_k_in_range_and_deterministic():
 def test_ward_tiny_n_all_noise():
     X, t = rand(3)
     assert (pipeline.run(X, t, P(clusterer="ward"), seed=0).labels == -1).all()
+
+
+def test_viz_epochs_drop_only_for_large_n():
+    from reqcluster.ml.reduce import _viz_epochs
+
+    assert _viz_epochs(10_000) == _viz_epochs(20_000) == 100
+    assert _viz_epochs(35_000) == 50
