@@ -16,6 +16,7 @@ from reqcluster.ml import metrics, pipeline
 from reqcluster.models import (
     AssignmentRow,
     ClusterRow,
+    ConstraintRow,
     GraphRow,
     RequirementRow,
     RunRow,
@@ -71,38 +72,51 @@ def _run(ctx: JobContext, sid: int, params: ClusteringParams) -> ClusteringSumma
     ctx.check_cancel()
     m = metrics.compute(res.labels, res.x10, seed)
 
-    n_noise = int((res.labels == -1).sum())
+    edges = [[req_ids[i], req_ids[j], float(w)] for i, j, w in res.edges]
+    rid, revision = persist_run(sid, "cluster", params.model_dump(), req_ids, res.labels,
+                                res.probabilities, res.x10, res.xy, res.clusters, edges, m,
+                                res.warnings, res.durations)
+    return ClusteringSummary(run_id=rid, revision=revision, n_clusters=len(res.clusters),
+                             noise_count=int((res.labels == -1).sum()), warnings=res.warnings,
+                             durations=res.durations, metrics=m)
+
+
+def persist_run(sid, kind, params, req_ids, labels, probabilities, x10, xy, clusters, edges,
+                metrics, warnings, durations, constraints=()) -> tuple[int, int]:
+    """Write one new revision (rows + npz + carried constraints), make it current, prune old
+    runs. One transaction, so a crash can never leave a constrained run without its constraints."""
+    n_noise = int((labels == -1).sum())
     with session_scope() as s:
         revision = (s.scalar(select(func.max(RunRow.revision)).where(RunRow.session_id == sid))
                     or 0) + 1
-        run = RunRow(session_id=sid, revision=revision, kind="cluster",
-                     params=params.model_dump(), metrics=m, warnings=res.warnings,
-                     durations=res.durations, n_clusters=len(res.clusters), noise_count=n_noise)
+        run = RunRow(session_id=sid, revision=revision, kind=kind, params=params,
+                     metrics=metrics, warnings=warnings, durations=durations,
+                     n_clusters=len(clusters), noise_count=n_noise)
         s.add(run)
         s.flush()
         rid = run.id
         s.execute(insert(AssignmentRow), [
-            {"run_id": rid, "requirement_id": req_ids[i], "cluster_id": int(res.labels[i]),
-             "probability": float(res.probabilities[i]), "x": float(res.xy[i, 0]),
-             "y": float(res.xy[i, 1])}
+            {"run_id": rid, "requirement_id": req_ids[i], "cluster_id": int(labels[i]),
+             "probability": float(probabilities[i]), "x": float(xy[i, 0]), "y": float(xy[i, 1])}
             for i in range(len(req_ids))
         ])
-        if res.clusters:
+        if clusters:
             s.execute(insert(ClusterRow), [
                 {"run_id": rid, "cluster_id": c.cluster_id, "size": c.size, "label": c.label,
-                 "keywords": c.keywords} for c in res.clusters])
-        s.add(GraphRow(run_id=rid, edges=[[req_ids[i], req_ids[j], float(w)]
-                                          for i, j, w in res.edges]))
-        _write_npz(rid, x10=res.x10, xy=res.xy, probabilities=res.probabilities)
+                 "keywords": c.keywords} for c in clusters])
+        s.add(GraphRow(run_id=rid, edges=edges))
+        if constraints:
+            s.execute(insert(ConstraintRow), [
+                {"run_id": rid, "a_id": a, "b_id": b, "kind": k, "feedback_id": f}
+                for a, b, k, f in constraints])
+        _write_npz(rid, x10=x10, xy=xy, probabilities=probabilities)
         s.get(SessionRow, sid).current_run_id = rid
         old = list(s.scalars(select(RunRow.id).where(RunRow.session_id == sid)
                              .order_by(RunRow.revision.desc()).offset(KEEP_RUNS)))
         if old:
             s.execute(delete(RunRow).where(RunRow.id.in_(old)))
     unlink_runs(old)
-    return ClusteringSummary(run_id=rid, revision=revision, n_clusters=len(res.clusters),
-                             noise_count=n_noise, warnings=res.warnings,
-                             durations=res.durations, metrics=m)
+    return rid, revision
 
 
 def _write_npz(run_id: int, **arrays) -> None:
