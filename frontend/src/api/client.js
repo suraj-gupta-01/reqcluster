@@ -53,7 +53,9 @@ export async function download(path, filename, query) {
   const url = URL.createObjectURL(await res.blob())
   const a = document.createElement('a')
   a.href = url
-  a.download = filename
+  // the server names the file (right extension per format); `filename` is only a fallback
+  const served = /filename="?([^";]+)"?/.exec(res.headers.get('Content-Disposition') || '')
+  a.download = served?.[1] || filename
   document.body.appendChild(a)
   a.click()
   a.remove()
