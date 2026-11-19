@@ -93,3 +93,13 @@ def test_expand_all_mock_fallback_and_report():
 def test_expansion_out_requires_fields():
     with pytest.raises(ValueError):
         ExpansionOut.model_validate({"expanded_text": "x"})
+
+
+def test_expand_all_real_provider_fallback_is_failed(monkeypatch):
+    from dataclasses import replace
+
+    from reqcluster.llm import gateway as gw
+    monkeypatch.setattr(gw, "_sleep", lambda s: None)
+    s = replace(get_settings(), llm_provider="openai", llm_base_url="", llm_max_retries=0)
+    out = expand_all([(1, "The system shall store audit records.")], LLMGateway(s))
+    assert out[0].status == "failed" and out[0].source == "fallback" and out[0].error

@@ -1,9 +1,9 @@
 """Single entry for every LLM call: retries, breaker, cache, fallback."""
 import hashlib
 import json
-import os
 import random
 import re
+import sqlite3
 import threading
 import time
 import urllib.error
@@ -11,7 +11,6 @@ import urllib.request
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Literal
 
 from pydantic import BaseModel, ValidationError
@@ -73,8 +72,8 @@ class LLMGateway:
         if self._open(provider):
             return LLMResult(fallback(), "fallback", provider, "circuit breaker open")
         messages = render(prompt)
-        path = self._cache_path(provider, prompt, messages)
-        hit = self._cache_read(path, prompt)
+        key = self._cache_key(provider, prompt, messages)
+        hit = self._cache_read(key, prompt)
         if hit is not None:
             return LLMResult(hit, "cache", provider, None)
         try:
@@ -83,7 +82,7 @@ class LLMGateway:
             self._record(provider, ok=False)
             return LLMResult(fallback(), "fallback", provider, str(e))
         self._record(provider, ok=True)
-        self._cache_write(path, out)
+        self._cache_write(key, out)
         return LLMResult(out, "llm", provider, None)
 
     def map(self, prompts: list[Prompt], fallback_for: Callable[[Prompt], BaseModel | str],
@@ -175,31 +174,50 @@ class LLMGateway:
             fails = self._breaker.get(provider, [0, 0.0])[0] + 1
             self._breaker[provider] = [fails, time.monotonic()]
 
-    # ---- cache
-    def _cache_path(self, provider: str, prompt: Prompt, messages: list[dict]) -> Path:
+    # ---- cache (single SQLite kv file; every failure degrades to a miss)
+    def _cache_key(self, provider: str, prompt: Prompt, messages: list[dict]) -> str:
         model = self.s.llm_model if provider == "openai" else self.s.local_llm_model
         schema = prompt.output_model.model_json_schema() if prompt.output_model else None
         key = json.dumps([provider, model, prompt.task, prompt.version, messages, schema],
                          sort_keys=True, ensure_ascii=False)
-        return self.s.cache_dir / "llm" / (hashlib.sha256(key.encode()).hexdigest() + ".json")
+        return hashlib.sha256(key.encode()).hexdigest()
 
-    def _cache_read(self, path: Path, prompt: Prompt):
+    def _cache_connect(self) -> sqlite3.Connection:
+        path = self.s.cache_dir / "llm.sqlite"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        con = sqlite3.connect(path, timeout=5)
+        con.execute("PRAGMA busy_timeout=5000")
+        con.execute("PRAGMA journal_mode=WAL")
+        con.execute("CREATE TABLE IF NOT EXISTS kv(key TEXT PRIMARY KEY, value TEXT)")
+        return con
+
+    def _cache_read(self, key: str, prompt: Prompt):
         try:
-            value = json.loads(path.read_text(encoding="utf-8"))
+            con = self._cache_connect()
+            try:
+                row = con.execute("SELECT value FROM kv WHERE key=?", (key,)).fetchone()
+            finally:
+                con.close()
+            if row is None:
+                return None
+            value = json.loads(row[0])
             if prompt.output_model is not None:
                 return prompt.output_model.model_validate(value)
             return value if isinstance(value, str) else None
-        except (OSError, ValueError):
+        except (sqlite3.Error, OSError, ValueError):
             return None
 
-    def _cache_write(self, path: Path, out: BaseModel | str) -> None:
+    def _cache_write(self, key: str, out: BaseModel | str) -> None:
         try:
-            path.parent.mkdir(parents=True, exist_ok=True)
-            tmp = path.with_name(f"{path.name}.{os.getpid()}.{threading.get_ident()}.tmp")
             payload = out.model_dump(mode="json") if isinstance(out, BaseModel) else out
-            tmp.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
-            os.replace(tmp, path)
-        except OSError:
+            con = self._cache_connect()
+            try:
+                with con:
+                    con.execute("INSERT OR REPLACE INTO kv(key, value) VALUES (?, ?)",
+                                (key, json.dumps(payload, ensure_ascii=False)))
+            finally:
+                con.close()
+        except (sqlite3.Error, OSError):
             pass  # cache is best-effort
 
 

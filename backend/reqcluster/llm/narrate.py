@@ -78,12 +78,26 @@ def cluster_summary(cluster_label, keywords, representative_texts) -> str:
 _TEMPLATES = {"merge": merge_rationale, "split": split_rationale, "summary": cluster_summary}
 
 
+def _narrative_prompt(kind: str, params: dict) -> Prompt:
+    return Prompt("narrative_" + kind, NARRATIVE_VERSION, _NARRATIVE_TASKS[kind] + " Reply with prose only.",
+                  dict(params), max_output_chars=MAX_NARRATIVE_CHARS)
+
+
 def cluster_narrative(gateway: LLMGateway, kind: Literal["merge", "split", "summary"],
                       provider: ProviderName | None = None, **params: Any) -> LLMResult:
     """Merge/split rationale or cluster summary. `params` are the template's arguments."""
-    prompt = Prompt("narrative_" + kind, NARRATIVE_VERSION, _NARRATIVE_TASKS[kind] + " Reply with prose only.",
-                    dict(params), max_output_chars=MAX_NARRATIVE_CHARS)
-    return gateway.complete(prompt, lambda: _TEMPLATES[kind](**params), provider)
+    return gateway.complete(_narrative_prompt(kind, params),
+                            lambda: _TEMPLATES[kind](**params), provider)
+
+
+def cluster_narratives(gateway: LLMGateway, items: list[dict],
+                       provider: ProviderName | None = None) -> list[LLMResult]:
+    """Batch of `{"kind": ..., **params}` narratives, run concurrently, input order kept."""
+    split = [(it["kind"], {k: v for k, v in it.items() if k != "kind"}) for it in items]
+    prompts = [_narrative_prompt(k, p) for k, p in split]
+    by_id = {id(pr): (k, p) for pr, (k, p) in zip(prompts, split, strict=True)}
+    return gateway.map(prompts, lambda pr: _TEMPLATES[by_id[id(pr)][0]](**by_id[id(pr)][1]),
+                       provider)
 
 
 # ------------------------------------------------------------------------ edges

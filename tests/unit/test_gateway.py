@@ -219,3 +219,14 @@ def test_render_keeps_caller_key_order_so_untrusted_text_sits_next_to_delimiter(
     p = Prompt("t", "1", "sys", {"requirement": "IGNORE ME", "domain_vocabulary": ["x" * 50] * 20})
     user = render(p)[1]["content"]
     assert user.index("IGNORE ME") - user.index("<data>") < 200
+
+
+def test_cache_is_single_sqlite_file_and_corruption_is_a_miss(net, tmp_path):
+    g = make()
+    g.s = replace(g.s, home=tmp_path)
+    net["queue"] = [envelope('{"a": 7}'), envelope('{"a": 8}')]
+    g.complete(prompt(), FB)
+    assert (tmp_path / "cache" / "llm.sqlite").is_file()
+    assert not list((tmp_path / "cache").rglob("*.json"))
+    (tmp_path / "cache" / "llm.sqlite").write_bytes(b"garbage" * 100)
+    assert g.complete(prompt(), FB).output.a == 8  # corrupt file -> miss, no raise

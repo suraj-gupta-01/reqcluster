@@ -5,6 +5,7 @@ from reqcluster.llm.gateway import LLMGateway
 from reqcluster.llm.narrate import (
     MAX_EXPLANATION_CHARS,
     cluster_narrative,
+    cluster_narratives,
     cluster_summary,
     explain_edge,
     merge_rationale,
@@ -87,3 +88,13 @@ def test_parser_rejects_empty(raw):
 
 def test_parser_bounds_length():
     assert len(parse_explanation_response("word " * 5000)) <= MAX_EXPLANATION_CHARS
+
+
+def test_cluster_narratives_match_single_calls_in_order():
+    g = LLMGateway(get_settings())
+    items = [{"kind": "summary", "cluster_label": "A", "keywords": ["x"], "representative_texts": []},
+             {"kind": "summary", "cluster_label": "B", "keywords": [], "representative_texts": []}]
+    got = cluster_narratives(g, items)
+    want = [cluster_narrative(g, **i) for i in items]
+    assert [r.output for r in got] == [r.output for r in want]
+    assert "A" in got[0].output and "B" in got[1].output
