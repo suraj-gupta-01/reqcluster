@@ -10,6 +10,12 @@ def _env(tmp_path, monkeypatch):
     monkeypatch.delenv("DATABASE_URL", raising=False)
     from reqcluster.config import get_settings
 
+    from reqcluster import db, jobs
+
     get_settings.cache_clear()
+    db.reset()
+    jobs.reset_runner()
     yield
+    jobs.reset_runner()
+    db.reset()
     get_settings.cache_clear()
