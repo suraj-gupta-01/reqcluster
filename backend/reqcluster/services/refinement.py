@@ -32,6 +32,8 @@ class SuggestParams(BaseModel):
     top_n_splits: int = Field(3, ge=0, le=50)
     sim_threshold: float = Field(0.7, ge=0, le=1)
     spread_threshold: float = Field(0.3, ge=0)
+    # only suggest edits that improve cluster separation; null lists every candidate (ranked)
+    min_silhouette_delta: float | None = 0.0
     provider: ProviderName | None = None
 
 
@@ -96,8 +98,10 @@ def _run(ctx: JobContext, sid: int, p: SuggestParams) -> SuggestSummary:
     with np.load(get_settings().runs_dir / f"{rid}.npz") as z:
         x10 = z["x10"]
     ctx.check_cancel()
-    merges = refine.suggest_merges(emb, x10, labels, p.top_n_merges, p.sim_threshold, seed)
-    splits = refine.suggest_splits(emb, x10, labels, p.top_n_splits, p.spread_threshold, seed)
+    merges = refine.suggest_merges(emb, x10, labels, p.top_n_merges, p.sim_threshold, seed,
+                                  p.min_silhouette_delta)
+    splits = refine.suggest_splits(emb, x10, labels, p.top_n_splits, p.spread_threshold, seed,
+                                  p.min_silhouette_delta)
 
     gw = get_gateway()
     out: list[dict] = []

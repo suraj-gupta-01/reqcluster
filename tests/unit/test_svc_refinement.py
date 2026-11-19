@@ -9,7 +9,8 @@ from reqcluster.services import clustering, refinement, sessions
 
 from .test_svc_clustering import make
 
-LOOSE = refinement.SuggestParams(sim_threshold=0.0, spread_threshold=0.0)
+LOOSE = refinement.SuggestParams(sim_threshold=0.0, spread_threshold=0.0,
+                                 min_silhouette_delta=None)
 
 
 def setup(n=60):

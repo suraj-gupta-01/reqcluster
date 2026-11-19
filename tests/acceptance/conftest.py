@@ -562,7 +562,10 @@ class NewApi(LegacyApi):
         return self._r(self.c.post(f"/api/sessions/{sid}/feedback/{feedback_id}/{act}"))
 
     def suggest(self, sid, **kw):
-        return self._job(self.c.post(f"/api/sessions/{sid}/suggestions", json=_prov(kw)))
+        body = _prov(kw)
+        if body.get("sim_threshold") == 0.0:  # legacy "permissive" request: list every candidate
+            body["min_silhouette_delta"] = None
+        return self._job(self.c.post(f"/api/sessions/{sid}/suggestions", json=body))
 
     def suggestions(self, sid, status=None):
         return self._r(self.c.get(f"/api/sessions/{sid}/suggestions",

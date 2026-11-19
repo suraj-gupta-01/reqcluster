@@ -1,6 +1,6 @@
 from .test_sessions_api import upload
 
-LOOSE = {"sim_threshold": 0.0, "spread_threshold": 0.0}
+LOOSE = {"sim_threshold": 0.0, "spread_threshold": 0.0, "min_silhouette_delta": None}
 
 
 def prep(client):

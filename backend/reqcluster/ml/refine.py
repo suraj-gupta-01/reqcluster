@@ -121,7 +121,8 @@ def evaluate_merge(x10: np.ndarray, labels: np.ndarray, a: int, b: int,
 
 def suggest_merges(embeddings: np.ndarray, x10: np.ndarray, labels: np.ndarray,
                    top_n: int = 5, sim_threshold: float = 0.75,
-                   seed: int = 0) -> list[MergeSuggestion]:
+                   seed: int = 0, min_delta: float | None = 0.0) -> list[MergeSuggestion]:
+    """min_delta: keep only merges whose silhouette gain exceeds it; None lists every candidate."""
     labels = np.asarray(labels)
     cands = [c for c in pairwise_similarity(unit_centroids(embeddings, labels))
              if c.centroid_similarity >= sim_threshold]
@@ -129,7 +130,7 @@ def suggest_merges(embeddings: np.ndarray, x10: np.ndarray, labels: np.ndarray,
     out = []
     for c in cands:
         ms = evaluate_merge(x10, labels, c.cluster_a, c.cluster_b, seed)
-        if ms is None or ms.silhouette_delta <= 0:
+        if ms is None or (min_delta is not None and ms.silhouette_delta <= min_delta):
             continue
         out.append(MergeSuggestion(
             c.cluster_a, c.cluster_b,
@@ -229,7 +230,8 @@ def evaluate_split(x10: np.ndarray, labels: np.ndarray, cluster_id: int,
 
 def suggest_splits(embeddings: np.ndarray, x10: np.ndarray, labels: np.ndarray,
                    top_n: int = 5, spread_threshold: float = 0.3,
-                   seed: int = 0) -> list[SplitSuggestion]:
+                   seed: int = 0, min_delta: float | None = 0.0) -> list[SplitSuggestion]:
+    """min_delta: keep only splits whose silhouette gain exceeds it; None lists every candidate."""
     labels = np.asarray(labels)
     out = []
     for cid, idx in L.groups(labels).items():
@@ -239,7 +241,7 @@ def suggest_splits(embeddings: np.ndarray, x10: np.ndarray, labels: np.ndarray,
         if bm is None or not bm.is_bimodal:
             continue
         sc = evaluate_split(x10, labels, cid, bm.sub_labels, seed)
-        if sc is None or sc.silhouette_delta <= 0:
+        if sc is None or (min_delta is not None and sc.silhouette_delta <= min_delta):
             continue
         out.append(SplitSuggestion(
             cid, size, round(spread, 6), bm.bimodality_score, bm.bic_improvement,
