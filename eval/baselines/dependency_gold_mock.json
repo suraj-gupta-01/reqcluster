@@ -1,0 +1,238 @@
+{
+  "dataset": "dependency_gold",
+  "provider": "mock",
+  "created_at": "2026-11-19T13:53:48.638959+00:00",
+  "commit": "ea93c49",
+  "metrics": {
+    "n": 371,
+    "n_clusters": 22,
+    "noise": 27,
+    "has_ground_truth": true,
+    "accuracy_pct": 87.20930232558139,
+    "accuracy_noise_inclusive_pct": 27.762803234501348,
+    "hungarian_accuracy_pct": 29.941860465116278,
+    "noise_pct": 7.277628032345014,
+    "coverage_pct": 92.72237196765498,
+    "purity_pct": 87.20930232558139,
+    "ari": 0.17493307107670147,
+    "nmi": 0.49288215682110137,
+    "v_measure": 0.49288215682110137,
+    "homogeneity": 0.761995532957523,
+    "completeness": 0.3642428054493028,
+    "n_true_groups": 5,
+    "confusion": {
+      "rows": [
+        [
+          22,
+          1,
+          2,
+          0,
+          0
+        ],
+        [
+          18,
+          9,
+          2,
+          0,
+          0
+        ],
+        [
+          11,
+          1,
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          14,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          11
+        ],
+        [
+          10,
+          3,
+          2,
+          0,
+          0
+        ],
+        [
+          5,
+          1,
+          1,
+          9,
+          0
+        ],
+        [
+          0,
+          0,
+          23,
+          0,
+          0
+        ],
+        [
+          0,
+          20,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          16
+        ],
+        [
+          1,
+          2,
+          0,
+          8,
+          0
+        ],
+        [
+          0,
+          0,
+          8,
+          0,
+          0
+        ],
+        [
+          5,
+          0,
+          0,
+          22,
+          0
+        ],
+        [
+          12,
+          1,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          19,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          20,
+          0,
+          0,
+          0
+        ],
+        [
+          15,
+          0,
+          2,
+          0,
+          0
+        ],
+        [
+          0,
+          12,
+          0,
+          0,
+          0
+        ],
+        [
+          7,
+          0,
+          0,
+          0,
+          0
+        ],
+        [
+          11,
+          1,
+          2,
+          0,
+          0
+        ],
+        [
+          6,
+          0,
+          1,
+          0,
+          0
+        ],
+        [
+          6,
+          1,
+          0,
+          0,
+          0
+        ]
+      ],
+      "cluster_ids": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19,
+        20,
+        21
+      ],
+      "group_names": [
+        "Data",
+        "Distractor",
+        "Reference",
+        "Refinement",
+        "Sequence"
+      ]
+    },
+    "reference_precision": 1.0,
+    "reference_recall": 1.0,
+    "reference_f1": 1.0,
+    "n_expected_reference_edges": 0,
+    "n_inferred_reference_edges": 0,
+    "n_inferred_total_edges": 255,
+    "total_enrichment_rows": 371,
+    "succeeded_enrichment_rows": 371,
+    "parse_success_rate": 1.0,
+    "mean_hallucination_risk_score": 0.0,
+    "mean_adjusted_confidence_score": 0.85,
+    "mean_lexical_overlap": 0.0,
+    "mean_domain_term_coverage": 0.0,
+    "warning_rate": 0.3019,
+    "n_merge_suggestions": 2,
+    "correct_merges": 2,
+    "n_eligible_merge_pairs": 60,
+    "merge_precision": 1.0,
+    "merge_recall": 0.0333,
+    "n_split_suggestions": 5,
+    "correct_splits": 5,
+    "n_impure_clusters": 11,
+    "split_precision": 1.0,
+    "split_recall": 0.4545,
+    "suggestion_precision": 1.0
+  }
+}
