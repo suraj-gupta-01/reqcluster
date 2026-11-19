@@ -487,9 +487,11 @@ class NewRun:
 
 
 def _prov(kw):
-    kw = dict(kw)
+    """Legacy request knobs -> redesign contract (provider names; per-call timeout/cache dropped)."""
+    kw = {k: v for k, v in kw.items() if k not in ("timeout_seconds", "use_cache")}
     if "provider_name" in kw:
-        kw["provider"] = kw.pop("provider_name")
+        p = kw.pop("provider_name")
+        kw["provider"] = "openai" if p == "openai_compatible" else p
     return kw
 
 
@@ -575,8 +577,24 @@ class NewApi(LegacyApi):
         assert st == 200, (st, body)
         return sorted(body, key=lambda r: r["id"])
 
+    def _job(self, resp, timeout=90):
+        """202 + Job -> poll; succeeded -> (200, result), else (400|409, error envelope)."""
+        st, b = self._r(resp)
+        if st != 202 or not isinstance(b, dict) or "id" not in b:
+            return st, b
+        end = time.time() + timeout
+        while time.time() < end:
+            _, j = self.job(b["id"])
+            if j["status"] == "succeeded":
+                return 200, j["result"]
+            if j["status"] in ("failed", "cancelled"):
+                return (409 if j["status"] == "cancelled" else 400,
+                        {"error": "job_" + j["status"], "message": j.get("error") or j["status"]})
+            time.sleep(0.05)
+        return 504, {"error": "timeout", "message": "job did not finish"}
+
     def recluster_constrained(self, sid):
-        return self._r(self.c.post(f"/api/sessions/{sid}/recluster"))
+        return self._job(self.c.post(f"/api/sessions/{sid}/recluster"))
 
     def move(self, sid, requirement_id, new_cluster_id, **kw):
         return self._r(self.c.post(f"/api/sessions/{sid}/feedback", json={
@@ -587,7 +605,7 @@ class NewApi(LegacyApi):
         return self._r(self.c.post(f"/api/sessions/{sid}/feedback/{feedback_id}/{act}"))
 
     def suggest(self, sid, **kw):
-        return self._r(self.c.post(f"/api/sessions/{sid}/suggestions", json=_prov(kw)))
+        return self._job(self.c.post(f"/api/sessions/{sid}/suggestions", json=_prov(kw)))
 
     def suggestions(self, sid, status=None):
         return self._r(self.c.get(f"/api/sessions/{sid}/suggestions",
@@ -597,14 +615,14 @@ class NewApi(LegacyApi):
         return self._r(self.c.post(f"/api/sessions/{sid}/suggestions/{suggestion_id}/{action}"))
 
     def dependencies_generate(self, sid, **kw):
-        return self._r(self.c.post(f"/api/sessions/{sid}/dependencies", json=_prov(kw)))
+        return self._job(self.c.post(f"/api/sessions/{sid}/dependencies", json=_prov(kw)))
 
     def explain(self, sid, source, target, **kw):
         return self._r(self.c.post(f"/api/sessions/{sid}/dependencies/explain", json={
             "source": source, "target": target, **_prov(kw)}))
 
     def enrich(self, sid, **kw):
-        return self._r(self.c.post(f"/api/sessions/{sid}/enrich", json=_prov(kw)))
+        return self._job(self.c.post(f"/api/sessions/{sid}/enrich", json=_prov(kw)))
 
     def export(self, sid, fmt):
         r = self.c.get(f"/api/sessions/{sid}/export/{fmt}")
