@@ -1,4 +1,5 @@
 """Hardening suite fixtures. Run with: uv run pytest -m hardening tests/hardening -q"""
+import os
 import contextlib
 import io
 import json
@@ -106,12 +107,18 @@ def running_app(home, workers=0, fake_embedder=True, env=None):
     mp.setenv("REQCLUSTER_JOB_WORKERS", str(workers))
     mp.delenv("DATABASE_URL", raising=False)
     mp.delenv("REQCLUSTER_DATABASE_URL", raising=False)
+    test_db = os.environ.get("REQCLUSTER_TEST_DATABASE_URL")
+    if test_db:  # opt-in: run against a real server DB (e.g. Postgres) with a fresh schema per app
+        mp.setenv("DATABASE_URL", test_db)
     for k, v in (env or {}).items():
         mp.setenv(k, str(v))
     emb = FakeEmbedder()
     if fake_embedder:
         mp.setattr("reqcluster.embeddings.get_embedder", lambda: emb)
     reset_all()
+    if test_db:
+        from reqcluster import db, models
+        models.Base.metadata.drop_all(db.get_engine())
     from reqcluster.app import create_app
     try:
         with TestClient(create_app(), raise_server_exceptions=False) as c:

@@ -19,7 +19,10 @@ ROOT = Path(__file__).resolve().parents[1]
 def _stop(procs: list[subprocess.Popen]) -> None:
     for p in procs:
         if p.poll() is None:
-            p.terminate()
+            if sys.platform == "win32":  # terminate() kills npm.cmd but leaves node/vite running
+                subprocess.run(["taskkill", "/PID", str(p.pid), "/T", "/F"], capture_output=True)
+            else:
+                p.terminate()
     for p in procs:
         try:
             p.wait(timeout=10)

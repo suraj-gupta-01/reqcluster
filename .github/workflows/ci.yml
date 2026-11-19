@@ -22,6 +22,31 @@ jobs:
       - run: uv run pytest -q
       - run: uv run pytest -m acceptance tests/acceptance -q
       - run: uv run ruff check backend tests eval scripts
+      - run: uv run pytest -m "hardening and not slow" tests/hardening -q
+
+  backend-postgres:
+    # Postgres differs from SQLite (32-bit INTEGER, no NUL in text, no round(float,int), psycopg 3):
+    # run the hardening suite against a real server with a fresh schema per app.
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_PASSWORD: pw
+          POSTGRES_DB: rc
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-retries 10
+    env:
+      REQCLUSTER_TEST_DATABASE_URL: postgresql://postgres:pw@127.0.0.1:5432/rc
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          python-version: "3.12"
+      - run: uv sync --extra all --extra cpu
+      - run: uv run pytest -m "hardening and not slow" tests/hardening -q
 
   frontend:
     runs-on: ubuntu-latest

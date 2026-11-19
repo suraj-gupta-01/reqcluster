@@ -7,7 +7,7 @@ from sqlalchemy import insert, select, update
 
 from reqcluster.config import get_settings
 from reqcluster.db import session_scope
-from reqcluster.domain import Job, ProviderName
+from reqcluster.domain import SafeText, Job, ProviderName
 from reqcluster.errors import Conflict, NotFound, Stale
 from reqcluster.jobs import JobContext, get_runner
 from reqcluster.llm.gateway import get_gateway
@@ -39,7 +39,7 @@ class SuggestParams(BaseModel):
 
 class DecisionBody(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    actor: str = ""
+    actor: SafeText = ""
 
 
 class SuggestSummary(BaseModel):

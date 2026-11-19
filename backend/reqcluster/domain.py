@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Annotated, Literal
 
 import numpy as np
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field
 
 ProviderName = Literal["mock", "openai", "local"]
 EmbeddingMode = Literal["base", "enriched", "hybrid"]
@@ -15,8 +15,12 @@ SessionStatus = Literal["uploaded", "queued", "running", "done", "error"]
 NOISE: int = -1
 
 # SQLite integers are signed 64-bit; reject anything larger at the HTTP boundary (422, not 500).
-DbId = Annotated[int, Field(ge=1, le=2**63 - 1)]
-ClusterRef = Annotated[int, Field(ge=-1, le=2**63 - 1)]  # -1 = noise
+# INTEGER columns are 32-bit on Postgres (64-bit on SQLite): validate to the narrower range
+DB_INT_MAX = 2**31 - 1
+DbId = Annotated[int, Field(ge=1, le=DB_INT_MAX)]
+ClusterRef = Annotated[int, Field(ge=-1, le=DB_INT_MAX)]  # -1 = noise
+# Postgres text cannot hold NUL bytes (SQLite can): strip them from any user text at the boundary
+SafeText = Annotated[str, AfterValidator(lambda v: v.replace("\x00", ""))]
 
 
 class RequirementIn(BaseModel):

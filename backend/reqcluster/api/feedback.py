@@ -4,7 +4,7 @@ from fastapi import APIRouter, Query, Response
 from pydantic import BaseModel
 
 from reqcluster.api import PathId
-from reqcluster.domain import ClusterRef, DbId, Job
+from reqcluster.domain import SafeText, ClusterRef, DbId, Job
 from reqcluster.services import active_learning, feedback
 
 router = APIRouter()
@@ -13,8 +13,8 @@ router = APIRouter()
 class FeedbackIn(BaseModel):
     requirement_id: DbId
     new_cluster_id: ClusterRef | None = None
-    comments: str = ""
-    applied_by: str = ""
+    comments: SafeText = ""
+    applied_by: SafeText = ""
 
 
 @router.post("/sessions/{sid}/feedback")

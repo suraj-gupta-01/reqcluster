@@ -226,6 +226,12 @@ def cluster_detail(sid: int, cid: int) -> ClusterDetail:
 LABEL_CHARS = 24
 
 
+def _round3(values) -> list:
+    """Round a column to 3 decimals in numpy (portable across SQLite/Postgres), keeping None."""
+    arr = np.array([np.nan if v is None else v for v in values], dtype=np.float64)
+    return [None if np.isnan(v) else v for v in np.round(arr, 3).tolist()]
+
+
 @functools.lru_cache(maxsize=8)
 def _graph(db_url: str, sid: int, run_id: int, edit_seq: int) -> GraphOut:
     """Columnar, text-free payload built from raw rows; cached until the run is edited."""
@@ -234,12 +240,12 @@ def _graph(db_url: str, sid: int, run_id: int, edit_seq: int) -> GraphOut:
         run = s.get(RunRow, run_id)
         q = (select(RequirementRow.id, RequirementRow.req_id,
                     func.substr(RequirementRow.text, 1, LABEL_CHARS),
-                    a.cluster_id, func.round(a.x, 3), func.round(a.y, 3),
-                    func.round(a.probability, 3))
+                    a.cluster_id, a.x, a.y, a.probability)  # rounded below: Postgres lacks round(float, int)
              .select_from(RequirementRow)
              .outerjoin(a, (a.requirement_id == RequirementRow.id) & (a.run_id == run_id))
              .where(RequirementRow.session_id == sid).order_by(RequirementRow.ordinal))
         cols = list(zip(*s.execute(q).all(), strict=False)) or [()] * 7
+        cols[4:7] = [_round3(c) for c in cols[4:7]]
         from reqcluster.services.clustering import load_run_arrays  # (clustering imports sessions)
         e = load_run_arrays(run_id).get("edges", np.zeros((0, 3)))
         return GraphOut.model_construct(

@@ -26,7 +26,7 @@ reqcluster-api = "reqcluster.app:main"
 fast = ["hnswlib>=0.8.0"]                 # ANN similarity graph; falls back to exact kNN
 nlp = ["spacy>=3.8"]                      # dependency-parse artifacts; falls back to regex
 charts = ["matplotlib>=3.9"]              # charts inside the PDF report
-postgres = ["psycopg2-binary>=2.9.10"]    # DATABASE_URL=postgresql://...
+postgres = ["psycopg[binary]>=3.2"]  # DATABASE_URL=postgresql://... (SQLAlchemy 2.1 default driver is psycopg 3)
 eval = ["pyyaml>=6.0", "pandas>=2.2.3"]
 # Pick exactly one torch build (same on Windows and Linux):
 #   uv sync --extra cpu      or      uv sync --extra gpu   (CUDA 12.6, NVIDIA driver >= 560)

@@ -5,7 +5,7 @@ from fastapi import APIRouter, Query, Response, UploadFile
 from reqcluster.api import PathClusterId, PathId
 from reqcluster import ingest
 from reqcluster.config import get_settings
-from reqcluster.domain import ClusteringParams, ClusterRef, Job
+from reqcluster.domain import SafeText, ClusteringParams, ClusterRef, Job
 from reqcluster.services import clustering, sessions
 
 router = APIRouter()
@@ -15,7 +15,7 @@ router = APIRouter()
 def upload(file: UploadFile) -> dict:
     s = get_settings()
     data = ingest.read_capped(file.file, s.max_upload_mb * 1024 * 1024)
-    name = file.filename or ""
+    name = (file.filename or "").replace("\x00", "")  # Postgres text cannot hold NUL
     res = ingest.parse(data, name, s.max_rows)
     out = sessions.create(res, name)
     return {"session": out, "ingest_report": {"stats": res.stats, "warnings": res.warnings}}
@@ -69,7 +69,7 @@ def requirements(
     response: Response,
     cluster_id: ClusterRef | None = None,
     noise: bool | None = None,
-    search: str | None = None,
+    search: SafeText | None = None,
     sort: Literal["ordinal", "req_id", "text", "cluster_id", "probability"] = "ordinal",
     dir: Literal["asc", "desc"] = "asc",
     page: int = Query(1, ge=1, le=2**31 - 1),
