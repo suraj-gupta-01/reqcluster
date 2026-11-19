@@ -12,7 +12,10 @@ from reqcluster.db import session_scope
 from reqcluster.domain import Job, ProviderName
 from reqcluster.errors import Conflict
 from reqcluster.jobs import JobContext, get_runner
-from reqcluster.llm.enrich import PROMPT_VERSION, expand_all
+from reqcluster.llm.enrich import (
+    PROMPT_VERSION, Expansion, build_quality_report, evaluate_expansion_quality, expand_all,
+    extract_domain_vocabulary_details,
+)
 from reqcluster.llm.gateway import get_gateway
 from reqcluster.models import EnrichmentRow, RequirementRow
 from reqcluster.services.sessions import _row
@@ -44,6 +47,12 @@ class EnrichmentOut(BaseModel):
     status: str
     source: str
     provider: str
+    quality: dict = {}
+
+
+class EnrichmentOverview(BaseModel):
+    quality_report: dict
+    domain_vocabulary: list[dict]
 
 
 def _hash(text: str) -> str:
@@ -73,7 +82,10 @@ def _run(ctx: JobContext, sid: int, provider: ProviderName | None) -> Enrichment
         "status": e.status, "source": e.source, "expanded_text": e.expanded_text,
         "domain_terms": e.domain_terms, "functional_intent": e.functional_intent,
         "mentioned_components": e.mentioned_components, "assumptions": e.assumptions,
-        "confidence": e.confidence, "warnings": e.warnings, "error": e.error, "created_at": datetime.now(UTC),
+        "confidence": e.confidence, "warnings": e.warnings,
+        "quality": evaluate_expansion_quality(text_of[e.requirement_id], e.expanded_text,
+                                              e.domain_terms, e.confidence)
+        if e.status == "succeeded" else {}, "error": e.error, "created_at": datetime.now(UTC),
     } for e in results]
     with session_scope() as s:
         have = {e.requirement_id: e for e in s.scalars(select(EnrichmentRow).where(
@@ -108,7 +120,7 @@ def results(sid: int) -> list[EnrichmentOut]:
             domain_terms=e.domain_terms, functional_intent=e.functional_intent,
             mentioned_components=e.mentioned_components, assumptions=e.assumptions,
             confidence=e.confidence, warnings=e.warnings, status=e.status, source=e.source,
-            provider=e.provider)
+            provider=e.provider, quality=e.quality or {})
             for rid, e in sorted(latest.items(), key=lambda kv: reqs[kv[0]].ordinal)]
 
 
@@ -132,3 +144,25 @@ def texts_for_mode(sid: int, mode: str) -> list[str]:
         if len(enr) < len(reqs):
             raise Conflict(f"{len(reqs) - len(enr)} requirement(s) lack current enrichment")
         return build_texts(texts, mode, [enr[r.id] for r in reqs])[0]
+
+
+def summary(sid: int) -> EnrichmentOverview:
+    with session_scope() as s:
+        _row(s, sid)
+        reqs = {r.id: r for r in s.scalars(select(RequirementRow)
+                                           .where(RequirementRow.session_id == sid))}
+        latest: dict[int, EnrichmentRow] = {}
+        for e in s.scalars(select(EnrichmentRow).where(
+                EnrichmentRow.session_id == sid, EnrichmentRow.status == "succeeded")
+                .order_by(EnrichmentRow.created_at, EnrichmentRow.id)):
+            latest[e.requirement_id] = e
+        if not latest:
+            raise Conflict("no enrichment yet; run enrichment first")
+        items = sorted(latest.items(), key=lambda kv: reqs[kv[0]].ordinal)
+        pairs = [(rid, reqs[rid].text) for rid, _ in items]
+        exps = [Expansion(rid, e.expanded_text, e.domain_terms, e.functional_intent,
+                          e.mentioned_components, e.assumptions, e.confidence or 0.0,
+                          e.warnings, "succeeded", e.source) for rid, e in items]
+    return EnrichmentOverview(
+        quality_report=build_quality_report(pairs, exps),
+        domain_vocabulary=extract_domain_vocabulary_details([x.expanded_text for x in exps]))

@@ -194,3 +194,26 @@ def audit(sid: int) -> list[AuditOut]:
                          .order_by(AuditRow.id.desc()))
         return [AuditOut(id=r.id, action=r.action, actor=r.actor, details=r.details,
                          created_at=r.created_at) for r in rows]
+
+
+class CoherenceOut(BaseModel):
+    cluster_id: int
+    coherence_score: float
+    top_keywords: list[str]
+    size: int
+    assessment: str
+
+
+def coherence(sid: int) -> list[CoherenceOut]:
+    with session_scope() as s:
+        run_id = _current_run(s, sid).id
+        rows = s.execute(select(RequirementRow.text, AssignmentRow.cluster_id)
+                         .join(AssignmentRow, (AssignmentRow.requirement_id == RequirementRow.id)
+                               & (AssignmentRow.run_id == run_id))
+                         .where(RequirementRow.session_id == sid)
+                         .order_by(RequirementRow.ordinal)).all()
+        kws = {c.cluster_id: list(c.keywords or []) for c in s.scalars(
+            select(ClusterRow).where(ClusterRow.run_id == run_id))}
+    X = embeddings.embed([r[0] for r in rows])
+    labels = np.array([r[1] for r in rows])
+    return [CoherenceOut(**d) for d in refine.score_all_clusters(X, labels, kws)]

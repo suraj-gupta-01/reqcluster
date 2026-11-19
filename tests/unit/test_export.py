@@ -138,3 +138,16 @@ def test_errors():
         export(sid, "docx")
     with pytest.raises(NotFound):
         export(9999, "csv")
+
+
+def test_csv_guards_attribute_header_names():
+    from reqcluster.export.bundle import to_csv
+    from reqcluster.ingest import parse
+    from reqcluster.services import sessions
+    from reqcluster.db import init_db
+
+    init_db()
+    res = parse(b"id,text,=cmd\nR1,The pump shall start within 2 seconds,x\n", "a.csv")
+    sid = sessions.create(res, "a").id
+    header = to_csv(build(sid)).decode("utf-8-sig").splitlines()[0]
+    assert ",'=cmd" in header

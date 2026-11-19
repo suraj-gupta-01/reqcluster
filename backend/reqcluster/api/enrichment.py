@@ -14,3 +14,8 @@ def enrich(sid: int, body: enrichment.EnrichRequest | None = None) -> Job:
 @router.get("/sessions/{sid}/enrichment")
 def get_enrichment(sid: int) -> list[enrichment.EnrichmentOut]:
     return enrichment.results(sid)
+
+
+@router.get("/sessions/{sid}/enrichment/summary")
+def enrichment_summary(sid: int) -> enrichment.EnrichmentOverview:
+    return enrichment.summary(sid)

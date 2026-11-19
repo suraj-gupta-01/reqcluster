@@ -76,6 +76,28 @@ def coherence(X: np.ndarray, labels: np.ndarray, cluster_id: int, seed: int = 0)
     return float(np.triu(cosine_similarity(E), k=1).sum() / (n * (n - 1) / 2))
 
 
+def score_coherence(X: np.ndarray, labels: np.ndarray, cluster_id: int,
+                    keywords: list[str]) -> dict:
+    n = int((labels == cluster_id).sum())
+    score = round(min(max(coherence(X, labels, cluster_id, seed=42), 0.0), 1.0), 6)
+    if score >= 0.8:
+        text = "Highly coherent cluster with strong semantic consistency."
+    elif score >= 0.6:
+        text = "Moderately coherent cluster. Some requirements may be loosely related."
+    elif score >= 0.4:
+        text = "Low coherence. Consider splitting into more focused sub-clusters."
+    else:
+        text = "Very low coherence. This cluster likely contains unrelated requirements."
+    return {"cluster_id": cluster_id, "coherence_score": score,
+            "top_keywords": list(keywords[:5]), "size": n, "assessment": text}
+
+
+def score_all_clusters(X: np.ndarray, labels: np.ndarray,
+                       keywords: dict[int, list[str]]) -> list[dict]:
+    return [score_coherence(X, labels, int(c), keywords.get(int(c), []))
+            for c in sorted(set(labels.tolist())) if c != -1]
+
+
 def evaluate_merge(x10: np.ndarray, labels: np.ndarray, a: int, b: int,
                    seed: int = 0) -> MergeScore | None:
     ids = set(L.cluster_ids(labels))

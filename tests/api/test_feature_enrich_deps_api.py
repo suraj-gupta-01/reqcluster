@@ -29,7 +29,7 @@ def test_dependencies(client):
     r = client.post(f"/api/sessions/{sid}/dependencies", json={"sim_threshold": 0.0})
     assert r.status_code == 202 and r.json()["kind"] == "dependencies"
     body = client.get(f"/api/sessions/{sid}/dependencies").json()
-    assert set(body) == {"run_id", "nodes", "edges", "stats"} and body["edges"]
+    assert set(body) == {"run_id", "nodes", "edges", "stats", "rationale"} and body["edges"]
     e = body["edges"][0]
     url = f"/api/sessions/{sid}/dependencies/explain"
     first = client.post(url, json={"source": e["source"], "target": e["target"]})

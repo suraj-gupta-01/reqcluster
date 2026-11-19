@@ -29,3 +29,8 @@ def reject(sid: int, suggestion_id: int, body: svc.DecisionBody | None = None) -
 @router.get("/sessions/{sid}/audit")
 def audit(sid: int) -> list[svc.AuditOut]:
     return svc.audit(sid)
+
+
+@router.get("/sessions/{sid}/coherence")
+def coherence(sid: int) -> list[svc.CoherenceOut]:
+    return svc.coherence(sid)

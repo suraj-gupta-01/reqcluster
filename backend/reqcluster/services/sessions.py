@@ -44,6 +44,7 @@ class RequirementOut(BaseModel):
     probability: float | None
     x: float | None
     y: float | None
+    attributes: dict[str, str] = {}
 
 
 class ClusterOut(ClusterInfo):
@@ -82,6 +83,8 @@ class MetricsOut(BaseModel):
     metrics: dict
     warnings: list[str]
     durations: dict
+    embedding_comparison: dict | None = None
+    ablation_report: dict | None = None
 
 
 def _row(s, sid: int) -> SessionRow:
@@ -125,7 +128,8 @@ def create(ingest_result: IngestResult, name: str) -> SessionOut:
         s.flush()
         if reqs:
             s.execute(insert(RequirementRow), [
-                {"session_id": row.id, "ordinal": r.ordinal, "req_id": r.req_id, "text": r.text}
+                {"session_id": row.id, "ordinal": r.ordinal, "req_id": r.req_id, "text": r.text,
+                 "attributes": r.attributes}
                 for r in reqs
             ])
         return _out(s, row)
@@ -185,7 +189,8 @@ def _req_query(run_id):
 def _req_out(r, cid, prob, x, y) -> RequirementOut:
     return RequirementOut(
         id=r.id, req_id=r.req_id, ordinal=r.ordinal, text=r.text, cluster_id=cid,
-        is_noise=None if cid is None else cid == -1, probability=prob, x=x, y=y)
+        is_noise=None if cid is None else cid == -1, probability=prob, x=x, y=y,
+        attributes=r.attributes or {})
 
 
 def cluster_detail(sid: int, cid: int) -> ClusterDetail:
@@ -222,7 +227,9 @@ def metrics(sid: int) -> MetricsOut:
         run = _current_run(s, sid)
         return MetricsOut(revision=run.revision, n_clusters=run.n_clusters,
                           noise_count=run.noise_count, metrics=run.metrics,
-                          warnings=run.warnings, durations=run.durations)
+                          warnings=run.warnings, durations=run.durations,
+                          embedding_comparison=(run.reports or {}).get("embedding_comparison"),
+                          ablation_report=(run.reports or {}).get("ablation_report"))
 
 
 _SORT = {"ordinal": RequirementRow.ordinal, "req_id": RequirementRow.req_id,

@@ -29,6 +29,7 @@ class ExportReq:
     cluster_label: str
     is_noise: bool
     ordinal: int
+    attributes: dict = field(default_factory=dict)
 
 
 @dataclass
@@ -79,7 +80,7 @@ def build(sid: int) -> ExportBundle:
             else:
                 label = labels.get(cid, f"Cluster {cid}")
             reqs.append(ExportReq((r.req_id or "").strip() or f"REQ-{r.ordinal:05d}", r.text,
-                                  cid, label, cid == NOISE, r.ordinal))
+                                  cid, label, cid == NOISE, r.ordinal, r.attributes or {}))
             pk_ids[r.id] = reqs[-1].req_id
         edges = []
         tree = s.get(DependencyTreeRow, run_id) if run_id is not None else None
@@ -116,8 +117,11 @@ def _guard(v) -> str:
 def to_csv(b: ExportBundle) -> bytes:
     buf = io.StringIO(newline="")
     w = csv.writer(buf)
-    w.writerow(["req_id", "text", "cluster_id", "cluster_label", "is_noise", "ordinal"])
+    keys = list(dict.fromkeys(k for r in b.requirements for k in r.attributes))
+    w.writerow([_guard(h) for h in ("req_id", "text", "cluster_id", "cluster_label", "is_noise",
+                                    "ordinal", *keys)])  # keys come from the uploaded header
     for r in b.requirements:
         w.writerow([_guard(x) for x in (r.req_id, r.text, "" if r.cluster_id is None else r.cluster_id,
-                                         r.cluster_label, r.is_noise, r.ordinal)])
+                                         r.cluster_label, r.is_noise, r.ordinal,
+                                         *(r.attributes.get(k, "") for k in keys))])
     return buf.getvalue().encode("utf-8-sig")

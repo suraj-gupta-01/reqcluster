@@ -104,6 +104,9 @@ def parse(data: bytes, filename: str, max_rows: int = 50000) -> IngestResult:
             f"Name one of: {', '.join(TEXT_NAMES[:4])}."
         )
     id_col = next((cols[n] for n in ID_NAMES if n in cols), None)
+    extra = {c: str(c).replace("\ufeff", "").strip() for c in df.columns if c not in (text_col, id_col)}
+    extra = {c: n for c, n in extra.items() if n}
+    extras = df[list(extra)].to_dict("records") if extra else [{}] * len(df)
 
     stats = {"rows_read": len(df), "rows_kept": 0, "duplicates": 0, "empty_dropped": 0,
              "truncated": 0, "bad_lines": len(bad)}
@@ -116,7 +119,7 @@ def parse(data: bytes, filename: str, max_rows: int = 50000) -> IngestResult:
     used_ids: set[str] = set()
     out: list[RequirementIn] = []
     ids = df[id_col].tolist() if id_col is not None else [""] * len(df)
-    for raw_id, raw in zip(ids, df[text_col].tolist(), strict=True):
+    for raw_id, raw, ex in zip(ids, df[text_col].tolist(), extras, strict=True):
         text = _clean(str(raw))
         if len(text) < MIN_TEXT_CHARS:
             stats["empty_dropped"] += 1
@@ -140,7 +143,8 @@ def parse(data: bytes, filename: str, max_rows: int = 50000) -> IngestResult:
             cand = f"{rid}-{n + 1}"
         seen_ids[rid] = n
         used_ids.add(cand)
-        out.append(RequirementIn(req_id=cand, text=text, ordinal=ordinal))
+        attrs = {extra[c]: v for c, v in ((c, _WS.sub(" ", str(v)).strip()) for c, v in ex.items()) if v}
+        out.append(RequirementIn(req_id=cand, text=text, ordinal=ordinal, attributes=attrs))
 
     if not out:
         raise Invalid("No requirements found in the file (all rows were empty).")

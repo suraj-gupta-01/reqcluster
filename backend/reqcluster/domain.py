@@ -19,6 +19,7 @@ class RequirementIn(BaseModel):
     req_id: str
     text: str
     ordinal: int
+    attributes: dict[str, str] = {}
 
 
 class ClusteringParams(BaseModel):
@@ -30,6 +31,8 @@ class ClusteringParams(BaseModel):
     top_k: int = Field(default=10, ge=1)
     embedding_mode: EmbeddingMode = "base"
     seed: int | None = None
+    enable_embedding_comparison: bool = False
+    run_ablation: bool = False
 
 
 class ClusterInfo(BaseModel):

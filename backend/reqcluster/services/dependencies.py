@@ -12,10 +12,11 @@ from reqcluster.domain import Job, ProviderName
 from reqcluster.errors import Conflict, NotFound
 from reqcluster.jobs import JobContext, get_runner
 from reqcluster.llm.gateway import get_gateway
-from reqcluster.llm.narrate import explain_edge
+from reqcluster.llm.narrate import cluster_narrative, explain_edge
+from reqcluster.ml import refine
 from reqcluster.ml.dependency.tree import build
 from reqcluster.models import (
-    AssignmentRow, DependencyExplanationRow, DependencyTreeRow, RequirementRow, SessionRow,
+    AssignmentRow, ClusterRow, DependencyExplanationRow, DependencyTreeRow, RequirementRow, SessionRow,
 )
 from reqcluster.services.sessions import _current_run
 
@@ -40,6 +41,7 @@ class TreeOut(BaseModel):
     nodes: list
     edges: list
     stats: dict
+    rationale: dict = {}
 
 
 class ExplanationOut(BaseModel):
@@ -67,6 +69,9 @@ def _run(ctx: JobContext, sid: int, req: DependencyRequest) -> TreeOut:
                                & (AssignmentRow.run_id == run_id))
                          .where(RequirementRow.session_id == sid)
                          .order_by(RequirementRow.ordinal)).all()
+        clusters = s.scalars(select(ClusterRow).where(ClusterRow.run_id == run_id)
+                             .order_by(ClusterRow.cluster_id)).all()
+        clusters = [(c.cluster_id, c.label, list(c.keywords or []), c.size) for c in clusters]
     pks = [r[0] for r in rows]
     texts = [r[2] for r in rows]
     ctx.progress(0.1, "embedding")
@@ -82,13 +87,30 @@ def _run(ctx: JobContext, sid: int, req: DependencyRequest) -> TreeOut:
         n["id"] = pks[n["id"]]
     for e in tree["edges"]:
         e["source"], e["target"] = pks[e["source"]], pks[e["target"]]
+    labels = np.array([r[3] for r in rows])
+    reps = refine.representatives(emb, texts, labels, [r[1] for r in rows], top_n=3)
+    gw = get_gateway()
+    grouping = []
+    for cid, label, kws, size in clusters:
+        rp = reps.get(cid, [])
+        summary = cluster_narrative(gw, "summary", req.provider, cluster_label=label, keywords=kws,
+                                    representative_texts=[r.text for r in rp])
+        grouping.append({"cluster_id": cid, "label": label, "keywords": kws, "size": size,
+                         "representative_req_ids": [r.req_id for r in rp],
+                         "rationale": str(summary.output)})
+    rid_of = {r[0]: r[1] for r in rows}
+    rationale = {"grouping": grouping, "stats": tree["stats"], "dependencies": [
+        {"source": e["source"], "target": e["target"], "source_req_id": rid_of[e["source"]],
+         "target_req_id": rid_of[e["target"]], "relation": e["relation"], "weight": e["weight"],
+         "justification": e["rationale"]} for e in tree["edges"]]}
     with session_scope() as s:
         if s.get(SessionRow, sid).current_run_id != run_id:
             raise Conflict("session was re-clustered while the tree was building")
         s.execute(delete(DependencyTreeRow).where(DependencyTreeRow.run_id == run_id))
         s.add(DependencyTreeRow(run_id=run_id, params=req.model_dump(exclude_none=True),
-                                nodes=tree["nodes"], edges=tree["edges"], stats=tree["stats"]))
-    return TreeOut(run_id=run_id, **tree)
+                                nodes=tree["nodes"], edges=tree["edges"], stats=tree["stats"],
+                                rationale=rationale))
+    return TreeOut(run_id=run_id, rationale=rationale, **tree)
 
 
 def get(sid: int) -> TreeOut:
@@ -97,7 +119,8 @@ def get(sid: int) -> TreeOut:
         row = s.get(DependencyTreeRow, run_id)
         if row is None:
             raise Conflict("no dependency tree for the current run; generate one first")
-        return TreeOut(run_id=run_id, nodes=row.nodes, edges=row.edges, stats=row.stats)
+        return TreeOut(run_id=run_id, nodes=row.nodes, edges=row.edges, stats=row.stats,
+                       rationale=row.rationale or {})
 
 
 def explain(sid: int, req: ExplainRequest) -> ExplanationOut:

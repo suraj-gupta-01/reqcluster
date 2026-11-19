@@ -55,6 +55,7 @@ class RequirementRow(Base):
     ordinal: Mapped[int] = mapped_column(Integer)
     req_id: Mapped[str] = mapped_column(String)
     text: Mapped[str] = mapped_column(Text)
+    attributes: Mapped[dict] = mapped_column(JSON, default=dict)
 
 
 class RunRow(Base):
@@ -70,6 +71,7 @@ class RunRow(Base):
     metrics: Mapped[dict] = mapped_column(JSON, default=dict)
     warnings: Mapped[list] = mapped_column(JSON, default=list)
     durations: Mapped[dict] = mapped_column(JSON, default=dict)
+    reports: Mapped[dict] = mapped_column(JSON, default=dict)
     n_clusters: Mapped[int] = mapped_column(Integer, default=0)
     noise_count: Mapped[int] = mapped_column(Integer, default=0)
     edit_seq: Mapped[int] = mapped_column(Integer, default=0)
@@ -133,6 +135,7 @@ class EnrichmentRow(Base):
     assumptions: Mapped[list] = mapped_column(JSON, default=list)
     confidence: Mapped[float | None] = mapped_column(Float, nullable=True)
     warnings: Mapped[list] = mapped_column(JSON, default=list)
+    quality: Mapped[dict] = mapped_column(JSON, default=dict)
     error: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = _ts(default=_now)
 
@@ -199,6 +202,7 @@ class DependencyTreeRow(Base):
     nodes: Mapped[list] = mapped_column(JSON, default=list)
     edges: Mapped[list] = mapped_column(JSON, default=list)  # source/target are requirement pks
     stats: Mapped[dict] = mapped_column(JSON, default=dict)
+    rationale: Mapped[dict] = mapped_column(JSON, default=dict)
     created_at: Mapped[datetime] = _ts(default=_now)
 
 

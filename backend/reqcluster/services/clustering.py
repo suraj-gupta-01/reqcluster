@@ -1,6 +1,8 @@
 """Clustering job: embed, reduce, cluster, then persist one revision in a single transaction."""
+import json
 import os
 import tempfile
+from dataclasses import asdict
 
 import numpy as np
 from pydantic import BaseModel
@@ -10,9 +12,10 @@ from reqcluster import embeddings
 from reqcluster.config import get_settings
 from reqcluster.db import session_scope
 from reqcluster.domain import ClusteringParams, Job
+from reqcluster import errors
 from reqcluster.errors import NotFound
 from reqcluster.jobs import JobContext, get_runner
-from reqcluster.ml import metrics, pipeline
+from reqcluster.ml import analysis, metrics, pipeline
 from reqcluster.models import (
     AssignmentRow,
     ClusterRow,
@@ -76,16 +79,41 @@ def _run(ctx: JobContext, sid: int, params: ClusteringParams) -> ClusteringSumma
     m = metrics.compute(res.labels, res.x10, seed)
 
     edges = [[req_ids[i], req_ids[j], float(w)] for i, j, w in res.edges]
+    reports = _reports(ctx, sid, params, texts, emb, res, seed, settings.threads)
     rid, revision = persist_run(sid, "cluster", params.model_dump(), req_ids, res.labels,
                                 res.probabilities, res.x10, res.xy, res.clusters, edges, m,
-                                res.warnings, res.durations)
+                                res.warnings, res.durations, reports=reports)
     return ClusteringSummary(run_id=rid, revision=revision, n_clusters=len(res.clusters),
                              noise_count=int((res.labels == -1).sum()), warnings=res.warnings,
                              durations=res.durations, metrics=m)
 
 
+def _reports(ctx, sid, params, texts, emb, res, seed, threads) -> dict:
+    if not (params.enable_embedding_comparison or params.run_ablation):
+        return {}
+    try:
+        enriched = enrichment.texts_for_mode(sid, "enriched")
+    except errors.Conflict:
+        res.warnings.append("Embedding comparison/ablation skipped: enrichment is incomplete.")
+        return {}
+    out = {}
+    if params.enable_embedding_comparison:
+        ctx.progress(0.96, "embedding comparison")
+        base = emb if params.embedding_mode == "base" else embeddings.embed(texts)
+        cmp = analysis.compare_embeddings(base, embeddings.embed(enriched),
+                                          labels_base=res.labels, seed=seed)
+        out["embedding_comparison"] = asdict(cmp)
+    if params.run_ablation:
+        ctx.progress(0.98, "ablation")
+        p = params.model_copy(update={"embedding_mode": "enriched"}) \
+            if params.embedding_mode == "base" else params
+        out["ablation_report"] = asdict(analysis.run_ablation(
+            texts, enriched, p, embeddings.embed, seed, threads))
+    return json.loads(json.dumps(out, default=float))  # numpy scalars / int keys -> JSON-safe
+
+
 def persist_run(sid, kind, params, req_ids, labels, probabilities, x10, xy, clusters, edges,
-                metrics, warnings, durations, constraints=()) -> tuple[int, int]:
+                metrics, warnings, durations, constraints=(), reports=None) -> tuple[int, int]:
     """Write one new revision (rows + npz + carried constraints), make it current, prune old
     runs. One transaction, so a crash can never leave a constrained run without its constraints."""
     n_noise = int((labels == -1).sum())
@@ -94,7 +122,7 @@ def persist_run(sid, kind, params, req_ids, labels, probabilities, x10, xy, clus
                     or 0) + 1
         run = RunRow(session_id=sid, revision=revision, kind=kind, params=params,
                      metrics=metrics, warnings=warnings, durations=durations,
-                     n_clusters=len(clusters), noise_count=n_noise)
+                     reports=reports or {}, n_clusters=len(clusters), noise_count=n_noise)
         s.add(run)
         s.flush()
         rid = run.id
