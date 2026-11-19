@@ -22,8 +22,9 @@ def reduce(X: np.ndarray, seed: int) -> tuple[np.ndarray, np.ndarray]:
         n_components=10, metric="cosine", n_neighbors=nn, min_dist=0.0, n_epochs=200,
         init="random", random_state=seed, compatibility_layout=True,
     ).fit_transform(P)
+    # viz only: 100 epochs at 10k rows 28.9s -> 5.4s (vs 200); clustering uses x10
     xy = umap.UMAP(
         n_components=2, metric="euclidean", n_neighbors=min(15, n - 1), min_dist=0.1,
-        n_epochs=200, init="random", random_state=seed, compatibility_layout=True,
+        n_epochs=100, init="random", random_state=seed, compatibility_layout=True,
     ).fit_transform(x10)
     return x10.astype(np.float32), xy.astype(np.float32)

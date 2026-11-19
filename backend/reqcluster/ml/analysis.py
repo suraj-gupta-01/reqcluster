@@ -8,13 +8,13 @@ from sklearn.metrics import adjusted_rand_score, normalized_mutual_info_score
 
 from ..domain import ClusteringParams
 from ..errors import Invalid
+from ..texts import build_texts
 from . import labels as L
 from . import pipeline, sampling
 
 DEFAULT_DELTA_THRESHOLDS = (0.05, 0.10, 0.20)
 DEFAULT_NEIGHBOR_K = 5
 MAX_NEIGHBOR_ITEMS = 2_000
-MAX_TEXT_CHARS = 2000
 
 
 def elapsed_ms(start: float) -> float:
@@ -247,19 +247,7 @@ class AblationReport:
 def build_embedding_texts(originals: Sequence[str], enriched: Sequence[str | None] | None,
                           mode: str) -> list[str]:
     """Deterministic model input per mode; missing enrichment falls back to the original."""
-    out = []
-    for i, o in enumerate(originals):
-        o = " ".join(str(o).split())
-        e = enriched[i] if enriched is not None else None
-        e = " ".join(str(e).split()) if e is not None else ""
-        if mode == "base" or not e:
-            p = o
-        elif mode == "enriched":
-            p = e
-        else:
-            p = f"Original Requirement:\n{o}\n\nDomain-Aware Context:\n{e}"
-        out.append(p[:MAX_TEXT_CHARS])
-    return out
+    return build_texts(originals, mode, enriched)[0]
 
 
 def _empty_variant(n: int, shape: list[int], durations: dict[str, float]) -> VariantReport:

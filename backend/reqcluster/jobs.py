@@ -97,8 +97,16 @@ class JobRunner:
         return job
 
     def _finish(self, job_id: str, **values: Any) -> None:
-        with session_scope() as s:
-            s.execute(update(JobRow).where(JobRow.id == job_id).values(finished_at=_now(), **values))
+        for attempt in range(1, 6):
+            try:
+                with session_scope() as s:
+                    s.execute(update(JobRow).where(JobRow.id == job_id).values(finished_at=_now(), **values))
+                return
+            except Exception:
+                log.warning("job %s: status write failed (attempt %d)", job_id, attempt, exc_info=True)
+                if attempt < 5:
+                    time.sleep(0.2 * attempt)
+        log.error("job %s: giving up writing final status; row may stay running", job_id)
 
     def _execute(self, job_id: str, fn: Callable[[JobContext], Any]) -> None:
         with session_scope() as s:
@@ -164,7 +172,7 @@ class JobRunner:
     def shutdown(self, wait: bool = True) -> None:
         for ex in (self._cpu, self._io):
             if ex is not None:
-                ex.shutdown(wait=wait)
+                ex.shutdown(wait=wait, cancel_futures=not wait)
 
 
 _runner: JobRunner | None = None
@@ -179,9 +187,9 @@ def get_runner() -> JobRunner:
         return _runner
 
 
-def reset_runner() -> None:
+def reset_runner(wait: bool = True) -> None:
     global _runner
     with _lock:
         r, _runner = _runner, None
     if r is not None:
-        r.shutdown(wait=True)
+        r.shutdown(wait=wait)

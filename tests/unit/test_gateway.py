@@ -185,3 +185,29 @@ def test_map_keeps_order(net):
     ps = [prompt(task=str(i)) for i in range(6)]
     out = g.map(ps, lambda p: Out(a=int(p.task)))
     assert [r.output.a for r in out] == list(range(6))
+
+
+def test_map_bounds_inflight_http(monkeypatch):
+    import threading
+    import time
+
+    cur = peak = 0
+    lock = threading.Lock()
+
+    def fake(req, timeout=None):
+        nonlocal cur, peak
+        with lock:
+            cur += 1
+            peak = max(peak, cur)
+        time.sleep(0.05)
+        with lock:
+            cur -= 1
+        return envelope('{"a": 1}')
+
+    monkeypatch.setattr(gw.urllib.request, "urlopen", fake)
+    g = make(llm_concurrency=2)
+    ps = [prompt(data={"x": str(i)}) for i in range(8)]
+    ts = [threading.Thread(target=g.map, args=(ps, lambda p: Out(a=-1))) for _ in range(3)]
+    [t.start() for t in ts]
+    [t.join() for t in ts]
+    assert 0 < peak <= 2

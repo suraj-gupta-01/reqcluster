@@ -40,7 +40,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             log.exception("startup failed: could not initialise database, runner or embedder")
             raise
         yield
-        jobs.reset_runner()
+        jobs.reset_runner(wait=False)
 
     def require_key(x_api_key: str | None = Header(default=None)) -> None:
         if s.api_key and not hmac.compare_digest(x_api_key or "", s.api_key):

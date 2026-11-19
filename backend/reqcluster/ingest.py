@@ -2,6 +2,7 @@
 import csv
 import io
 import re
+import zipfile
 from dataclasses import dataclass, field
 
 import pandas as pd
@@ -10,6 +11,7 @@ from .domain import RequirementIn
 from .errors import Invalid, TooLarge
 
 MAX_TEXT_CHARS = 10_000
+MAX_XLSX_UNZIPPED = 200 * 1024 * 1024
 MIN_TEXT_CHARS = 6  # legacy rule: text length > 5
 ID_NAMES = ["id", "req_id", "requirement_id", "req id", "identifier"]
 TEXT_NAMES = ["text", "requirement", "description", "requirement text", "req text", "content", "shall"]
@@ -77,6 +79,15 @@ def parse(data: bytes, filename: str, max_rows: int = 50000) -> IngestResult:
     else:
         raise Invalid("Unsupported file type. Allowed: .csv, .xlsx.")
 
+    if kind == "xlsx":
+        try:
+            with zipfile.ZipFile(io.BytesIO(data)) as z:
+                total = sum(i.file_size for i in z.infolist())
+        except zipfile.BadZipFile:
+            raise Invalid("Could not read the XLSX file; it may be corrupt or malformed.") from None
+        if total > MAX_XLSX_UNZIPPED:
+            raise TooLarge("The spreadsheet expands to more than 200 MB; split it into smaller files.")
+
     bad: list = []
     try:
         df = _read_xlsx(data) if kind == "xlsx" else _read_csv(data, bad)
@@ -102,6 +113,7 @@ def parse(data: bytes, filename: str, max_rows: int = 50000) -> IngestResult:
 
     seen_text: set[str] = set()
     seen_ids: dict[str, int] = {}
+    used_ids: set[str] = set()
     out: list[RequirementIn] = []
     ids = df[id_col].tolist() if id_col is not None else [""] * len(df)
     for raw_id, raw in zip(ids, df[text_col].tolist(), strict=True):
@@ -121,9 +133,14 @@ def parse(data: bytes, filename: str, max_rows: int = 50000) -> IngestResult:
             raise TooLarge(f"Too many requirements; the limit is {max_rows} rows.")
         ordinal = len(out) + 1
         rid = _WS.sub(" ", str(raw_id)).strip() or f"REQ-{ordinal:05d}"
-        n = seen_ids.get(rid, 0) + 1
+        n = seen_ids.get(rid, 0)
+        cand = rid
+        while cand in used_ids:
+            n += 1
+            cand = f"{rid}-{n + 1}"
         seen_ids[rid] = n
-        out.append(RequirementIn(req_id=rid if n == 1 else f"{rid}-{n}", text=text, ordinal=ordinal))
+        used_ids.add(cand)
+        out.append(RequirementIn(req_id=cand, text=text, ordinal=ordinal))
 
     if not out:
         raise Invalid("No requirements found in the file (all rows were empty).")

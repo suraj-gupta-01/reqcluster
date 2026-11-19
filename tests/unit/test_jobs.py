@@ -115,3 +115,37 @@ def test_sweep_on_startup():
     r.sweep_on_startup()
     j = r.get("a" * 32)
     assert j.status == "failed" and j.error == "interrupted by restart"
+
+
+def test_finish_retries_locked_db(monkeypatch):
+    from sqlalchemy.exc import OperationalError
+
+    monkeypatch.setattr(jobs.time, "sleep", lambda s: None)
+    real, calls = jobs.update, []
+
+    def flaky(*a, **kw):
+        calls.append(1)
+        if len(calls) <= 2:
+            raise OperationalError("UPDATE", {}, Exception("database is locked"))
+        return real(*a, **kw)
+
+    monkeypatch.setattr(jobs, "update", flaky)
+    r = jobs.get_runner()
+    assert r.submit("cluster", 1, lambda ctx: None).status == "succeeded"
+    assert r.submit("cluster", 1, lambda ctx: None).status == "succeeded"
+
+
+def test_shutdown_nowait_drops_queued(monkeypatch):
+    import threading
+
+    monkeypatch.setenv("REQCLUSTER_JOB_WORKERS", "1")
+    get_settings.cache_clear()
+    r = jobs.get_runner()
+    gate = threading.Event()
+    j1 = r.submit("cluster", 1, lambda ctx: gate.wait(5))
+    j2 = r.submit("cluster", 2, lambda ctx: None)
+    jobs.reset_runner(wait=False)
+    gate.set()
+    _wait(r, j1.id)
+    time.sleep(0.2)
+    assert r.get(j2.id).status == "queued"

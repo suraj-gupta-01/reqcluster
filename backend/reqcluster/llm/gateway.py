@@ -61,6 +61,7 @@ class LLMGateway:
     def __init__(self, settings: Settings):
         self.s = settings
         self._lock = threading.Lock()
+        self._slots = threading.BoundedSemaphore(max(1, settings.llm_concurrency))
         self._breaker: dict[str, list[float]] = {}  # provider -> [fails, opened_at]
 
     # ---- public
@@ -135,7 +136,7 @@ class LLMGateway:
                 body["format"] = schema
         req = urllib.request.Request(url, json.dumps(body).encode(), headers, method="POST")
         try:
-            with urllib.request.urlopen(req, timeout=s.llm_timeout_s) as resp:
+            with self._slots, urllib.request.urlopen(req, timeout=s.llm_timeout_s) as resp:
                 raw = resp.read(MAX_BODY + 1)
         except urllib.error.HTTPError as e:
             raise _Fail(f"HTTP {e.code}", e.code >= 500 or e.code == 429) from None

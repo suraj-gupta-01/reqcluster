@@ -103,3 +103,19 @@ def test_quoted_comma_and_newline():
     s = 'text\n"A, B, and C shall work"\n"The unit shall say ""hi"",\nthen go"\n'
     r = parse(s.encode(), "a.csv")
     assert texts(r) == ["A, B, and C shall work", 'The unit shall say "hi", then go']
+
+
+def test_zip_bomb_rejected():
+    import zipfile
+
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
+        z.writestr("x.xlsx", b"\0" * (201 * 1024 * 1024))
+    with pytest.raises(TooLarge):
+        parse(buf.getvalue(), "a.xlsx")
+
+
+def test_suffixed_ids_stay_unique():
+    data = csv_bytes(f"id,text\nR1,{A}\nR1,{B}\nR1-2,{C}\n")
+    ids = [r.req_id for r in parse(data, "a.csv").requirements]
+    assert len(set(ids)) == 3

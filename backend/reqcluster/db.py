@@ -78,14 +78,6 @@ def session_scope() -> Iterator[Session]:
         s.close()
 
 
-def get_db() -> Iterator[Session]:
-    s = SessionLocal()
-    try:
-        yield s
-    finally:
-        s.close()
-
-
 def init_db() -> None:
     from reqcluster.models import Base
 
