@@ -42,3 +42,20 @@ umap-learn 0.6.0 (installed) has a new layout pipeline: `compatibility_layout=Fa
 | uav 10k | .909 / 16.2 | .904 / 15.7 | .864 / 4.6 | .899 / 5.2 |
 
 All seeded variants reproduce labels exactly. Decision: `compatibility_layout=True` (set explicitly, silences the 0.6 FutureWarning), `random_state=seed`, `init="random"`. The seeded single-thread penalty is only ~1-2 s below 2k rows and absent at 10k, so determinism is free. Adam is 3x faster at 10k but costs up to 0.05 ARI on UAV; revisit only if UMAP time becomes the bottleneck after GPU encoding. Script: `umap06.py` in the session scratchpad (copied into findings/exp).
+
+## G. Run-scoped derived state (from the acceptance suite)
+Feedback, constraints, suggestions, audit and dependency trees are keyed by `run_id`. A plain re-cluster starts clean; a constrained re-cluster copies its constraints into the new run in the same transaction (`persist_run(..., constraints=)`). Edits claim `runs.edit_seq` with a conditional UPDATE, so concurrent edits get 409 instead of a lost update.
+
+## H. No PCA before UMAP (2026-11-19, `findings/exp/pca_threshold.py`, `newpipe_gate.py`)
+The original grid only compared PCA vs raw input for HDBSCAN *without* UMAP; PCA50 before UMAP was assumed, never tested. UMAP (cosine) on the raw 384-D MiniLM embeddings is better everywhere measured:
+| dataset | PCA50 -> UMAP (3 seeds) | raw -> UMAP (3 seeds) | gate seed 42, raw |
+|---|---|---|---|
+| aerospace 64 | .435 | .436 | n/a |
+| adversarial 600 | .320 | .320 | .414 |
+| multidomain 1.2k | .636 | .649 | .671 |
+| uav 2k | .934 | .987 | .976 |
+| uav 10k | .908 | .958 | .966 |
+At 10k the 10-D UMAP took 31.5 s raw vs 53.1 s with PCA in the same run. Absolute timings on this laptop swing up to 3x between runs (thermal), so re-measure speed on a quiet machine.
+
+## I. Small uploads are unstable
+On a 64-row set, float noise of ~1e-6 (GPU vs CPU encoding) flips UMAP+HDBSCAN between 2 and 4 clusters (ARI .1 to .5). Legacy's .503 baseline on aerospace was a lucky draw. Experiment: `findings/exp/small_n.py`.

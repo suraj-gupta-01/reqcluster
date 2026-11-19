@@ -16,12 +16,13 @@ def reduce(X: np.ndarray, seed: int) -> tuple[np.ndarray, np.ndarray]:
 
     import umap  # lazy: slow import, caller sets NUMBA_CACHE_DIR first
 
-    P = PCA(min(50, n - 1, d), svd_solver="randomized", random_state=seed).fit_transform(X)
+    # No PCA50 before UMAP: on raw cosine embeddings ARI rises uav2k .934->.987, uav10k .908->.958,
+    # multidomain .636->.649, and 10k is faster (findings/exp/pca_threshold.py, 3 seeds).
     nn = min(80, max(15, n // 100), n - 1)
     x10 = umap.UMAP(
         n_components=10, metric="cosine", n_neighbors=nn, min_dist=0.0, n_epochs=200,
         init="random", random_state=seed, compatibility_layout=True,
-    ).fit_transform(P)
+    ).fit_transform(X)
     # viz only: 100 epochs at 10k rows 28.9s -> 5.4s (vs 200); clustering uses x10
     xy = umap.UMAP(
         n_components=2, metric="euclidean", n_neighbors=min(15, n - 1), min_dist=0.1,

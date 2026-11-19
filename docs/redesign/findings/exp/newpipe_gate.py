@@ -1,7 +1,7 @@
 """Accuracy + speed gate for the new reqcluster.ml.pipeline on real labeled data.
 
 Usage: uv run python docs/redesign/findings/exp/newpipe_gate.py EMB_DIR
-EMB_DIR holds emb_<dataset>.npy (MiniLM, L2-normalised, row order = CSV order), as written
+EMB_DIR holds (or receives) emb_<dataset>.npy (MiniLM, L2-normalised, row order = CSV order), as written
 by umap06.py. Floors from 04-ml-defaults.md.
 """
 import json
@@ -22,7 +22,13 @@ emb_dir = Path(sys.argv[1])
 fail = False
 for name, floor in FLOORS.items():
     df = pd.read_csv(DATA / f"{name}_requirements.csv", keep_default_na=False)
-    X = np.load(emb_dir / f"emb_{name}.npy").astype(np.float32)
+    f = emb_dir / f"emb_{name}.npy"
+    if not f.exists():  # encode once on CPU and cache, so device float noise stays out of the gate
+        from sentence_transformers import SentenceTransformer
+        emb_dir.mkdir(parents=True, exist_ok=True)
+        np.save(f, SentenceTransformer("all-MiniLM-L6-v2", device="cpu").encode(
+            df.text.astype(str).tolist(), batch_size=64, normalize_embeddings=True))
+    X = np.load(f).astype(np.float32)
     texts = df.text.astype(str).tolist()
     t = time.perf_counter()
     res = pipeline.run(X, texts, ClusteringParams(), seed=42, threads=12)
