@@ -260,14 +260,23 @@ class FakeLLM:
 
 @pytest.fixture
 def fake_llm(monkeypatch):
+    def _reset_llm():
+        from reqcluster.config import get_settings
+        from reqcluster.llm.gateway import reset_gateway
+
+        get_settings.cache_clear()
+        reset_gateway()
+
     srv = FakeLLM()
     monkeypatch.setenv("REQCLUSTER_LLM_BASE_URL", srv.url)
     monkeypatch.setenv("REQCLUSTER_LLM_API_KEY", "test-key")
     monkeypatch.setenv("REQCLUSTER_LLM_MODEL", "fake-model")
     monkeypatch.setenv("REQCLUSTER_LLM_MAX_RETRIES", "2")
     monkeypatch.setenv("REQCLUSTER_LOCAL_LLM_URL", srv.url + "/generate")
+    _reset_llm()
     yield srv
     srv.close()
+    _reset_llm()
 
 
 # ---------------------------------------------------------------- the adapter
