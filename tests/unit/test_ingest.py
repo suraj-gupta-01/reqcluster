@@ -123,7 +123,7 @@ def test_suffixed_ids_stay_unique():
 
 def test_ids_headers_and_attribute_values_are_cleaned_like_text():
     # NUL/control bytes anywhere in the file must not reach the DB (Postgres rejects NUL in text)
-    data = "id,text,mod\x00ule\nR\x001,The pump shall start within 5 seconds,The\x07rmal\n".encode()
+    data = b"id,text,mod\x00ule\nR\x001,The pump shall start within 5 seconds,The\x07rmal\n"
     r = parse(data, "a.csv").requirements[0]
     blob = r.req_id + "".join(k + v for k, v in r.attributes.items())
     assert "\x00" not in blob and "\x07" not in blob

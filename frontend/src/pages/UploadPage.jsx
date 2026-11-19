@@ -20,7 +20,7 @@ export default function UploadPage({ onSessionCreated }) {
   const [error, setError] = useState(null)
   const [jobId, setJobId] = useState(null)
   const [showParams, setShowParams] = useState(false)
-  const [params, setParams] = useState({ min_cluster_size: '', min_samples: 3, sim_threshold: 0.5, top_k: 10, embedding_mode: 'base', enable_embedding_comparison: false, run_ablation: false })
+  const [params, setParams] = useState({ clusterer: 'hdbscan', min_cluster_size: '', min_samples: 3, sim_threshold: 0.5, top_k: 10, embedding_mode: 'base', enable_embedding_comparison: false, run_ablation: false })
 
   const validateAndSetFile = useCallback((f) => {
     if (!f.name.match(/\.(csv|xlsx|xls)$/i)) {
@@ -76,6 +76,7 @@ export default function UploadPage({ onSessionCreated }) {
     setError(null)
     try {
       const payload = {
+        clusterer: params.clusterer,
         min_samples: params.min_samples,
         sim_threshold: params.sim_threshold,
         top_k: params.top_k,
@@ -195,6 +196,16 @@ export default function UploadPage({ onSessionCreated }) {
               </button>
               {showParams && (
                 <div className="px-4 pb-4 border-t border-gray-800 pt-4 grid grid-cols-3 gap-4">
+                  <div className="col-span-3">
+                    <label className="block text-xs font-medium text-gray-400 mb-1.5">Clustering method</label>
+                    <select value={params.clusterer}
+                      onChange={e => setParams(p => ({ ...p, clusterer: e.target.value }))}
+                      className="input text-sm w-full">
+                      <option value="hdbscan">HDBSCAN (finds outliers)</option>
+                      <option value="ward">Ward (every requirement assigned)</option>
+                    </select>
+                    {params.clusterer === 'ward' && <p className="text-xs text-gray-600 mt-1">Min cluster size and min samples are ignored.</p>}
+                  </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-400 mb-1.5">Min Cluster Size</label>
                     <input type="number" min="2" placeholder="auto"

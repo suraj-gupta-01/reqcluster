@@ -123,3 +123,25 @@ def test_exact_knn_matches_brute_force_with_self_first():
     assert (idx[:, 0] == np.arange(120)).all() and np.allclose(dist[:, 0], 0)
     for i in range(120):
         assert np.allclose(np.sort(D[i])[:15], dist[i], atol=1e-5)  # ascending, exact
+
+
+def blobs(k=12, per=15, d=384, seed=0):
+    rng = np.random.default_rng(seed)
+    C = rng.normal(size=(k, d))
+    X = np.vstack([c + 0.05 * rng.normal(size=(per, d)) for c in C])
+    X /= np.linalg.norm(X, axis=1, keepdims=True)
+    return X.astype(np.float32), [f"req {i}" for i in range(len(X))]
+
+
+def test_ward_no_noise_k_in_range_and_deterministic():
+    X, t = blobs()
+    a = pipeline.run(X, t, P(clusterer="ward"), seed=3)
+    b = pipeline.run(X, t, P(clusterer="ward"), seed=3)
+    assert (a.labels >= 0).all() and (a.probabilities == 1.0).all()
+    assert 8 <= len(a.clusters) <= min(40, len(X) // 5)
+    assert (a.labels == b.labels).all()
+
+
+def test_ward_tiny_n_all_noise():
+    X, t = rand(3)
+    assert (pipeline.run(X, t, P(clusterer="ward"), seed=0).labels == -1).all()

@@ -47,7 +47,7 @@ export default function EnrichmentPage() {
 
 function Enrichment({ sessionId, reloadSession }) {
   const [provider, setProvider] = useState('')
-  const [clusterOptions, setClusterOptions] = useState({ sim_threshold: 0.5, min_cluster_size: '', min_samples: '' })
+  const [clusterOptions, setClusterOptions] = useState({ clusterer: 'hdbscan', sim_threshold: 0.5, min_cluster_size: '', min_samples: '' })
   const [enrichJobId, setEnrichJobId] = useState(null)
   const [clusterJobId, setClusterJobId] = useState(null)
   const [clusterMode, setClusterMode] = useState('base')
@@ -138,6 +138,7 @@ function Enrichment({ sessionId, reloadSession }) {
     setClusterMode(mode)
     const payload = {
       embedding_mode: mode,
+      clusterer: clusterOptions.clusterer,
       sim_threshold: Number(clusterOptions.sim_threshold),
       enable_embedding_comparison: !!clusterOptions.enable_embedding_comparison,
       run_ablation: !!clusterOptions.run_ablation,
@@ -212,6 +213,13 @@ function Enrichment({ sessionId, reloadSession }) {
 
           <section className="card p-4 space-y-4">
             <h2 className="text-sm font-semibold text-gray-200">Clustering Controls</h2>
+            <label className="block text-xs text-gray-400">
+              Clustering method
+              <select value={clusterOptions.clusterer} onChange={e => updateClusterOption('clusterer', e.target.value)} className="input text-sm w-full mt-1">
+                <option value="hdbscan">HDBSCAN (finds outliers)</option>
+                <option value="ward">Ward (every requirement assigned)</option>
+              </select>
+            </label>
             <div className="grid grid-cols-3 gap-3">
               <NumberControl
                 id="similarity-threshold"
