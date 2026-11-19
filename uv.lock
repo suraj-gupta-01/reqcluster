@@ -5,20 +5,20 @@ resolution-markers = [
     "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-10-reqcluster-cpu' and extra == 'extra-10-reqcluster-gpu'",
     "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-10-reqcluster-cpu' and extra == 'extra-10-reqcluster-gpu'",
     "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-10-reqcluster-cpu' and extra == 'extra-10-reqcluster-gpu'",
-    "python_full_version < '3.14' and sys_platform == 'win32' and extra != 'extra-10-reqcluster-cpu' and extra == 'extra-10-reqcluster-gpu'",
-    "python_full_version < '3.14' and sys_platform == 'emscripten' and extra != 'extra-10-reqcluster-cpu' and extra == 'extra-10-reqcluster-gpu'",
-    "python_full_version < '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-10-reqcluster-cpu' and extra == 'extra-10-reqcluster-gpu'",
     "python_full_version >= '3.14' and sys_platform == 'win32' and extra == 'extra-10-reqcluster-cpu' and extra != 'extra-10-reqcluster-gpu'",
     "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra == 'extra-10-reqcluster-cpu' and extra != 'extra-10-reqcluster-gpu'",
     "python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-10-reqcluster-cpu' and extra != 'extra-10-reqcluster-gpu'",
     "python_full_version >= '3.14' and sys_platform == 'darwin' and extra == 'extra-10-reqcluster-cpu' and extra != 'extra-10-reqcluster-gpu'",
+    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-10-reqcluster-cpu' and extra != 'extra-10-reqcluster-gpu'",
+    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-10-reqcluster-cpu' and extra != 'extra-10-reqcluster-gpu'",
+    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-10-reqcluster-cpu' and extra != 'extra-10-reqcluster-gpu'",
+    "python_full_version < '3.14' and sys_platform == 'win32' and extra != 'extra-10-reqcluster-cpu' and extra == 'extra-10-reqcluster-gpu'",
+    "python_full_version < '3.14' and sys_platform == 'emscripten' and extra != 'extra-10-reqcluster-cpu' and extra == 'extra-10-reqcluster-gpu'",
+    "python_full_version < '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-10-reqcluster-cpu' and extra == 'extra-10-reqcluster-gpu'",
     "python_full_version < '3.14' and sys_platform == 'win32' and extra == 'extra-10-reqcluster-cpu' and extra != 'extra-10-reqcluster-gpu'",
     "python_full_version < '3.14' and sys_platform == 'emscripten' and extra == 'extra-10-reqcluster-cpu' and extra != 'extra-10-reqcluster-gpu'",
     "python_full_version < '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra == 'extra-10-reqcluster-cpu' and extra != 'extra-10-reqcluster-gpu'",
     "python_full_version < '3.14' and sys_platform == 'darwin' and extra == 'extra-10-reqcluster-cpu' and extra != 'extra-10-reqcluster-gpu'",
-    "python_full_version >= '3.14' and sys_platform == 'win32' and extra != 'extra-10-reqcluster-cpu' and extra != 'extra-10-reqcluster-gpu'",
-    "python_full_version >= '3.14' and sys_platform == 'emscripten' and extra != 'extra-10-reqcluster-cpu' and extra != 'extra-10-reqcluster-gpu'",
-    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-10-reqcluster-cpu' and extra != 'extra-10-reqcluster-gpu'",
     "python_full_version < '3.14' and sys_platform == 'win32' and extra != 'extra-10-reqcluster-cpu' and extra != 'extra-10-reqcluster-gpu'",
     "python_full_version < '3.14' and sys_platform == 'emscripten' and extra != 'extra-10-reqcluster-cpu' and extra != 'extra-10-reqcluster-gpu'",
     "python_full_version < '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32' and extra != 'extra-10-reqcluster-cpu' and extra != 'extra-10-reqcluster-gpu'",
@@ -2335,7 +2335,7 @@ wheels = [
 [[package]]
 name = "reqcluster"
 version = "0.2.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "fastapi" },
     { name = "numpy" },

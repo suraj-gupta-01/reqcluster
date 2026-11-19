@@ -11,9 +11,9 @@ import sys
 
 import pytest
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 sys.path.insert(
-    0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "backend"))
+    0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "backend"))
 )
 
 from fastapi import FastAPI

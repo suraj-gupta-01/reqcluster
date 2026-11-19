@@ -7,8 +7,8 @@ import xml.etree.ElementTree as ET
 
 import pytest
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "backend")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "backend")))
 
 from export.reqif_exporter import export_reqif, REQIF_NS
 from export.sysml_xmi_exporter import export_sysml_xmi, UML_NS, XMI_NS

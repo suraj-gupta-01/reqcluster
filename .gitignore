@@ -41,3 +41,5 @@ frontend/dist/
 
 # isolated GPU benchmark venv (not committed)
 .gpuvenv/
+
+var/
