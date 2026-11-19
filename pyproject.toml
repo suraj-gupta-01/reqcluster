@@ -11,7 +11,6 @@ dependencies = [
     "pydantic>=2.9",
     "sqlalchemy>=2.0.36",
     "numpy>=2.0",
-    "pandas>=2.2.3",
     "openpyxl>=3.1.5",
     "scikit-learn>=1.5",          # also provides HDBSCAN (sklearn.cluster)
     "umap-learn>=0.5.7",
@@ -28,7 +27,7 @@ fast = ["hnswlib>=0.8.0"]                 # ANN similarity graph; falls back to 
 nlp = ["spacy>=3.8"]                      # dependency-parse artifacts; falls back to regex
 charts = ["matplotlib>=3.9"]              # charts inside the PDF report
 postgres = ["psycopg2-binary>=2.9.10"]    # DATABASE_URL=postgresql://...
-eval = ["pyyaml>=6.0"]
+eval = ["pyyaml>=6.0", "pandas>=2.2.3"]
 # Pick exactly one torch build (same on Windows and Linux):
 #   uv sync --extra cpu      or      uv sync --extra gpu   (CUDA 12.6, NVIDIA driver >= 560)
 cpu = ["torch>=2.4"]

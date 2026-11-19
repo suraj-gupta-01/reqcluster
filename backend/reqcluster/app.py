@@ -7,6 +7,7 @@ import uvicorn
 from fastapi import Depends, FastAPI, Header, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
@@ -47,6 +48,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             raise Unauthorized("missing or invalid API key")
 
     app = FastAPI(title="ReqCluster", lifespan=lifespan)
+    app.add_middleware(GZipMiddleware, minimum_size=1024)
     app.add_middleware(
         CORSMiddleware, allow_origins=list(s.cors_origins), allow_methods=["*"],
         allow_headers=["*"], expose_headers=["X-Total-Count"],

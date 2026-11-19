@@ -5,7 +5,7 @@ import re
 import zipfile
 from dataclasses import dataclass, field
 
-import pandas as pd
+import openpyxl
 
 from .domain import RequirementIn
 from .errors import Invalid, TooLarge
@@ -41,7 +41,7 @@ def _clean(text: str) -> str:
     return _WS.sub(" ", text).strip().strip("\"'").strip()
 
 
-def _read_csv(data: bytes, bad: list) -> pd.DataFrame:
+def _read_csv(data: bytes, bad: list) -> list[list[str]]:
     for enc in ("utf-8-sig", "cp1252", "latin-1"):
         try:
             s = data.decode(enc)
@@ -54,14 +54,23 @@ def _read_csv(data: bytes, bad: list) -> pd.DataFrame:
         delim = csv.Sniffer().sniff(s[:65536], delimiters=",;\t|").delimiter
     except csv.Error:
         delim = ","
-    return pd.read_csv(
-        io.StringIO(s), sep=delim, dtype=str, keep_default_na=False,
-        engine="python", on_bad_lines=lambda row: bad.append(1),
-    )
+    rows = [r for r in csv.reader(io.StringIO(s, newline=""), delimiter=delim) if r]
+    if not rows:
+        raise ValueError("no header")
+    width = len(rows[0])
+    bad.extend(1 for r in rows[1:] if len(r) > width)
+    return [rows[0]] + [r for r in rows[1:] if len(r) <= width]
 
 
-def _read_xlsx(data: bytes) -> pd.DataFrame:
-    return pd.read_excel(io.BytesIO(data), sheet_name=0, dtype=str, engine="openpyxl").fillna("")
+def _read_xlsx(data: bytes) -> list[list[str]]:
+    wb = openpyxl.load_workbook(io.BytesIO(data), read_only=True, data_only=True)
+    try:
+        rows = [["" if c is None else str(c) for c in r] for r in wb.worksheets[0].iter_rows(values_only=True)]
+    finally:
+        wb.close()
+    if not rows:
+        raise ValueError("no header")
+    return rows
 
 
 def parse(data: bytes, filename: str, max_rows: int = 50000) -> IngestResult:
@@ -90,25 +99,27 @@ def parse(data: bytes, filename: str, max_rows: int = 50000) -> IngestResult:
 
     bad: list = []
     try:
-        df = _read_xlsx(data) if kind == "xlsx" else _read_csv(data, bad)
+        table = _read_xlsx(data) if kind == "xlsx" else _read_csv(data, bad)
     except Invalid:
         raise
     except Exception:
         raise Invalid(f"Could not read the {kind.upper()} file; it may be corrupt or malformed.") from None
 
-    cols = {str(c).replace("﻿", "").strip().lower(): c for c in df.columns}
+    header, body = table[0], table[1:]
+    width = len(header)
+    body = [r + [""] * (width - len(r)) if len(r) < width else r[:width] for r in body]
+    cols = {str(c).replace("\ufeff", "").strip().lower(): i for i, c in enumerate(header)}
     text_col = next((cols[n] for n in TEXT_NAMES if n in cols), None)
     if text_col is None:
         raise Invalid(
-            f"No requirement text column found. Columns found: {', '.join(map(str, df.columns)) or 'none'}. "
+            f"No requirement text column found. Columns found: {', '.join(map(str, header)) or 'none'}. "
             f"Name one of: {', '.join(TEXT_NAMES[:4])}."
         )
     id_col = next((cols[n] for n in ID_NAMES if n in cols), None)
-    extra = {c: str(c).replace("\ufeff", "").strip() for c in df.columns if c not in (text_col, id_col)}
-    extra = {c: n for c, n in extra.items() if n}
-    extras = df[list(extra)].to_dict("records") if extra else [{}] * len(df)
+    extra = {i: str(c).replace("\ufeff", "").strip() for i, c in enumerate(header) if i not in (text_col, id_col)}
+    extra = {i: n for i, n in extra.items() if n}
 
-    stats = {"rows_read": len(df), "rows_kept": 0, "duplicates": 0, "empty_dropped": 0,
+    stats = {"rows_read": len(body), "rows_kept": 0, "duplicates": 0, "empty_dropped": 0,
              "truncated": 0, "bad_lines": len(bad)}
     warnings: list[str] = []
     if bad:
@@ -118,8 +129,10 @@ def parse(data: bytes, filename: str, max_rows: int = 50000) -> IngestResult:
     seen_ids: dict[str, int] = {}
     used_ids: set[str] = set()
     out: list[RequirementIn] = []
-    ids = df[id_col].tolist() if id_col is not None else [""] * len(df)
-    for raw_id, raw, ex in zip(ids, df[text_col].tolist(), extras, strict=True):
+    for row in body:
+        raw_id = row[id_col] if id_col is not None else ""
+        raw = row[text_col]
+        ex = {i: row[i] for i in extra}
         text = _clean(str(raw))
         if len(text) < MIN_TEXT_CHARS:
             stats["empty_dropped"] += 1
