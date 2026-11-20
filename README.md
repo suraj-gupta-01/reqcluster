@@ -1,530 +1,295 @@
 # ReqCluster
 
-**AI-assisted requirements engineering.** Upload a messy CSV or XLSX of engineering
-requirements and ReqCluster groups them by meaning, infers the dependencies
-between them, explains every grouping, lets analysts correct it, and exports the
-result into the tools teams already use - all of it deterministic and able to run
-fully offline.
-
-Built for the **Honeywell Hackathon, problem statement DP5** ("Grouping
-Functionally Related Requirements"): a categorized list, a dependency diagram,
-and a rationale document, with no manual intervention required to produce them.
-
-```
-CSV / XLSX  ->  preprocess  ->  SBERT embeddings  ->  UMAP  ->  HDBSCAN  ->  c-TF-IDF labels
-                                       |                                          |
-                                       +------------>  similarity graph  <--------+
-                                                              |
-                            dependency tree + rationale  ·  dashboard  ·  export (PDF / ReqIF / SysML / Jama / CSV)
-```
-
----
-
-## Contents
-- [Why it exists](#why-it-exists)
-- [What it does](#what-it-does)
-- [Architecture](#architecture)
-- [The pipeline](#the-pipeline)
-- [Quick start](#quick-start)
-- [How to test](#how-to-test)
-- [Configuration](#configuration)
-- [API reference](#api-reference)
-- [Datasets](#datasets)
-- [Scalability](#scalability)
-- [Project structure](#project-structure)
-
----
-
-## Why it exists
-
-A serious aerospace or automotive program carries **500 to 50,000** requirements,
-written by many teams over years. Someone still has to sort them by hand, and that
-is slow (8-12 hours per 500), inconsistent (two analysts agree only ~60% of the
-time, Cohen's kappa), and incomplete (cross-cutting links get missed).
-
-Existing tools each solve one slice and stop there:
-
-- **DOORS / Jama** store and version requirements but do not cluster anything.
-- **k-means / LDA** need a preset cluster count and ignore domain meaning.
-- **LLM prompting** is non-deterministic, manual, and lives outside the RE workflow.
-
-ReqCluster is the missing middle: automatic, explainable, repeatable,
-human-supervised, and it exports back into DOORS, Jama, and SysML tools.
-
----
+Upload a requirements file, get semantically grouped requirements you can inspect, correct and export. FastAPI backend, React frontend, SQLite by default.
 
 ## What it does
 
-| Capability | Summary |
-|---|---|
-| **Clustering pipeline** | SBERT embeddings -> UMAP reduction -> HDBSCAN density clustering -> c-TF-IDF labels -> cosine similarity graph. Deterministic, noise-aware. |
-| **Dependency tree + rationale (DP5)** | Hierarchical / sequential / data / reference edges inferred from each requirement's inputs, pre-conditions, and outputs, rendered as an interactive 2D/3D graph, plus a generated rationale document. |
-| **LLM enrichment (Phase 2)** | Optionally expand requirements with domain context before embedding ("base", "enriched", or "hybrid" modes) with comparison + ablation metrics. |
-| **ClusterLLM refinement (Phase 3)** | Automatic merge/split suggestions with silhouette and bimodality analysis; accept/reject with an audit log. |
-| **Human in the loop (Phase 4)** | Manual cluster corrections that generate must-link / cannot-link constraints; a review queue with approve/reject. |
-| **Active learning (Phase 5)** | Constraints fed back into a constrained re-cluster; uncertainty-sampled review queue; quality tracked across iterations. |
-| **Export** | **PDF report**, ReqIF 1.2, SysML/UML XMI, Jama bundle, and CSV. |
-| **On-prem LLM** | Summaries / rationales via a local open-source model (Qwen via Ollama) or any OpenAI-compatible endpoint, with a deterministic mock fallback. No data leaves your network. |
-
----
+- **Cluster**: upload CSV/XLSX -> embed (sentence-transformers) -> UMAP -> HDBSCAN clusters with c-TF-IDF labels. Optional `ward` mode draws groups with Ward linkage and keeps HDBSCAN's outliers.
+- **Explore**: 2-D UMAP scatter, kNN similarity graph, per-cluster detail, searchable and paged requirements table.
+- **Dependency tree** with a rationale per edge; LLM edge explanations on demand.
+- **LLM enrichment** and **refinement suggestions** (split/merge/move) behind a gateway: `mock`, OpenAI-compatible or local Ollama.
+- **Feedback loop**: move a requirement, approve or reject, then constrained re-clustering. Active learning ranks the most uncertain items (margin) and tracks quality over time. Every change is audited.
+- **Exports**: ReqIF, SysML XMI, Jama JSON, CSV, PDF.
 
 ## Architecture
 
-Three tiers, each independently testable.
-
-```mermaid
-flowchart TB
-    subgraph APP[Application]
-      UI[React · Vite · Tailwind · Plotly]
-    end
-    subgraph API[API + ML]
-      R[FastAPI routes]
-      SVC[Services: enrichment · refinement · feedback · dependency · active-learning · export]
-      ML[Core ML: embeddings · reduction · clustering · labeling · graph · dependency_tree]
-      LLM[LLM services: providers · enrichment · refinement]
-    end
-    subgraph DATA[Data]
-      PG[(PostgreSQL / SQLite)]
-      RD[(Redis embedding cache)]
-      EMB[(Embedding store)]
-    end
-    UI --> R --> SVC --> ML
-    SVC --> LLM
-    ML --> RD
-    SVC --> PG
-    ML --> EMB
-```
-
-Data model (core tables):
-
-```mermaid
-erDiagram
-    SESSION ||--o{ REQUIREMENT : has
-    SESSION ||--o{ CLUSTER : has
-    SESSION ||--|| GRAPH : has
-    SESSION ||--|| DEPENDENCY_TREE : has
-    SESSION ||--o{ ENRICHED_REQUIREMENT : has
-    SESSION ||--o{ REFINEMENT_SUGGESTION : has
-    SESSION ||--o{ FEEDBACK_CORRECTION : has
-    FEEDBACK_CORRECTION ||--o{ CONSTRAINT_PAIR : generates
-    SESSION ||--o{ CLUSTERING_ITERATION : has
-```
-
-| Layer | Tech |
-|---|---|
-| Backend | Python 3.10+, FastAPI, Uvicorn |
-| ML | sentence-transformers (SBERT), UMAP, HDBSCAN, scikit-learn |
-| LLM | mock (offline default), local (Ollama), OpenAI-compatible |
-| Database | PostgreSQL (production) / SQLite (local fallback), SQLAlchemy |
-| Cache | Redis per-text embedding cache (file fallback) |
-| Frontend | React, Vite, TailwindCSS, Plotly.js (WebGL) |
-| Export | reportlab (PDF), stdlib XML (ReqIF/XMI), JSON (Jama) |
-
----
-
-## The pipeline
-
-![ReqCluster AI requirements clustering pipeline](docs/pipeline-diagram.png)
+### Components
 
 ```mermaid
 flowchart LR
-    A[Upload CSV/XLSX] --> B[Preprocess: clean · dedup]
-    B --> C[SBERT 384-d · Redis cached]
-    C --> D[UMAP: 384 to 10-d and 2-d]
-    D --> E[HDBSCAN: clusters + noise]
-    E --> F[c-TF-IDF labels]
-    C --> G[Cosine similarity graph]
-    E --> G
-    F --> H[Dashboard / Dependency tree / Export]
-    G --> H
+  UI["React (Vite)<br/>api/client.js, hooks useApi / useJob"] -->|"HTTP /api"| APP["FastAPI app.py<br/>API key, CORS, gzip"]
+  APP --> API["api routers"]
+  API --> SVC["services"]
+  SVC --> ML["ml (pure numpy functions)"]
+  SVC --> EMB["embeddings"]
+  EMB --> CACHE[("SQLite embedding cache")]
+  SVC --> LLM["llm gateway<br/>mock | openai | ollama"]
+  LLM --- GW["retry, circuit breaker,<br/>response cache, in-flight caps"]
+  SVC --> EXP["export<br/>reqif, xmi, jama, csv, pdf"]
+  API --> JOBS["jobs.JobRunner<br/>thread pools, one active job per session"]
+  JOBS --> SVC
+  SVC --> DB[("DB: SQLite WAL (default) | Postgres")]
+  JOBS --> DB
+  SVC --> NPZ[("run arrays<br/>npz files in REQCLUSTER_HOME")]
 ```
 
-- **SBERT (`all-MiniLM-L6-v2`)** turns each requirement into a 384-dim vector; similar meaning gives similar vectors.
-- **UMAP** reduces to 10-d (for clustering) and 2-d (for the scatter plot).
-- **HDBSCAN** finds dense groups automatically (no preset count) and marks outliers as noise (`-1`).
-- **c-TF-IDF** names each cluster with its most distinctive words.
-- **Cosine similarity** links related requirements into a graph and underpins dependency inference.
+`ml/` has no I/O: arrays in, arrays out. Services own persistence and orchestration. Routers validate input and return models.
 
----
+### Clustering pipeline
+
+```mermaid
+flowchart TD
+  A["upload: capped read, csv / xlsx,<br/>cleaning, dedupe"] --> B["embed<br/>auto: gte-modernbert on NVIDIA GPU, MiniLM on CPU<br/>per-text cache"]
+  B --> C["exact BLAS kNN<br/>1k - 50k rows"]
+  C --> D["UMAP 10-D cosine, seeded<br/>n_neighbors = min(80, max(15, n / 100)), 200 epochs"]
+  D --> E{"clusterer"}
+  E -->|"hdbscan (default)"| F["HDBSCAN"]
+  E -->|ward| G["ward + HDBSCAN noise"]
+  F --> H["c-TF-IDF labels"]
+  G --> H
+  H --> I["kNN similarity graph"]
+  B --> J["2-D UMAP for the scatter"]
+```
+
+### Job lifecycle
+
+```mermaid
+sequenceDiagram
+  participant UI as Frontend useJob
+  participant API as FastAPI
+  participant R as JobRunner
+  participant W as Worker thread
+  participant DB as DB
+  UI->>API: POST /api/sessions/{sid}/cluster
+  API->>R: submit (one active job per session)
+  R->>DB: insert job, status queued
+  API-->>UI: 202 Job
+  R->>W: run
+  loop progress
+    W->>DB: write progress
+    UI->>API: GET /api/jobs/{id}
+    API-->>UI: Job (status, progress)
+  end
+  W->>DB: succeeded or failed
+  UI->>API: GET /api/jobs/{id}
+  API-->>UI: terminal status, onDone fires
+  Note over R,DB: POST /api/jobs/{id}/cancel sets cancelled.<br/>Startup sweep marks interrupted jobs failed.
+```
+
+### Data model
+
+```mermaid
+erDiagram
+  sessions ||--o{ requirements : has
+  sessions ||--o{ runs : has
+  sessions ||--o{ feedback : has
+  sessions ||--o{ constraints : has
+  sessions ||--o{ audit : has
+  sessions ||--o{ jobs : has
+  runs ||--o{ assignments : has
+  runs ||--o{ clusters : has
+  runs ||--o{ suggestions : has
+  runs ||--o{ enrichments : has
+  runs ||--o{ dependency_trees : has
+  dependency_trees ||--o{ dependency_explanations : has
+  requirements ||--o{ assignments : "assigned in"
+  runs {
+    int revision
+    int edit_seq
+    int max_cluster_id
+  }
+  requirements {
+    json attributes
+  }
+```
+
+Run-scoped (replaced or versioned by a new run): `assignments`, `clusters`, `suggestions`, `enrichments`, `dependency_trees`, `dependency_explanations`. Session-scoped (survive re-clustering): `requirements`, `feedback`, `constraints`, `audit`, `jobs`. A run records `revision`, `edit_seq` (manual edits) and `max_cluster_id` so edited cluster ids stay stable.
 
 ## Quick start
 
-Two terminals. **Use `uv run`** for the backend (it selects the project's Python
-and avoids the Windows torch DLL issue).
-
-### Backend
 ```bash
-uv sync
-uv run reqcluster-api            # http://127.0.0.1:8000 (REQCLUSTER_PORT to change)
-```
-First clustering run downloads the SBERT model (~80 MB) once. With no
-`DATABASE_URL` set, the backend uses a local SQLite file (a startup warning makes
-this explicit).
-
-Optional, for the higher-accuracy dependency engine:
-
-```bash
-uv run python -m spacy download en_core_web_sm   # ~13 MB, one time
+uv sync --extra all --extra cpu          # Python 3.12; use --extra gpu for CUDA torch
+cd frontend && npm install && cd ..
+uv run python scripts/dev.py             # backend :8000 + frontend :5173
 ```
 
-This adds a second one-time download on top of SBERT (~80 MB -> ~93 MB total).
-Without it the artifact extractor falls back to its regex path automatically and
-nothing breaks; passive-voice and coordinated artifacts are simply missed. Set
-`REQCLUSTER_DISABLE_SPACY=1` to force the fallback even when the model is
-installed.
+`./start.sh` wraps the same launcher. Copy `.env.example` to `.env` to change settings.
 
-### Frontend
-```bash
-cd frontend
-npm install
-npm run dev
-```
-Or run both at once: `uv run python scripts/dev.py` (or `./start.sh`).
-Open **http://localhost:5173** (API docs at **http://localhost:8000/docs**).
-
-### Docker (Postgres + Redis + backend + frontend)
-```bash
-docker compose up --build
-```
-Open **http://localhost:3000**.
-
-## Fastest
-### Docker (Postgres + Redis)
-```bash
-docker compose up -d postgres redis
-```
-### Backend
-```bash
-uv sync
-uv run reqcluster-api            # http://127.0.0.1:8000 (REQCLUSTER_PORT to change)
-```
-First clustering run downloads the SBERT model (~80 MB) once. With no
-`DATABASE_URL` set, the backend uses a local SQLite file (a startup warning makes
-this explicit).
-
-Optional, for the higher-accuracy dependency engine:
+### Docker
 
 ```bash
-uv run python -m spacy download en_core_web_sm   # ~13 MB, one time
+docker compose up --build                # backend :8000, frontend :3000, SQLite in the reqcluster_var volume
+export DATABASE_URL=postgresql://reqcluster:reqcluster_dev_password@postgres:5432/reqcluster
+docker compose --profile full up         # adds Postgres (change the dev password)
 ```
 
-This adds a second one-time download on top of SBERT (~80 MB -> ~93 MB total).
-Without it the artifact extractor falls back to its regex path automatically and
-nothing breaks; passive-voice and coordinated artifacts are simply missed. Set
-`REQCLUSTER_DISABLE_SPACY=1` to force the fallback even when the model is
-installed.
+The backend image is 2.44 GB and runs fully offline. The numba cache is baked in.
 
-### Frontend
-```bash
-cd frontend
-npm install
-npm run dev
-```
-Or run both at once: `uv run python scripts/dev.py` (or `./start.sh`).
-Open **http://localhost:5173** (API docs at **http://localhost:8000/docs**).
-
-
-### Try it
-Upload `data/aerospace_requirements.csv`, run clustering, then explore
-**Overview -> Scatter -> Graph -> Dependency Tree -> Review Queue -> Active
-Learning -> Export** (download the **PDF report**).
-
----
-
-## How to test
-
-Score the engine against the hand-labeled gold edge sets:
+### Local LLM (Ollama)
 
 ```bash
-uv run python -m scripts.eval_dependency_tree data/aerospace_requirements.csv --compare
-uv run python -m scripts.eval_dependency_tree data/dependency_adversarial_set.csv --compare
+ollama pull qwen3.5:4b
+export REQCLUSTER_LLM_PROVIDER=local     # model: REQCLUSTER_LOCAL_LLM_MODEL=qwen3.5:4b
+uv run python scripts/llm_smoke.py --help
 ```
 
-Reports land in `var/reports/`.
-
-```bash
-# full backend suite (offline, deterministic - no model download, no network)
-uv run pytest -q
-
-# with coverage
-uv run pytest --cov=backend --cov-report=term-missing
-
-# frontend build
-cd frontend && npm run build
-```
-
-- Tests mock the embedding model (`tests/conftest.py`) so they run offline and
-  fast; real UMAP/HDBSCAN run when installed.
-- `.github/workflows/ci.yml` runs the backend suite and the frontend build on
-  every push/PR.
-- To verify the real pipeline end-to-end on a large set, generate a dataset and
-  run it (see [Datasets](#datasets) / [Scalability](#scalability)).
-
----
+Default provider is `mock` (deterministic, no network).
 
 ## Configuration
 
-| Variable | Purpose | Default |
+Read from the environment and `.env`; real env vars win. All variables with comments: [.env.example](.env.example).
+
+| Variable | Default | Meaning |
 |---|---|---|
-| `DATABASE_URL` | PostgreSQL DSN; unset = local SQLite | unset (SQLite) |
-| `REDIS_URL` | Redis for the embedding cache; unset = file cache | unset |
-| `CORS_ORIGINS` | Comma-separated allowed origins | `http://localhost:5173,http://localhost:3000` |
-| `REQCLUSTER_LLM_PROVIDER` | `mock` (default, offline), `local`, or `openai` | `mock` |
-| `REQCLUSTER_LOCAL_LLM_URL` / `_MODEL` | Local LLM endpoint + model (e.g. Ollama, `qwen2.5`) | unset |
-| `REQCLUSTER_LLM_BASE_URL` / `_API_KEY` / `_MODEL` | OpenAI-compatible gateway | unset |
-| `JAMA_BASE_URL` / `JAMA_API_TOKEN` / `JAMA_PROJECT_ID` | Jama export target | unset |
-| `REQCLUSTER_DISABLE_SPACY` | `1` forces the regex artifact extractor even if spaCy is installed | unset |
-| `REQCLUSTER_SPACY_MODEL` | spaCy model for artifact extraction | `en_core_web_sm` |
+| `REQCLUSTER_HOME` | `./var` | Data dir: DB, embedding cache, run arrays |
+| `DATABASE_URL` | SQLite in HOME | Set `postgresql://...` for Postgres |
+| `REQCLUSTER_API_KEY` | empty | Non-empty requires header `X-API-Key` |
+| `CORS_ORIGINS` | localhost 5173, 3000 | Comma-separated |
+| `REQCLUSTER_JOB_WORKERS` | 1 | Job threads (0 = inline) |
+| `REQCLUSTER_SEED` | 42 | UMAP/HDBSCAN seed |
+| `REQCLUSTER_EMBEDDING_MODEL` | `auto` | gte-modernbert on NVIDIA GPU, MiniLM on CPU, or a pinned model |
+| `REQCLUSTER_EMBEDDING_DEVICE` | `auto` | `auto`, `cpu`, `cuda`. Pin `cpu` for reproducible clusters |
+| `REQCLUSTER_EMBEDDING_BACKEND` | `torch` | `torch` or `mock` |
+| `REQCLUSTER_EMBEDDING_REVISION` | 1 | Bump to invalidate the embedding cache |
+| `REQCLUSTER_MAX_UPLOAD_MB` / `_MAX_ROWS` | 25 / 50000 | Upload caps |
+| `REQCLUSTER_LLM_PROVIDER` | `mock` | `mock`, `openai`, `local` |
+| `REQCLUSTER_LLM_BASE_URL`, `_API_KEY`, `_MODEL` | empty | OpenAI-compatible provider |
+| `REQCLUSTER_LOCAL_LLM_URL` / `_MODEL` | `http://localhost:11434` / `qwen3.5:4b` | Ollama |
+| `REQCLUSTER_LOCAL_LLM_CONCURRENCY` | 1 | Ollama serves one request at a time |
+| `REQCLUSTER_LLM_MAX_RETRIES`, `_TIMEOUT_SECONDS`, `_CONCURRENCY` | 2, 30, 4 | Gateway resilience |
+| `REQCLUSTER_BREAKER_THRESHOLD` / `_COOLDOWN_SECONDS` | 5 / 60 | Circuit breaker |
+| `REQCLUSTER_JAMA_PROJECT_ID`, `_ITEM_TYPE_ID`, `_REL_TYPE_ID` | 0, 33, 1 | Jama export ids |
 
-With nothing configured, everything runs offline via the deterministic mock provider.
-
----
+Cluster parameters (`POST /cluster` body): `clusterer` (`hdbscan` or `ward`), `min_cluster_size`, `min_samples`, `sim_threshold`, `top_k`, `embedding_mode`, `seed`, `enable_embedding_comparison`, `run_ablation`.
 
 ## API reference
 
-| Method | Endpoint | Description |
+All routes are under `/api`. Errors use the envelope `{"error": "<code>", "message": "<text>"}`. Long work returns `202` with a `Job`; poll `GET /api/jobs/{id}`. Interactive docs at `/docs`. The client contract lives in `frontend/src/api/endpoints.js`.
+
+| Area | Method and path | Purpose |
 |---|---|---|
-| POST | `/api/upload` | Upload CSV/XLSX; returns session id + dedup stats |
-| POST | `/api/cluster` | Run the clustering pipeline (base / enriched / hybrid) |
-| GET | `/api/progress/{session_id}` | Poll pipeline progress |
-| GET | `/api/sessions` · `/api/sessions/{id}` | List / get sessions |
-| GET | `/api/clusters` · `/api/cluster/{id}` | Clusters / cluster detail |
-| GET | `/api/graph` · `/api/requirements` | Similarity graph / requirements |
-| POST | `/api/enrich` · GET `/api/enrich/status/{id}` · `/api/enrich/results` | LLM enrichment (Phase 2) |
-| POST | `/api/suggestions/generate` · `/api/suggestions/apply` · GET `/api/suggestions` · `/api/suggestions/audit` | Refinement (Phase 3) |
-| POST | `/api/feedback/submit` · `/api/feedback/review` · GET `/api/feedback/queue` · `/api/feedback/constraints` · `/api/feedback/export` | Human-in-the-loop (Phase 4) |
-| POST | `/api/dependencies/generate` · GET `/api/dependencies` | Dependency tree + rationale (DP5) |
-| POST | `/api/cluster/constrained` · GET `/api/active-learning/queue` · `/api/quality/history` | Active learning (Phase 5) |
-| GET | `/api/export/{pdf\|reqif\|sysml\|jama\|csv}?session_id=` | Export the result |
+| Sessions | `POST /sessions` | Upload file, create session |
+| | `GET /sessions` | List sessions |
+| | `GET /sessions/{sid}` | Session summary |
+| | `DELETE /sessions/{sid}` | Delete session (204) |
+| Clustering | `POST /sessions/{sid}/cluster` | Start clustering job (202) |
+| | `GET /sessions/{sid}/clusters` | Clusters with labels |
+| | `GET /sessions/{sid}/clusters/{cid}` | Cluster detail and representatives |
+| | `GET /sessions/{sid}/graph` | Scatter points and similarity edges |
+| | `GET /sessions/{sid}/metrics` | Run metrics |
+| | `GET /sessions/{sid}/requirements` | Paged list. Filters: `cluster_id`, `noise`, `search`; `sort`, `dir`, `page`, `page_size`. Total in `X-Total-Count` |
+| Jobs | `GET /jobs/{job_id}` | Status and progress |
+| | `POST /jobs/{job_id}/cancel` | Cancel |
+| Feedback | `POST /sessions/{sid}/feedback` | Submit a move |
+| | `GET /sessions/{sid}/feedback` | List feedback |
+| | `GET /sessions/{sid}/feedback/export` | Export feedback |
+| | `POST /sessions/{sid}/feedback/{fid}/approve` | Approve |
+| | `POST /sessions/{sid}/feedback/{fid}/reject` | Reject |
+| | `GET /sessions/{sid}/constraints` | Must/cannot-link constraints |
+| | `POST /sessions/{sid}/recluster` | Constrained re-clustering job (202) |
+| Active learning | `GET /sessions/{sid}/uncertainty?top_k=` | Most uncertain requirements |
+| | `GET /sessions/{sid}/quality` | Quality over revisions |
+| Refinement | `POST /sessions/{sid}/suggestions` | Generate suggestions job (202) |
+| | `GET /sessions/{sid}/suggestions` | List |
+| | `POST /sessions/{sid}/suggestions/{id}/accept` | Apply |
+| | `POST /sessions/{sid}/suggestions/{id}/reject` | Dismiss |
+| | `GET /sessions/{sid}/audit` | Audit trail |
+| | `GET /sessions/{sid}/coherence` | Per-cluster coherence |
+| Enrichment | `POST /sessions/{sid}/enrich` | LLM enrichment job (202) |
+| | `GET /sessions/{sid}/enrichment` | Results |
+| | `GET /sessions/{sid}/enrichment/summary` | Summary |
+| Dependencies | `POST /sessions/{sid}/dependencies` | Build tree job (202) |
+| | `GET /sessions/{sid}/dependencies` | Tree with rationale |
+| | `POST /sessions/{sid}/dependencies/explain` | LLM explanation for an edge |
+| Export | `GET /sessions/{sid}/export/{fmt}` | `fmt`: `reqif`, `sysml`, `jama`, `csv`, `pdf` |
 
-Full interactive docs at `/docs` (Swagger).
+## Metrics
 
----
+All measured; methods and raw data are in [docs/redesign](docs/redesign/README.md).
 
-## Datasets
+### Accuracy
 
-| File | Rows | Notes |
-|---|---|---|
-| `data/sample_requirements.csv` | 119 | Original sample, 6 domains. |
-| `data/aerospace_requirements.csv` | 64 | 8 subsystems with intentional dependency structure (cross-references, sequential pre-conditions, producer/consumer links). Best for the dependency tree + export. Regenerate with `python data/generate_aerospace_dataset.py`. |
+ARI (1.0 = perfect), mean of 3 seeds:
 
-**Real public requirements datasets for evaluation** (research-licensed, cite the
-sources): **PROMISE NFR** (625 labelled requirements), **PURE** (79 public SRS
-documents, thousands of requirements), and **Dronology** (UAV requirements with
-ground-truth trace links - ideal for validating the dependency tree). Export any
-of them to a CSV with at least a `text` column and upload; the preprocessor
-auto-detects common column-name variants.
-
----
-
-## Scalability
-
-The pipeline is **size-adaptive**: small datasets take the exact, deterministic
-path; large ones automatically switch to the fast parallel/approximate path.
-
-**Implemented**
-
-- **Adaptive reduction:** for N > ~4000, UMAP drops the fixed seed to run
-  multi-threaded, a PCA pre-step (384 -> ~50) denoises and shrinks the cost, and
-  the expensive kNN graph is computed once and shared by both the 10-d and 2-d
-  embeddings. A cuML (GPU) path is used automatically when a CUDA device is
-  present. Small N keeps the seeded, reproducible path.
-- **ANN similarity graph:** edges are built with hnswlib approximate kNN over
-  *all* non-noise nodes (O(N log N)), not a dense O(N^2) matrix capped to the
-  first 500 - with a bounded exact fallback if hnswlib is missing.
-- **PostgreSQL** with connection pooling and indexed hot query paths (SQLite is
-  the zero-setup local fallback, WAL enabled).
-- **Redis** per-text embedding cache - add new requirements without re-embedding
-  the existing ones; file-cache fallback when Redis is absent.
-- **Async background clustering job** with live progress polling.
-- Server-side paginated / filterable requirements reads; WebGL (`scattergl`)
-  scatter rendering.
-- 140+ automated tests, green in CI; one-command Docker Compose stack.
-
-### Performance (measured)
-
-Measured on a 12-core CPU laptop + RTX 2050 (4 GB). Each number is the **min/max
-of repeated runs**. Two definitions:
-
-- **Best** = warm process, all CPU cores, idle machine.
-- **Worst** = cold start (SBERT load ~4s + numba JIT ~8s, one-time) **plus** a
-  single CPU core (a busy / constrained machine).
-
-**1) Time to output — full pipeline (seconds)**
-
-| Requirements | **CPU best → worst** | **GPU best → worst** |
-|--:|--:|--:|
-| 500 | 4 → 17 | 4 → 16 |
-| 1,000 | 8 → 20 | 7 → 19 |
-| 5,000 | 23 → 43 | 15 → 35 |
-| 10,000 | 41 → 71 | 26 → 55 |
-| 35,000 | 105 → 139\* | 46 → 80\* |
-| 50,000 | 146 → 188\* | 65 → 108\* |
-
-"GPU" = embeddings on the RTX 2050, UMAP/clustering on CPU (GPU clustering needs
-cuML / Linux-WSL). \* 35k/50k worst extrapolates single-core reduce (≈1.6× all-core).
-
-**2) Per-stage building blocks (measured, the numbers above are composed from these)**
-
-| N | embed CPU | embed GPU | reduce all-core | reduce 1-core |
-|--:|--:|--:|--:|--:|
-| 500 | 0.9s | 0.13s | 3.5s | 3.8s |
-| 1,000 | 1.8s | 0.27s | 6.4s | 6.3s |
-| 5,000 | 8.9s | 1.3s | 13.6s | 21.0s |
-| 10,000 | 17.9s | 2.7s | 23.3s | 38.8s |
-| 35,000 | 68.5s | 9.3s | 36.3s | ~58s |
-| 50,000 | 94.3s | 13.5s | 51.4s | ~82s |
-
-(`reduce` = UMAP + HDBSCAN + ANN graph. HDBSCAN+graph are <5s even at 50k;
-embedding variance is tiny, ±5%.)
-
-**What the numbers say:**
-- **Embeddings are the biggest slice at scale** and are **GPU ≈ 7× CPU** (≈3,700 vs
-  ≈540 req/s), so GPU roughly **halves** large runs (50k: 146 → 65s). The file/Redis
-  cache makes re-runs embed-free.
-- **UMAP dominates the compute**; parallel + PCA keep it near-linear (10k 23s, 35k
-  36s, 50k 51s) instead of exploding. Parallel gives **~1.5-1.7×** over single core
-  at these sizes; under 4,000 it's single-threaded by design (reproducible).
-- **The graph is ANN / O(N log N)** — no quadratic blow-up.
-
-### Accuracy & validation (measured)
-
-Clusters are validated against ground-truth groups (the `module` column) via
-`GET /api/metrics`, also shown in the UI (Overview → *Validation metrics*).
-Accuracy = cluster **purity**; ARI / V-measure are external scores (0-1). On the
-generated UAV-FMS datasets (ground-truth = subsystem):
-
-| Dataset | Accuracy (purity) | ARI | V-measure | Silhouette | Noise |
-|---|--:|--:|--:|--:|--:|
-| 2k  | **98.3%** | 0.956 | 0.977 | 0.825 | 0.7% |
-| 10k | **98.0%** | 0.893 | 0.951 | 0.544 | 4.6% |
-| 35k | **95.7%** | 0.811 | 0.912 | 0.091 | 6.5% |
-
-Full accuracy + per-stage and Intelligence-stage (enrichment/refinement/dependency)
-timing tables, plus best/worst cases, are in **[metrics.md](metrics.md)**.
-
-### Adaptive methods — what runs at each size & how to control it
-
-| Input size N | Reduction method | Embedding | Determinism |
+| Dataset | MiniLM (CPU default) | gte-modernbert (GPU default) | Ward + outliers (option) |
 |---|---|---|---|
-| < 4,000 | seeded single-threaded UMAP + PCA(>50) | CPU/GPU auto | reproducible |
-| ≥ 4,000 | parallel UMAP (`n_jobs=-1`) + PCA + shared kNN | CPU/GPU auto | non-deterministic |
-| CUDA + cuML present | GPU UMAP/HDBSCAN (`cuml`) | GPU | — |
+| UAV FMS 2k | 0.991 | 0.992 | 0.885 |
+| UAV FMS 10k | 0.958 | 0.998 | 0.999 |
+| Multidomain 1.2k | 0.679 | 0.742 | 0.722 |
+| Adversarial 600 (20% junk) | 0.320 | 0.358 | 0.413 |
 
-| You want | How |
-|---|---|
-| See active device | `python backend/core/device.py` |
-| GPU embeddings (~8×) | `pip install torch --index-url https://download.pytorch.org/whl/cu121` |
-| GPU UMAP/HDBSCAN | install RAPIDS cuML (Linux/WSL) |
-| Parallel UMAP for small N | `REQCLUSTER_SMALL_N=500` in `.env` |
-| Force single-core | `NUMBA_NUM_THREADS=1` |
-| Tune clustering | Upload-page params, or `POST /api/cluster {min_cluster_size, min_samples, similarity_threshold}` |
+Small natural sets (64-100 rows) score 0.2-0.5 and are less stable.
 
-### Infrastructure
+Eval fast-suite baselines (MiniLM, CPU): uav_fms_2k ARI 0.975, purity 99.2%; multidomain 0.638; aerospace 0.474; bit_control 0.220; dependency_gold 0.175 (purity 87%); promise 0.110. Dependency reference recall 1.0 (aerospace 0.75).
 
-| Component | Role |
-|---|---|
-| **FastAPI + Uvicorn** | REST API; clustering runs as an async background job with live progress polling (the request returns immediately). |
-| **PostgreSQL** | Primary datastore: `QueuePool` connection pooling, indexed hot query paths. Auto-falls back to **SQLite** (WAL mode) when `DATABASE_URL` is unset, for zero-setup local dev. |
-| **Redis** | Per-text embedding cache (content-hash keyed); file-cache fallback when `REDIS_URL` is unset. |
-| **Embedding store** | Embeddings persisted off-DB (`.npy`) rather than bloating rows. |
-| **GPU (optional)** | cuML UMAP/HDBSCAN used automatically when a CUDA device is present; CPU path otherwise. |
-| **Docker Compose** | One command brings up postgres + redis + backend + frontend (nginx). Backend image pre-downloads the SBERT model and has a healthcheck. |
-| **CI** | GitHub Actions runs the backend test suite + the frontend build on every push/PR. |
-| **LLM** | Offline-first: deterministic mock by default; optional local (Ollama) or OpenAI-compatible provider. No data leaves the network. |
+Uncertainty ranking AUROC (margin): uav2k 0.932, multidomain 0.787, adversarial 0.861. Split/merge suggestions: false splits on clean gold groups fell from 2/5 to 0 after the silhouette gate.
 
-### GPU acceleration (measured)
+### Speed
 
-The pipeline auto-detects the accelerator (`backend/core/device.py`) and runs
-embeddings on the GPU automatically when a CUDA build of torch is installed - no
-code change. Measured here (RTX 2050 laptop, 4 GB, vs the 12-core CPU), encoding
-`all-MiniLM-L6-v2`:
+Dev laptop: 12-core CPU, RTX 2050 4 GB.
 
-| N | CPU (12-core) | GPU (RTX 2050) | speedup |
-|--:|--:|--:|--:|
-| 2,000 | 4.6 s · 433 req/s | 0.55 s · 3,614 req/s | **8.4×** |
-| 10,000 | 22.4 s · 447 req/s | 2.73 s · 3,664 req/s | **8.2×** |
-| 50,000 | ~112 s (extrapolated) | 13.8 s · 3,633 req/s | **~8×** |
+- Encode, texts/s. CPU: MiniLM 150, gte 17. GPU: MiniLM 3551, gte 863.
+- Clustering job: 2k ~20 s, 10k ~1-3 min, 35k ~2-4 min (CPU).
+- UMAP reduce at 2k: 3.9 s warm. The first call in a process adds ~20 s of numba JIT. A startup warm-up thread hides it; Docker bakes the cache (fresh-container 2k job: 19 s).
+- 35k reduce: 118 s with exact BLAS kNN, 220 s with NN-descent.
 
-Embeddings go from ~440 to ~3,650 req/s. On a datacenter GPU (L4 / A100) expect
-20-40×. (Batch past 128 didn't help on 4 GB - the run is model-bound.)
+API latency at 35k rows: requirements page 0.06-0.08 s, clusters 0.01 s, metrics 0.006 s, graph 0.33 s (3.25 MB raw, gzip level 1), CSV export 0.92 s, upload 1.4-2.5 s. Peak memory 1.07 GB.
 
-**Check and enable GPU on your machine:**
+LLM (local Ollama qwen3.5:4b, 4 GB GPU): ~17 s per requirement; cold model load ~100 s (the gateway loads once and uses keep_alive); edge explanation ~12 s.
+
+### Quality gates
+
+Tests: unit + api 298; acceptance 104/104 (legacy app 53/104); hardening 68/68 on SQLite and Postgres, plus 35k scale; eval fast suite passing. CI: Ubuntu + Windows matrix, Postgres job, frontend build and lint, eval workflow.
+
+### Known limits
+
+- Small uploads can cluster differently on CPU and GPU. Pin `REQCLUSTER_EMBEDDING_DEVICE=cpu` for reproducibility.
+- Outlier recall on adversarial junk is ~21%.
+- Windows has not been run yet (the CI job exists).
+
+## Testing
+
 ```bash
-python backend/core/device.py                 # reports GPU, driver, and whether torch can use it
-# if it says "torch is CPU-only", install a CUDA build matching your driver:
-pip install torch --index-url https://download.pytorch.org/whl/cu121
-python scripts/benchmark_embeddings.py --device cuda --n 10000   # verify
+uv run pytest -q                                    # unit + api (default)
+uv run pytest -q -m acceptance                      # black-box contract suite
+uv run pytest -q -m "hardening and not slow"        # fuzz, concurrency, failure injection
+uv run pytest -q -m "hardening and slow"            # 35k scale
+REQCLUSTER_TEST_DATABASE_URL=postgresql://... uv run pytest -q -m "hardening and not slow"   # Postgres
+uv run ruff check backend tests
+cd frontend && npm run build && npm run lint
 ```
-Embeddings then run on the GPU automatically. **GPU UMAP/HDBSCAN (cuML/RAPIDS) is
-Linux-only** - on Windows use WSL2; the CPU path remains the default everywhere.
 
-**Remaining roadmap**
+Evaluation and tooling:
 
-- Memory-mapped embeddings instead of in-RAM arrays for very large N.
-- ONNX-runtime embeddings for a faster CPU encode path.
-- Cluster-level aggregate graph view for the dashboard at 50k+.
-
-Target: 500k requirements, ~10s clustering, on GPU hardware.
-
----
+```bash
+uv run python -m eval run --suite fast --model real          # gates on eval/baselines
+uv run python -m eval --help                                 # run, baseline, drift, report
+uv run python docs/redesign/findings/exp/newpipe_gate.py var/cache/gate   # accuracy gate
+uv run python scripts/profile_graph.py pipeline --help       # profile the pipeline
+uv run python scripts/bench_reads.py --help                  # read-path latency at scale
+uv run python scripts/llm_smoke.py --help                    # enrich + deps + refine against the configured LLM
+```
 
 ## Project structure
 
 ```
-reqcluster/
-  eval/                   Hermetic regression guard + benchmark suite
-    cli.py                CLI entrypoint (run, update-baselines, drift, report)
-    datasets.yaml         Dataset registry & tolerance configuration
-    baselines/            Committed golden baselines per dataset
-    runner.py             Hermetic TestClient runner & ephemeral cache setup
-    pipeline.py           HTTP E2E dataset evaluation orchestration
-  backend/
-    main.py                 FastAPI app + lifespan
-    api/routes.py           all REST endpoints
-    core/                   ML: embeddings, embedding_cache, reduction, clustering,
-                            labeling, graph, dependency_tree, representatives,
-                            merge_suggest, split_suggest, constrained_clustering,
-                            active_learning, feedback_bridge, domain_embeddings,
-                            ablation, embedding_comparison, preprocessing, pipeline
-    services/               enrichment · refinement · feedback · dependency ·
-                            active_learning · export
-    llm_services/           providers (mock/local/openai) · enrichment · refinement
-    export/                 reqif · sysml_xmi · jama · pdf_report
-    models/                 database (SQLAlchemy) · schemas (Pydantic)
-  frontend/src/
-    pages/                  Upload · Overview · Scatter · Graph · Requirements ·
-                            ClusterDetail · Enrichment · Refinement · ReviewQueue ·
-                            DependencyTree · ActiveLearning · Export
-    components/ · utils/
-  data/                     sample datasets + generator
-  tests/                    pytest suite (offline-mocked)
-  docker-compose.yml · Dockerfile.backend · Dockerfile.frontend · nginx.conf
+backend/reqcluster/
+  app.py  config.py  db.py  models.py  domain.py  errors.py  runtime.py
+  ingest.py  texts.py  embeddings.py  store.py  jobs.py
+  api/        routers: sessions, jobs, feedback, refinement, enrichment, dependencies, export
+  services/   clustering, sessions, assignments, feedback, active_learning,
+              refinement, enrichment, dependencies
+  ml/         pipeline, reduce, cluster, labels, graph, metrics, constraints, refine,
+              active, analysis, keywords, sampling, dependency/   (no I/O)
+  llm/        gateway, prompts, enrich, narrate
+  export/     bundle (csv), reqif, xmi, jama, pdf
+frontend/src/ api/ (client.js, endpoints.js)  hooks/ (useApi, useJob)  pages/  components/  state/
+eval/         harness: datasets.yaml, baselines/, drift, report; run via python -m eval
+scripts/      dev.py, llm_smoke.py, profile_graph.py, bench_reads.py, benchmark_embeddings.py
+tests/        unit, api, acceptance, hardening, eval
+docs/redesign/  design decisions, reviews, experiment findings
 ```
 
----
+## Design decisions
 
-## Quality & Evaluation Harness
-
-ReqCluster includes an automated, hermetic regression guard and benchmark suite (`eval/`) that verifies clustering purity, dependency tree precision/recall, enrichment reliability, and refinement suggestion quality against committed golden baselines:
-
-```bash
-# Run fast suite in CI mode (gates against golden baselines)
-uv run python -m eval run --suite fast
-
-# Update committed golden baselines
-uv run python -m eval update-baselines --suite fast
-
-# Inspect append-only metric drift history
-uv run python -m eval drift --n 10
-
-# View latest Markdown benchmark report
-uv run python -m eval report
-```
-
----
-
-Phase 1 (core pipeline + dashboard), Phase 2 (LLM enrichment), Phase 3 (refinement),
-Phase 4 (human-in-the-loop), and Phase 5 (active learning, MBSE + PDF export,
-scalability, and evaluation harness) are implemented. Everything runs offline by default; no API keys
-required.
+The redesign plan, amendments, review outcomes and the experiments behind every default are in [docs/redesign/](docs/redesign/README.md). Start with the README there, then `05-amendment-review.md` and `06-review-2.md`.
