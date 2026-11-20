@@ -1,4 +1,5 @@
 import threading
+import warnings
 
 import numpy as np
 from sklearn.decomposition import PCA
@@ -58,12 +59,15 @@ def _umap(X: np.ndarray, seed: int, n: int) -> tuple[np.ndarray, np.ndarray]:
     # No PCA50 before UMAP: on raw cosine embeddings ARI rises uav2k .934->.987, uav10k .908->.958,
     # multidomain .636->.649, and 10k is faster (findings/exp/pca_threshold.py, 3 seeds).
     nn = min(80, max(15, n // 100), n - 1)
-    x10 = umap.UMAP(
-        n_components=10, metric="cosine", n_neighbors=nn, min_dist=0.0, n_epochs=200,
-        init="random", random_state=seed, n_jobs=1, compatibility_layout=True,  # seeded = 1 thread
-        precomputed_knn=(_exact_knn(X, nn) if EXACT_KNN_MIN <= n <= EXACT_KNN_MAX
-                         else (None, None, None)),
-    ).fit_transform(X)
+    with warnings.catch_warnings():  # safe: callers hold _UMAP_LOCK
+        # exact kNN carries no search index; that only disables UMAP.transform, which we never call
+        warnings.filterwarnings("ignore", message=r"precomputed_knn\[2\]", category=UserWarning)
+        x10 = umap.UMAP(
+            n_components=10, metric="cosine", n_neighbors=nn, min_dist=0.0, n_epochs=200,
+            init="random", random_state=seed, n_jobs=1, compatibility_layout=True,  # seeded = 1 thread
+            precomputed_knn=(_exact_knn(X, nn) if EXACT_KNN_MIN <= n <= EXACT_KNN_MAX
+                             else (None, None, None)),
+        ).fit_transform(X)
     # viz only: 100 epochs at 10k rows 28.9s -> 5.4s (vs 200); clustering uses x10
     xy = umap.UMAP(
         n_components=2, metric="euclidean", n_neighbors=min(15, n - 1), min_dist=0.1,

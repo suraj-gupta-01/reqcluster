@@ -1,6 +1,6 @@
 import { useNavigate, Link } from 'react-router-dom'
 import { Layers, Hash, AlertTriangle, ChevronRight, Loader, Tag, Sparkles, Wrench } from 'lucide-react'
-import { getClusters, getEnrichmentSummary, getSuggestions } from '../api/endpoints.js'
+import { getClusters, getEnrichmentSummary, getSuggestions, getMetrics } from '../api/endpoints.js'
 import { useApi } from '../hooks/useApi.js'
 import { useSession } from '../state/SessionContext.jsx'
 import { getErrorMessage, conflictAs } from '../utils/format.js'
@@ -82,6 +82,7 @@ function Overview() {
   const clustersQ = useApi((o) => getClusters(sessionId, o), [sessionId])
   const enrichQ = useApi((o) => getEnrichmentSummary(sessionId, o).catch(conflictAs(null)), [sessionId])
   const sugsQ = useApi((o) => getSuggestions(sessionId, undefined, o), [sessionId])
+  const metricsQ = useApi((o) => getMetrics(sessionId, o).catch(conflictAs(null)), [sessionId])
   const clusters = clustersQ.data || []
   const maxSize = Math.max(0, ...clusters.map(x => x.size))
   const refinementSuggestions = sugsQ.data || []
@@ -217,7 +218,9 @@ function Overview() {
             <p className="text-sm text-gray-500 mt-1">
               {refinementSuggestions.length > 0
                 ? `${refinementSuggestions.length} suggestion${refinementSuggestions.length !== 1 ? 's' : ''} generated for cluster boundary correction.`
-                : 'No refinement suggestions generated yet.'}
+                : metricsQ.data?.refinement_report
+                  ? 'Analysis found no merge or split that improves cluster separation.'
+                  : 'No refinement suggestions generated yet.'}
             </p>
           </div>
           <div className="flex gap-3 text-right">

@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { Wrench, GitMerge, Scissors, Clock, AlertTriangle, RefreshCw } from 'lucide-react'
-import { startSuggestions, getSuggestions, decideSuggestion, getAudit, getClusters, getCoherence } from '../api/endpoints.js'
+import { startSuggestions, getSuggestions, decideSuggestion, getAudit, getClusters, getCoherence, getMetrics } from '../api/endpoints.js'
 import { useApi } from '../hooks/useApi.js'
 import { useJob } from '../hooks/useJob.js'
 import { useSession } from '../state/SessionContext.jsx'
@@ -23,6 +23,8 @@ export default function RefinementPage() {
 
   const cohApi = useApi((o) => (sessionId ? getCoherence(sessionId, o) : Promise.resolve([])), [sessionId, sugg.data])
   const coherenceScores = cohApi.data || []
+  const metricsApi = useApi((o) => (sessionId ? getMetrics(sessionId, o) : Promise.resolve(null)), [sessionId, sugg.data])
+  const analyzed = metricsApi.data?.refinement_report
 
   const all = sugg.data || []
   const mergeSuggestions = all.filter(s => s.kind === 'merge')
@@ -142,9 +144,7 @@ export default function RefinementPage() {
                   {cs.top_keywords?.slice(0, 2).join(', ') || `Cluster ${cs.cluster_id}`}
                 </div>
                 <div className={`text-lg font-bold ${
-                  cs.coherence_score >= 0.8 ? 'text-emerald-400'
-                    : cs.coherence_score >= 0.6 ? 'text-amber-400'
-                      : 'text-red-400'
+                  ({ high: 'text-emerald-400', moderate: 'text-amber-400' })[cs.level] || 'text-red-400'
                 }`}>
                   {cs.coherence_score.toFixed(3)}
                 </div>
@@ -187,7 +187,9 @@ export default function RefinementPage() {
         <div className="space-y-3">
           {currentSuggestions.length === 0 ? (
             <div className="card p-8 text-center text-gray-500 text-sm">
-              {generating ? 'Analyzing clusters...' : 'No suggestions yet. Click "Analyze Clusters" to generate.'}
+              {generating ? 'Analyzing clusters...'
+                : analyzed ? `Last analysis found no ${activeTab} that improves cluster separation.`
+                  : 'No suggestions yet. Click "Analyze Clusters" to generate.'}
             </div>
           ) : (
             currentSuggestions.map(s => (

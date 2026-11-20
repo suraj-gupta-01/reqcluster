@@ -64,3 +64,13 @@ def test_score_all_clusters_tight_beats_scattered():
     X = np.vstack([tight, loose])
     out = refine.score_all_clusters(X, np.array([0] * 10 + [1] * 10), {0: ["a"]})
     assert out[0]["coherence_score"] > out[1]["coherence_score"] and out[0]["top_keywords"] == ["a"]
+
+
+def test_metrics_record_refinement_analysis(client):
+    # the UI said "No suggestions yet" after an analysis that found nothing to improve
+    sid = _upload(client)
+    client.post(f"/api/sessions/{sid}/cluster")
+    assert client.get(f"/api/sessions/{sid}/metrics").json()["refinement_report"] is None
+    client.post(f"/api/sessions/{sid}/suggestions", json={"top_n_merges": 0, "top_n_splits": 0})
+    rep = client.get(f"/api/sessions/{sid}/metrics").json()["refinement_report"]
+    assert rep["n_merges"] == 0 and rep["n_splits"] == 0 and rep["edit_seq"] == 0

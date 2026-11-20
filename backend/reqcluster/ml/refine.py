@@ -84,14 +84,15 @@ def score_coherence(X: np.ndarray, labels: np.ndarray, cluster_id: int,
     score = round(min(max(coherence(X, labels, cluster_id, seed=42), 0.0), 1.0), 6)
     high, mid, low = embeddings.calibration().coherence
     if score >= high:
-        text = "Highly coherent cluster with strong semantic consistency."
+        level, text = "high", "Highly coherent cluster with strong semantic consistency."
     elif score >= mid:
-        text = "Moderately coherent cluster. Some requirements may be loosely related."
+        level, text = "moderate", "Moderately coherent cluster. Some requirements may be loosely related."
     elif score >= low:
-        text = "Low coherence. Consider splitting into more focused sub-clusters."
+        level, text = "low", "Low coherence. Consider splitting into more focused sub-clusters."
     else:
-        text = "Very low coherence. This cluster likely contains unrelated requirements."
-    return {"cluster_id": cluster_id, "coherence_score": score,
+        level, text = "very_low", "Very low coherence. This cluster likely contains unrelated requirements."
+    # `level` lets the UI colour by the same model-calibrated band as the text
+    return {"cluster_id": cluster_id, "coherence_score": score, "level": level,
             "top_keywords": list(keywords[:5]), "size": n, "assessment": text}
 
 

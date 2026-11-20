@@ -144,6 +144,10 @@ def test_shutdown_nowait_drops_queued(monkeypatch):
     gate = threading.Event()
     j1 = r.submit("cluster", 1, lambda ctx: gate.wait(5))
     j2 = r.submit("cluster", 2, lambda ctx: None)
+    for _ in range(500):  # j1 must be running first: a still-queued j1 is (correctly) dropped too
+        if r.get(j1.id).status == "running":
+            break
+        time.sleep(0.01)
     jobs.reset_runner(wait=False)
     gate.set()
     _wait(r, j1.id)

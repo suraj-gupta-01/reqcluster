@@ -92,6 +92,7 @@ class MetricsOut(BaseModel):
     durations: dict
     embedding_comparison: dict | None = None
     ablation_report: dict | None = None
+    refinement_report: dict | None = None  # last suggestion analysis on this run, even if it found none
 
 
 def _row(s, sid: int) -> SessionRow:
@@ -291,7 +292,8 @@ def metrics(sid: int) -> MetricsOut:
                           noise_count=run.noise_count, metrics=run.metrics,
                           warnings=run.warnings, durations=run.durations,
                           embedding_comparison=(run.reports or {}).get("embedding_comparison"),
-                          ablation_report=(run.reports or {}).get("ablation_report"))
+                          ablation_report=(run.reports or {}).get("ablation_report"),
+                          refinement_report=(run.reports or {}).get("refinement"))
 
 
 _SORT = {"ordinal": RequirementRow.ordinal, "req_id": RequirementRow.req_id,

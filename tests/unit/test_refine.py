@@ -213,3 +213,16 @@ def test_coherence_bands_follow_the_embedding_model(monkeypatch):
     monkeypatch.setattr(embeddings, "calibration",
                         lambda model=None: embeddings.CALIBRATION["Alibaba-NLP/gte-modernbert-base"])
     assert R.score_coherence(E, lab, 0, [])["assessment"].startswith("Very low")
+
+
+def test_coherence_level_matches_assessment_band():
+    # the UI coloured by fixed old-scale numbers and contradicted the label; it now uses `level`
+    from reqcluster import embeddings
+
+    high, mid, low = embeddings.calibration().coherence
+    rng = np.random.default_rng(0)
+    base = rng.standard_normal(384)
+    for noise, expect in ((0.01, "high"), (5.0, "very_low")):
+        X = (base + noise * rng.standard_normal((12, 384))).astype(np.float32)
+        r = R.score_coherence(X, np.zeros(12, dtype=np.int64), 0, ["k"])
+        assert r["level"] == expect, (r["coherence_score"], (high, mid, low))

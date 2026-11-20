@@ -140,6 +140,11 @@ def _run(ctx: JobContext, sid: int, p: SuggestParams) -> SuggestSummary:
         if out:
             s.execute(insert(SuggestionRow),
                       [{"run_id": rid, "edit_seq": edit_seq, **o} for o in out])
+        run = s.get(RunRow, rid)
+        # recorded so the UI can tell "analysed, nothing improves separation" from "never analysed"
+        run.reports = {**(run.reports or {}), "refinement": {
+            "n_merges": len(merges), "n_splits": len(splits), "edit_seq": edit_seq,
+            "analyzed_at": datetime.now(UTC).isoformat()}}
     return SuggestSummary(run_id=rid, n_merges=len(merges), n_splits=len(splits),
                          warnings=warnings)
 
@@ -207,6 +212,7 @@ class CoherenceOut(BaseModel):
     coherence_score: float
     top_keywords: list[str]
     size: int
+    level: str  # high | moderate | low | very_low (model-calibrated band)
     assessment: str
 
 
