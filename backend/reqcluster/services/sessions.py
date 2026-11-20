@@ -1,6 +1,6 @@
 """Session read models and queries. Every function opens its own short DB scope."""
-import contextlib
 import functools
+import logging
 from datetime import datetime
 
 import numpy as np
@@ -22,6 +22,9 @@ from reqcluster.models import (
     SessionRow,
     to_job,
 )
+
+
+log = logging.getLogger(__name__)
 
 
 class SessionOut(BaseModel):
@@ -165,8 +168,12 @@ def get(sid: int) -> SessionOut:
 def unlink_runs(run_ids) -> None:
     d = get_settings().runs_dir
     for rid in run_ids:
-        with contextlib.suppress(FileNotFoundError):
+        try:
             (d / f"{rid}.npz").unlink()
+        except FileNotFoundError:
+            pass
+        except OSError:  # e.g. Windows PermissionError: the DB commit already happened
+            log.warning("could not remove %s.npz", rid, exc_info=True)
 
 
 
@@ -233,7 +240,7 @@ def _round3(values) -> list:
 
 
 @functools.lru_cache(maxsize=8)
-def _graph(db_url: str, sid: int, run_id: int, edit_seq: int) -> GraphOut:
+def _graph(db_url: str, sid: int, run_id: int, edit_seq: int, created: str) -> GraphOut:
     """Columnar, text-free payload built from raw rows; cached until the run is edited."""
     a = AssignmentRow
     with session_scope() as s:
@@ -260,7 +267,7 @@ def _graph(db_url: str, sid: int, run_id: int, edit_seq: int) -> GraphOut:
 def _graph_key(sid: int) -> tuple:
     with session_scope() as s:
         run = _current_run(s, sid)
-        return get_settings().database_url, sid, run.id, run.edit_seq
+        return get_settings().database_url, sid, run.id, run.edit_seq, run.created_at.isoformat()
 
 
 def graph(sid: int) -> GraphOut:

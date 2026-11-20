@@ -150,6 +150,7 @@ class LLMGateway:
         except urllib.error.HTTPError as e:
             raise _Fail(f"HTTP {e.code}", e.code >= 500 or e.code == 429) from None
         except (urllib.error.URLError, TimeoutError, OSError) as e:
+            self._loaded = False  # Ollama may have unloaded the model: load it again next try
             raise _Fail(f"request failed: {type(e).__name__}", True) from None
         if len(raw) > MAX_BODY:
             raise _Fail("response exceeded 64 KB", True)

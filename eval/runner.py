@@ -16,14 +16,20 @@ _ENV_KEYS = (
     "REQCLUSTER_JOB_WORKERS",
     "REQCLUSTER_EMBEDDING_BACKEND",
     "REQCLUSTER_LLM_PROVIDER",
+    "REQCLUSTER_EMBEDDING_MODEL",
+    "REQCLUSTER_EMBEDDING_DEVICE",
 )
 
 
 def _reset_backend() -> None:
     from reqcluster import db, jobs
     from reqcluster.config import get_settings
+    from reqcluster.embeddings import get_embedder
+    from reqcluster.llm.gateway import reset_gateway
 
     get_settings.cache_clear()
+    get_embedder.cache_clear()
+    reset_gateway()
     db.reset()
     jobs.reset_runner()
 
@@ -45,6 +51,9 @@ def hermetic_client(
     os.environ["REQCLUSTER_JOB_WORKERS"] = "0"
     os.environ["REQCLUSTER_EMBEDDING_BACKEND"] = "mock" if model_mode == "mock" else "torch"
     os.environ["REQCLUSTER_LLM_PROVIDER"] = provider
+    # pin the baseline model so results do not depend on the host GPU
+    os.environ.setdefault("REQCLUSTER_EMBEDDING_MODEL", "all-MiniLM-L6-v2")
+    os.environ.setdefault("REQCLUSTER_EMBEDDING_DEVICE", "cpu")
 
     from fastapi.testclient import TestClient
     from reqcluster.app import create_app

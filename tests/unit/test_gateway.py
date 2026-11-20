@@ -274,3 +274,10 @@ def test_local_map_respects_local_concurrency(monkeypatch):
     g = make("local", local_llm_concurrency=1, llm_concurrency=4)
     g.map([prompt(data={"x": str(i)}) for i in range(6)], lambda p: FB())
     assert peak[0] == 1  # Ollama serves one request at a time; more only queue into timeouts
+
+
+def test_local_timeout_forces_model_reload(net):
+    net["queue"] = [LOADED, TimeoutError(), LOADED, envelope('{"a": 5}', "local")]
+    out = make("local").complete(prompt(), FB)
+    assert [r.full_url.rsplit("/", 1)[1] for r in net["reqs"]] == ["generate", "chat", "generate", "chat"]
+    assert out.output.a == 5
