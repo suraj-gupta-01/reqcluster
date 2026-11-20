@@ -93,3 +93,14 @@ def test_sbert_always_loads_float32(monkeypatch):
     monkeypatch.setattr(sentence_transformers, "SentenceTransformer", ST)
     E.SbertEmbedder("Alibaba-NLP/gte-modernbert-base", "1", "cpu")
     assert seen["model_kwargs"]["dtype"] is torch.float32 and seen["device"] == "cpu"
+
+
+@pytest.mark.parametrize("cuda,expected", [(True, "Alibaba-NLP/gte-modernbert-base"),
+                                           (False, "all-MiniLM-L6-v2")])
+def test_auto_model_follows_device(monkeypatch, cuda, expected):
+    import torch
+
+    monkeypatch.setattr(torch.cuda, "is_available", lambda: cuda)
+    assert E.resolve_model("auto", "auto") == (expected, "cuda" if cuda else "cpu")
+    assert E.resolve_model("auto", "cpu") == ("all-MiniLM-L6-v2", "cpu")  # forced CPU stays fast
+    assert E.resolve_model("my/model", "auto")[0] == "my/model"  # explicit choice wins

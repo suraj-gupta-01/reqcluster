@@ -94,12 +94,30 @@ class HashingMockEmbedder:
         return out
 
 
+# "auto": the accurate model where it is fast. gte-modernbert vs MiniLM, ARI uav10k .998 vs .958,
+# multidomain .742 vs .679; speed CPU 17 vs 150 texts/s, GPU 863 vs 3551 (findings: 05 K2).
+FAST_MODEL = "all-MiniLM-L6-v2"
+ACCURATE_MODEL = "Alibaba-NLP/gte-modernbert-base"
+
+
+def resolve_model(model: str, device: str) -> tuple[str, str]:
+    """(model, device) with 'auto' resolved: cuda if available, gte on cuda, MiniLM on cpu."""
+    if device == "auto":
+        import torch
+
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+    if model == "auto":
+        model = ACCURATE_MODEL if device == "cuda" else FAST_MODEL
+    return model, device
+
+
 @functools.lru_cache(maxsize=1)
 def get_embedder() -> Embedder:
     s = get_settings()
     if s.embedding_backend == "mock":
         return HashingMockEmbedder()
-    return SbertEmbedder(s.embedding_model, s.embedding_revision, s.embedding_device)
+    model, device = resolve_model(s.embedding_model, s.embedding_device)
+    return SbertEmbedder(model, s.embedding_revision, device)
 
 
 def embed(texts: list[str], progress: Callable[[int, int], None] | None = None) -> np.ndarray:

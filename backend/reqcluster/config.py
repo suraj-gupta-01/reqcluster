@@ -126,7 +126,7 @@ def load_settings(
         job_workers=get("REQCLUSTER_JOB_WORKERS", 1, int, lo=0),
         seed=get("REQCLUSTER_SEED", 42, int),
         threads=get("REQCLUSTER_THREADS", os.cpu_count() or 1, int, lo=1),
-        embedding_model=get("REQCLUSTER_EMBEDDING_MODEL", "all-MiniLM-L6-v2"),
+        embedding_model=get("REQCLUSTER_EMBEDDING_MODEL", "auto"),  # auto: gte on GPU, MiniLM on CPU
         embedding_revision=get("REQCLUSTER_EMBEDDING_REVISION", "1"),
         embedding_backend=lit("REQCLUSTER_EMBEDDING_BACKEND", "torch", Backend),
         embedding_device=lit("REQCLUSTER_EMBEDDING_DEVICE", "auto", Device),
