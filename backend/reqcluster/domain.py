@@ -39,10 +39,10 @@ class ClusteringParams(BaseModel):
                     "still flags outliers; better on large mixed-domain sets, worse on uav2k.")
     min_cluster_size: int | None = Field(default=None, ge=2)  # None = auto
     min_samples: int = Field(default=3, ge=1)
-    sim_threshold: float = Field(default=0.5, ge=0.0, le=1.0)
+    sim_threshold: float | None = Field(default=None, ge=0.0, le=1.0)  # None = per-model default
     top_k: int = Field(default=10, ge=1)
     embedding_mode: EmbeddingMode = "base"
-    seed: int | None = None
+    seed: int | None = Field(default=None, ge=0, le=2**32 - 1)
     enable_embedding_comparison: bool = False
     run_ablation: bool = False
 

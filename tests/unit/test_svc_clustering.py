@@ -104,3 +104,32 @@ def test_search_matches_req_id_too():
     sid = make(texts=["The pump shall start", "The valve shall close", "The fan shall spin"])
     items, total = sessions.requirements(sid, search="R1")
     assert total == 1 and items[0].req_id == "R1"
+
+
+def test_run_records_embedding_model_and_ward_is_capped(monkeypatch):
+    sid = make()
+    clustering.start(sid, ClusteringParams())
+    with session_scope() as s:
+        assert s.scalar(select(RunRow.params)
+                        .where(RunRow.session_id == sid))["embedding_model"] == "mock"
+    monkeypatch.setattr(clustering, "WARD_MAX", 10)
+    with pytest.raises(errors.Invalid):
+        clustering.start(sid, ClusteringParams(clusterer="ward"))
+    clustering.start(sid, ClusteringParams())  # hdbscan is not capped
+
+
+def test_run_embeddings_warns_on_model_change():
+    sid = make()
+    clustering.start(sid, ClusteringParams())
+    with session_scope() as s:
+        run = s.scalar(select(RunRow).where(RunRow.session_id == sid))
+        run.params = {**run.params, "embedding_model": "other-model"}
+        w: list[str] = []
+        clustering.run_embeddings(sid, run, w)
+    assert any("other-model" in m for m in w)
+
+
+@pytest.mark.parametrize("seed", [-1, 2**40])
+def test_seed_out_of_range_rejected(seed):
+    with pytest.raises(ValueError):
+        ClusteringParams(seed=seed)

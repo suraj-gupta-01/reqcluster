@@ -58,3 +58,15 @@ def test_tree_tied_to_run_and_explain_cache():
     with pytest.raises(errors.NotFound):
         dependencies.explain(sid, req)
     assert build_bundle(sid).edges == []
+
+
+def test_fallback_explanation_is_not_cached(monkeypatch):
+    from reqcluster.llm.gateway import LLMResult
+    from reqcluster.services import dependencies as D
+    sid = make()
+    e = tree(sid)["edges"][0]
+    req = D.ExplainRequest(source=e["source"], target=e["target"])
+    monkeypatch.setattr(D, "explain_edge",
+                        lambda *a, **k: LLMResult("stand-in", "fallback", "openai", "down"))
+    D.explain(sid, req)
+    assert D.explain(sid, req).cached is False

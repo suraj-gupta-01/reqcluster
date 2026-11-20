@@ -5,6 +5,7 @@ import numpy as np
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import insert, select, update
 
+from reqcluster import embeddings
 from reqcluster.config import get_settings
 from reqcluster.db import session_scope
 from reqcluster.domain import SafeText, Job, ProviderName
@@ -30,7 +31,7 @@ class SuggestParams(BaseModel):
     model_config = ConfigDict(extra="forbid")
     top_n_merges: int = Field(3, ge=0, le=50)
     top_n_splits: int = Field(3, ge=0, le=50)
-    sim_threshold: float = Field(0.7, ge=0, le=1)
+    sim_threshold: float | None = Field(None, ge=0, le=1)  # None = per-model default
     spread_threshold: float = Field(0.3, ge=0)
     # only suggest edits that improve cluster separation; null lists every candidate (ranked)
     min_silhouette_delta: float | None = 0.0
@@ -99,7 +100,9 @@ def _run(ctx: JobContext, sid: int, p: SuggestParams) -> SuggestSummary:
     emb = run_embeddings(sid, run, warnings)
     x10 = load_run_arrays(rid)["x10"]
     ctx.check_cancel()
-    merges = refine.suggest_merges(emb, x10, labels, p.top_n_merges, p.sim_threshold, seed,
+    merges = refine.suggest_merges(emb, x10, labels, p.top_n_merges,
+                                  p.sim_threshold if p.sim_threshold is not None
+                                  else embeddings.calibration().merge, seed,
                                   p.min_silhouette_delta)
     splits = refine.suggest_splits(emb, x10, labels, p.top_n_splits, p.spread_threshold, seed,
                                   p.min_silhouette_delta)

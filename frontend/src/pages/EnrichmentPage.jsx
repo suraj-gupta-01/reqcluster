@@ -47,7 +47,7 @@ export default function EnrichmentPage() {
 
 function Enrichment({ sessionId, reloadSession }) {
   const [provider, setProvider] = useState('')
-  const [clusterOptions, setClusterOptions] = useState({ clusterer: 'hdbscan', sim_threshold: 0.5, min_cluster_size: '', min_samples: '' })
+  const [clusterOptions, setClusterOptions] = useState({ clusterer: 'hdbscan', sim_threshold: '', min_cluster_size: '', min_samples: '' })
   const [enrichJobId, setEnrichJobId] = useState(null)
   const [clusterJobId, setClusterJobId] = useState(null)
   const [clusterMode, setClusterMode] = useState('base')
@@ -139,10 +139,10 @@ function Enrichment({ sessionId, reloadSession }) {
     const payload = {
       embedding_mode: mode,
       clusterer: clusterOptions.clusterer,
-      sim_threshold: Number(clusterOptions.sim_threshold),
       enable_embedding_comparison: !!clusterOptions.enable_embedding_comparison,
       run_ablation: !!clusterOptions.run_ablation,
     }
+    if (clusterOptions.sim_threshold !== '') payload.sim_threshold = Number(clusterOptions.sim_threshold)
     if (clusterOptions.min_cluster_size !== '') payload.min_cluster_size = Number(clusterOptions.min_cluster_size)
     if (clusterOptions.min_samples !== '') payload.min_samples = Number(clusterOptions.min_samples)
     try {

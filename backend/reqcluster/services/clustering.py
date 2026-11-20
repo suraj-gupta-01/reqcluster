@@ -14,7 +14,7 @@ from reqcluster.config import get_settings
 from reqcluster.db import session_scope
 from reqcluster.domain import ClusteringParams, Job
 from reqcluster import errors
-from reqcluster.errors import NotFound
+from reqcluster.errors import Invalid, NotFound
 from reqcluster.jobs import JobContext, get_runner
 from reqcluster.ml import analysis, metrics, pipeline
 from reqcluster.models import (
@@ -29,6 +29,7 @@ from reqcluster.services import enrichment
 from reqcluster.services.sessions import unlink_runs
 
 KEEP_RUNS = 5
+WARD_MAX = 20000
 
 
 class ClusteringSummary(BaseModel):
@@ -42,6 +43,12 @@ class ClusteringSummary(BaseModel):
 
 
 def start(sid: int, params: ClusteringParams) -> Job:
+    if params.clusterer == "ward":  # linkage builds an O(n^2) pdist: 4.9 GB at 35k requirements
+        with session_scope() as s:
+            n = s.scalar(select(func.count()).select_from(RequirementRow)
+                         .where(RequirementRow.session_id == sid))
+        if n > WARD_MAX:
+            raise Invalid(f"ward supports at most {WARD_MAX} requirements ({n} given); use hdbscan")
     if params.embedding_mode != "base":
         enrichment.texts_for_mode(sid, params.embedding_mode)  # 404 / fail fast (409) if incomplete
     else:
@@ -61,6 +68,10 @@ def run_embeddings(sid: int, run: RunRow, warnings: list[str] | None = None) -> 
         texts = enrichment.texts_for_mode(sid, "base")
         if warnings is not None:
             warnings.append(f"Enrichment is incomplete: used base text embeddings, not {mode}.")
+    used = (run.params or {}).get("embedding_model")
+    if warnings is not None and used and used != embeddings.get_embedder().name:
+        warnings.append(f"Run was clustered with {used}; the current embedding model is "
+                        f"{embeddings.get_embedder().name}. Similarities may not match the run.")
     return embeddings.embed(texts)
 
 
@@ -96,7 +107,8 @@ def _run(ctx: JobContext, sid: int, params: ClusteringParams) -> ClusteringSumma
 
     edges = [[req_ids[i], req_ids[j], float(w)] for i, j, w in res.edges]
     reports = _reports(ctx, sid, params, texts, emb, res, seed, settings.threads)
-    rid, revision = persist_run(sid, "cluster", params.model_dump(), req_ids, res.labels,
+    rid, revision = persist_run(sid, "cluster",
+                                {**params.model_dump(), "embedding_model": embeddings.get_embedder().name}, req_ids, res.labels,
                                 res.probabilities, res.x10, res.xy, res.clusters, edges, m,
                                 res.warnings, res.durations, reports=reports)
     return ClusteringSummary(run_id=rid, revision=revision, n_clusters=len(res.clusters),

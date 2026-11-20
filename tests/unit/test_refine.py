@@ -200,3 +200,16 @@ def test_coherence_assessment_calibrated_for_minilm():
     r = R.score_coherence(emb, np.zeros(40, dtype=np.int32), 0, [])
     assert 0.42 < r["coherence_score"] < 0.54
     assert not r["assessment"].startswith(("Low", "Very low"))
+
+
+def test_coherence_bands_follow_the_embedding_model(monkeypatch):
+    from reqcluster import embeddings
+    rng = np.random.default_rng(0)
+    base = rng.standard_normal(384)
+    E = base + 0.9 * rng.standard_normal((40, 384))  # mean pairwise cosine ~ .55
+    E = (E / np.linalg.norm(E, axis=1, keepdims=True)).astype(np.float32)
+    lab = np.zeros(40, dtype=np.int32)
+    assert R.score_coherence(E, lab, 0, [])["assessment"].startswith("Highly")  # MiniLM bands
+    monkeypatch.setattr(embeddings, "calibration",
+                        lambda model=None: embeddings.CALIBRATION["Alibaba-NLP/gte-modernbert-base"])
+    assert R.score_coherence(E, lab, 0, [])["assessment"].startswith("Very low")

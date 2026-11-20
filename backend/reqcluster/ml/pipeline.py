@@ -2,6 +2,7 @@ import time
 
 import numpy as np
 
+from ..embeddings import calibration
 from ..domain import ClusteringParams, ClusteringResult
 from ..errors import Invalid
 from . import cluster, labels as L, graph, keywords, reduce
@@ -44,7 +45,8 @@ def run(embeddings, texts, params: ClusteringParams, *, seed: int, threads: int 
     labels, probs = step("cluster", 0.4, lambda: _cluster(x10, params, mcs, seed))
     clusters = step("keywords", 0.7, lambda: keywords.label_clusters(texts, labels))
     edges = step("graph", 0.85, lambda: graph.build(
-        X, labels, params.sim_threshold, params.top_k, seed, threads))
+        X, labels, params.sim_threshold if params.sim_threshold is not None
+        else calibration().graph, params.top_k, seed, threads))
     if progress:
         progress(1.0, "done")
 

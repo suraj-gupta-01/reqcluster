@@ -82,8 +82,10 @@ def _run(ctx: JobContext, sid: int, req: DependencyRequest) -> TreeOut:
     warnings: list[str] = []
     emb = run_embeddings(sid, run, warnings)
     ctx.check_cancel()
-    kw = {k: v for k, v in (("sim_threshold", req.sim_threshold), ("top_k", req.top_k))
-          if v is not None}
+    kw = {"sim_threshold": req.sim_threshold if req.sim_threshold is not None
+          else embeddings.calibration().dependency}
+    if req.top_k is not None:
+        kw["top_k"] = req.top_k
     ctx.progress(0.5, "building")
     tree = build(emb, texts, [r[1] for r in rows], np.array([r[3] for r in rows]),
                  embed_fn=lambda t: embeddings.embed(t), spacy_model=settings.spacy_model,
@@ -152,7 +154,9 @@ def explain(sid: int, req: ExplainRequest) -> ExplanationOut:
                        rationale=edge.get("rationale", ""), provider=req.provider)
     text = str(res.output)
     with session_scope() as s:
-        if s.get(SessionRow, sid).current_run_id == run_id:
+        # a fallback text is a stand-in for an LLM answer that failed: never cache it
+        cacheable = res.source != "fallback" or res.provider == "mock"
+        if cacheable and s.get(SessionRow, sid).current_run_id == run_id:
             s.execute(delete(DependencyExplanationRow).where(
                 DependencyExplanationRow.run_id == run_id,
                 DependencyExplanationRow.source == req.source,

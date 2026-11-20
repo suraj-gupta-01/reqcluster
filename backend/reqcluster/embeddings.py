@@ -4,6 +4,7 @@ import functools
 import logging
 import zlib
 from collections.abc import Callable
+from dataclasses import dataclass
 from typing import Protocol
 
 import numpy as np
@@ -98,6 +99,35 @@ class HashingMockEmbedder:
 # multidomain .742 vs .679; speed CPU 17 vs 150 texts/s, GPU 863 vs 3551 (findings: 05 K2).
 FAST_MODEL = "all-MiniLM-L6-v2"
 ACCURATE_MODEL = "Alibaba-NLP/gte-modernbert-base"
+
+
+@dataclass(frozen=True)
+class Calibration:
+    coherence: tuple[float, float, float]  # "Highly" / "Moderately" / "Low" lower bounds
+    graph: float  # similarity-graph edge cosine
+    merge: float  # merge-suggestion centroid cosine
+    dependency: float  # dependency-candidate cosine
+
+
+# Cosine scales differ per model (multidomain random-pair median: MiniLM .20, gte .56), so every
+# threshold is per model. Measured with docs/redesign/findings/exp/refine_calibration.py on
+# uav_fms_2k / multidomain / uav_fms_10k:
+#   coherence median  MiniLM gold .48/.39/.47  merged .36/.28/.36  random .24/.20/.24
+#                     gte    gold .69/.66/.69  merged .63/.60/.63  random .57/.56/.56
+#   MiniLM bands .45/.38/.28 sit at 1.0/.69/.24 of the random->gold median span (.23 -> .45);
+#   the same positions on gte's span (.563 -> .681) give .68/.64/.59.
+#   graph/dependency/merge: MiniLM .5/.45 are the p98/p97 of random-pair cosine and .7 is the p98
+#   of gold-centroid-pair cosine on multidomain; the same percentiles on gte are .71/.69/.90.
+CALIBRATION: dict[str, Calibration] = {
+    "all-MiniLM-L6-v2": Calibration((0.45, 0.38, 0.28), 0.5, 0.7, 0.45),
+    "Alibaba-NLP/gte-modernbert-base": Calibration((0.68, 0.64, 0.59), 0.71, 0.90, 0.69),
+}
+
+
+def calibration(model: str | None = None) -> Calibration:
+    """Thresholds for a model (default: the current embedder); unknown models use MiniLM's."""
+    model = model or get_embedder().name
+    return CALIBRATION.get(model, CALIBRATION["all-MiniLM-L6-v2"])
 
 
 def resolve_model(model: str, device: str) -> tuple[str, str]:

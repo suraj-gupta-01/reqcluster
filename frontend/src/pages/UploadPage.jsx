@@ -20,7 +20,7 @@ export default function UploadPage({ onSessionCreated }) {
   const [error, setError] = useState(null)
   const [jobId, setJobId] = useState(null)
   const [showParams, setShowParams] = useState(false)
-  const [params, setParams] = useState({ clusterer: 'hdbscan', min_cluster_size: '', min_samples: 3, sim_threshold: 0.5, top_k: 10, embedding_mode: 'base', enable_embedding_comparison: false, run_ablation: false })
+  const [params, setParams] = useState({ clusterer: 'hdbscan', min_cluster_size: '', min_samples: 3, sim_threshold: '', top_k: 10, embedding_mode: 'base', enable_embedding_comparison: false, run_ablation: false })
 
   const validateAndSetFile = useCallback((f) => {
     if (!f.name.match(/\.(csv|xlsx|xls)$/i)) {
@@ -78,7 +78,7 @@ export default function UploadPage({ onSessionCreated }) {
       const payload = {
         clusterer: params.clusterer,
         min_samples: params.min_samples,
-        sim_threshold: params.sim_threshold,
+        sim_threshold: params.sim_threshold === '' ? undefined : params.sim_threshold,
         top_k: params.top_k,
         embedding_mode: params.embedding_mode,
         enable_embedding_comparison: params.enable_embedding_comparison,
@@ -204,7 +204,7 @@ export default function UploadPage({ onSessionCreated }) {
                       <option value="hdbscan">HDBSCAN (default, most robust)</option>
                       <option value="ward">Ward + outliers (large mixed-domain sets)</option>
                     </select>
-                    {params.clusterer === 'ward' && <p className="text-xs text-gray-600 mt-1">Min cluster size and min samples are ignored.</p>}
+                    {params.clusterer === 'ward' && <p className="text-xs text-gray-600 mt-1">Min cluster size and min samples only drive outlier detection.</p>}
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-400 mb-1.5">Min Cluster Size</label>
@@ -223,11 +223,11 @@ export default function UploadPage({ onSessionCreated }) {
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-400 mb-1.5">Similarity Threshold</label>
-                    <input type="number" min="0" max="1" step="0.05"
+                    <input type="number" min="0" max="1" step="0.05" placeholder="auto"
                       value={params.sim_threshold}
-                      onChange={e => setParams(p => ({ ...p, sim_threshold: parseFloat(e.target.value) || 0.5 }))}
+                      onChange={e => setParams(p => ({ ...p, sim_threshold: e.target.value === '' ? '' : parseFloat(e.target.value) }))}
                       className="input text-sm w-full" />
-                    <p className="text-xs text-gray-600 mt-1">For edge filtering in graph</p>
+                    <p className="text-xs text-gray-600 mt-1">Edge filter in the graph; empty = default for the embedding model</p>
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-400 mb-1.5">Top K</label>

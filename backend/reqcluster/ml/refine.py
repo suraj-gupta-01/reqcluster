@@ -5,6 +5,8 @@ import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.mixture import GaussianMixture
 
+from reqcluster import embeddings
+
 from . import labels as L
 from . import sampling
 
@@ -80,12 +82,12 @@ def score_coherence(X: np.ndarray, labels: np.ndarray, cluster_id: int,
                     keywords: list[str]) -> dict:
     n = int((labels == cluster_id).sum())
     score = round(min(max(coherence(X, labels, cluster_id, seed=42), 0.0), 1.0), 6)
-    # MiniLM calibration (refine_calibration.py): gold median .39-.48, merged pairs .28-.36, random .20-.24
-    if score >= 0.45:
+    high, mid, low = embeddings.calibration().coherence
+    if score >= high:
         text = "Highly coherent cluster with strong semantic consistency."
-    elif score >= 0.38:
+    elif score >= mid:
         text = "Moderately coherent cluster. Some requirements may be loosely related."
-    elif score >= 0.28:
+    elif score >= low:
         text = "Low coherence. Consider splitting into more focused sub-clusters."
     else:
         text = "Very low coherence. This cluster likely contains unrelated requirements."
