@@ -2,7 +2,7 @@ name: Evaluation Harness
 
 on:
   push:
-    branches: [main, hikki]
+    branches: [main, overhaul]
   pull_request:
 
 jobs:

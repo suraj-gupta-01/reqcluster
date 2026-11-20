@@ -15,4 +15,5 @@ if (-not $torch) {
     }
 }
 uv sync --extra all --extra $torch
+if ($LASTEXITCODE) { exit $LASTEXITCODE }
 uv run --no-sync python scripts/dev.py @args

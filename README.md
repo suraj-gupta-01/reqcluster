@@ -48,7 +48,7 @@ flowchart TD
   F --> H["c-TF-IDF labels"]
   G --> H
   H --> I["kNN similarity graph"]
-  B --> J["2-D UMAP for the scatter"]
+  D --> J["2-D UMAP for the scatter<br/>(fed from the 10-D points)"]
 ```
 
 ### Job lifecycle
@@ -111,7 +111,7 @@ One command (needs [uv](https://docs.astral.sh/uv/) and Node.js 20+):
 
 ```bash
 ./start.sh        # Linux / macOS
-.\start.ps1       # Windows (PowerShell)
+powershell -ExecutionPolicy Bypass -File .\start.ps1   # Windows
 ```
 
 It installs the Python deps (CUDA torch when an NVIDIA GPU is found, else CPU; override with
@@ -127,7 +127,7 @@ export DATABASE_URL=postgresql://reqcluster:reqcluster_dev_password@postgres:543
 docker compose --profile full up         # adds Postgres (change the dev password)
 ```
 
-The backend image is 2.44 GB and runs fully offline. The numba cache is baked in.
+The backend image is 2.44 GB and runs fully offline. It bakes MiniLM; for a GPU build pass `--build-arg EXTRAS="--extra gpu --extra fast --extra postgres"` and, to use another model, `--build-arg EMBED_MODEL=...`. The numba cache is baked in.
 
 ### Local LLM (Ollama)
 
@@ -178,7 +178,7 @@ All routes are under `/api`. Errors use the envelope `{"error": "<code>", "messa
 | | `DELETE /sessions/{sid}` | Delete session (204) |
 | Clustering | `POST /sessions/{sid}/cluster` | Start clustering job (202) |
 | | `GET /sessions/{sid}/clusters` | Clusters with labels |
-| | `GET /sessions/{sid}/clusters/{cid}` | Cluster detail and representatives |
+| | `GET /sessions/{sid}/clusters/{cid}` | Cluster detail with its requirements |
 | | `GET /sessions/{sid}/graph` | Scatter points and similarity edges |
 | | `GET /sessions/{sid}/metrics` | Run metrics |
 | | `GET /sessions/{sid}/requirements` | Paged list. Filters: `cluster_id`, `noise`, `search`; `sort`, `dir`, `page`, `page_size`. Total in `X-Total-Count` |
@@ -267,7 +267,7 @@ Evaluation and tooling:
 
 ```bash
 uv run python -m eval run --suite fast --model real          # gates on eval/baselines
-uv run python -m eval --help                                 # run, baseline, drift, report
+uv run python -m eval --help                                 # run, update-baselines, drift, report
 uv run python docs/redesign/findings/exp/newpipe_gate.py var/cache/gate   # accuracy gate
 uv run python scripts/profile_graph.py pipeline --help       # profile the pipeline
 uv run python scripts/bench_reads.py --help                  # read-path latency at scale
