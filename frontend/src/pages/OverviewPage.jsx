@@ -83,12 +83,15 @@ function Overview() {
   const enrichQ = useApi((o) => getEnrichmentSummary(sessionId, o).catch(conflictAs(null)), [sessionId])
   const sugsQ = useApi((o) => getSuggestions(sessionId, undefined, o), [sessionId])
   const clusters = clustersQ.data || []
+  const maxSize = Math.max(0, ...clusters.map(x => x.size))
   const refinementSuggestions = sugsQ.data || []
   const qr = enrichQ.data?.quality_report
-  const enrichmentStatus = qr?.total
+  const enrichmentStatus = enrichQ.data?.total
     ? {
-        total: qr.total,
-        succeeded: qr.succeeded,
+        total: enrichQ.data.total,
+        succeeded: enrichQ.data.succeeded,
+        failed: enrichQ.data.failed,
+        fallback: enrichQ.data.fallback,
         warnings: qr.warnings || [],
         provider: enrichQ.data.provider,
         status: 'available',
@@ -188,6 +191,14 @@ function Overview() {
               <div className="text-xs text-gray-500">Warnings</div>
             </div>
             <div>
+              <div className="text-lg font-semibold text-red-400">{enrichmentStatus?.failed ?? 0}</div>
+              <div className="text-xs text-gray-500">Failed</div>
+            </div>
+            <div>
+              <div className="text-lg font-semibold text-amber-400">{enrichmentStatus?.fallback ?? 0}</div>
+              <div className="text-xs text-gray-500">Fallback</div>
+            </div>
+            <div>
               <div className="text-lg font-semibold text-brand-400">{enrichmentStatus?.status || 'not started'}</div>
               <div className="text-xs text-gray-500">Status</div>
             </div>
@@ -245,7 +256,7 @@ function Overview() {
             </div>
           ) : (
             clusters.map((c) => (
-              <ClusterRow key={c.cluster_id} cluster={c} sessionId={sessionId} maxSize={Math.max(0, ...clusters.map(x => x.size))} />
+              <ClusterRow key={c.cluster_id} cluster={c} sessionId={sessionId} maxSize={maxSize} />
             ))
           )}
         </div>

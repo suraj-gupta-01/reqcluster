@@ -104,3 +104,11 @@ def test_expand_all_real_provider_fallback_is_marked(monkeypatch):
     out = expand_all([(1, "The system shall store audit records.")], LLMGateway(s))
     # contract (acceptance 10): a fallback still counts as succeeded, but stays identifiable
     assert out[0].status == "succeeded" and out[0].source == "fallback" and out[0].error
+
+
+def test_expand_all_reports_chunks():
+    seen = []
+    reqs = [(i, f"The system shall do thing {i}") for i in range(5)]
+    out = expand_all(reqs, LLMGateway(get_settings()), None,
+                     on_chunk=lambda d, t, new: seen.append((d, t, len(new))), chunk=2)
+    assert seen == [(2, 5, 2), (4, 5, 2), (5, 5, 1)] and len(out) == 5

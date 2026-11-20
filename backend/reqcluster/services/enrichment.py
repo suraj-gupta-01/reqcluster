@@ -53,6 +53,10 @@ class EnrichmentOut(BaseModel):
 
 
 class EnrichmentOverview(BaseModel):
+    total: int
+    succeeded: int
+    failed: int
+    fallback: int = 0
     quality_report: dict
     domain_vocabulary: list[dict]
     provider: str
@@ -75,10 +79,24 @@ def _run(ctx: JobContext, sid: int, provider: ProviderName | None) -> Enrichment
         reqs = [(r.id, r.text) for r in s.scalars(
             select(RequirementRow).where(RequirementRow.session_id == sid)
             .order_by(RequirementRow.ordinal))]
-    ctx.progress(0.1, "enriching")
-    results = expand_all(reqs, get_gateway(), provider)
-    ctx.check_cancel()
+    ctx.progress(0.02, "enriching")
     text_of = dict(reqs)
+    ok = fb = n = 0
+
+    def save(done: int, total: int, new: list[Expansion]) -> None:
+        nonlocal ok, fb, n
+        _persist(sid, provider, text_of, new)
+        n += len(new)
+        ok += sum(e.status == "succeeded" for e in new)
+        fb += sum(e.status == "succeeded" and _is_fallback(e.source, provider) for e in new)
+        ctx.progress(0.02 + 0.96 * done / max(1, total), "enriching", f"{done}/{total}")
+        ctx.check_cancel()
+
+    expand_all(reqs, get_gateway(), provider, on_chunk=save)
+    return EnrichmentSummary(total=n, succeeded=ok, failed=n - ok, fallback=fb, provider=provider)
+
+
+def _persist(sid: int, provider: str, text_of: dict[int, str], results: list[Expansion]) -> None:
     rows = [{
         "session_id": sid, "requirement_id": e.requirement_id, "provider": provider,
         "prompt_version": PROMPT_VERSION, "text_hash": _hash(text_of[e.requirement_id]),
@@ -104,10 +122,6 @@ def _run(ctx: JobContext, sid: int, provider: ProviderName | None) -> Enrichment
                     setattr(cur, k, v)
         if fresh:
             s.execute(insert(EnrichmentRow), fresh)
-    ok = sum(e.status == "succeeded" for e in results)
-    fb = sum(e.status == "succeeded" and _is_fallback(e.source, provider) for e in results)
-    return EnrichmentSummary(total=len(results), succeeded=ok, failed=len(results) - ok,
-                             fallback=fb, provider=provider)
 
 
 def _is_fallback(source: str, provider: str | None) -> bool:
@@ -162,19 +176,23 @@ def summary(sid: int) -> EnrichmentOverview:
         reqs = {r.id: r for r in s.scalars(select(RequirementRow)
                                            .where(RequirementRow.session_id == sid))}
         latest: dict[int, EnrichmentRow] = {}
-        for e in s.scalars(select(EnrichmentRow).where(
-                EnrichmentRow.session_id == sid, EnrichmentRow.status == "succeeded")
-                .order_by(EnrichmentRow.created_at, EnrichmentRow.id)):
+        for e in s.scalars(select(EnrichmentRow).where(EnrichmentRow.session_id == sid)
+                           .order_by(EnrichmentRow.created_at, EnrichmentRow.id)):
             latest[e.requirement_id] = e
         if not latest:
             raise Conflict("no enrichment yet; run enrichment first")
-        items = sorted(latest.items(), key=lambda kv: reqs[kv[0]].ordinal)
-        provider = items[0][1].provider
+        every = sorted(latest.items(), key=lambda kv: reqs[kv[0]].ordinal)
+        failed = sum(e.status != "succeeded" for _, e in every)
+        fallback = sum(e.status == "succeeded" and _is_fallback(e.source, e.provider)
+                       for _, e in every)
+        items = [(r, e) for r, e in every if e.status == "succeeded"]
+        provider = every[-1][1].provider  # an all-failed run is still reported, with its counts
         pairs = [(rid, reqs[rid].text) for rid, _ in items]
         exps = [Expansion(rid, e.expanded_text, e.domain_terms, e.functional_intent,
                           e.mentioned_components, e.assumptions, e.confidence or 0.0,
                           e.warnings, "succeeded", e.source) for rid, e in items]
     return EnrichmentOverview(
+        total=len(every), succeeded=len(items), failed=failed, fallback=fallback,
         quality_report=build_quality_report(pairs, exps),
         domain_vocabulary=extract_domain_vocabulary_details([x.expanded_text for x in exps]),
         provider=provider)

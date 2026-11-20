@@ -386,7 +386,9 @@ def mock_expansion(text: str, domain_vocabulary: Sequence[str] | None = None) ->
 # ------------------------------------------------------------------- entrypoint
 
 def expand_all(reqs: list[tuple[int, str]], gateway: LLMGateway,
-               provider: ProviderName | None = None) -> list[Expansion]:
+               provider: ProviderName | None = None, on_chunk=None,
+               chunk: int = 32) -> list[Expansion]:
+    """`on_chunk(done, total, new)` runs after each chunk; it may raise to abort."""
     vocab = extract_domain_vocabulary([t for _, t in reqs], top_n=50)
     out: list[Expansion | None] = [None] * len(reqs)
     todo: list[int] = []
@@ -396,26 +398,36 @@ def expand_all(reqs: list[tuple[int, str]], gateway: LLMGateway,
         else:
             out[i] = Expansion(rid, status="failed", source="fallback",
                                error="Requirement text is empty.")
-    prompts = [
-        Prompt("enrich", PROMPT_VERSION, SYSTEM,
-               {"requirement": normalize_plain_text(reqs[i][1]), "domain_vocabulary": vocab},
-               output_model=ExpansionOut)
-        for i in todo
-    ]
-    results = gateway.map(
-        prompts, lambda p: mock_expansion(p.data["requirement"], p.data["domain_vocabulary"]),
-        provider)
-    for i, res in zip(todo, results, strict=True):
-        rid, text = reqs[i]
-        try:
-            parsed = parse_expansion(res.output.model_dump())
-        except ValueError as e:
-            out[i] = Expansion(rid, status="failed", source=res.source, error=str(e))
-            continue
-        quality = evaluate_expansion_quality(text, parsed.expanded_text, parsed.domain_terms,
-                                             parsed.confidence)
-        out[i] = Expansion(
-            rid, parsed.expanded_text, parsed.domain_terms, parsed.functional_intent,
-            parsed.mentioned_components, parsed.assumptions, parsed.confidence,
-            _dedupe([*parsed.warnings, *quality["warnings"]]), "succeeded", res.source, res.error)
+    if on_chunk and len(todo) < len(reqs):  # report the empty-text failures up front
+        on_chunk(len(reqs) - len(todo), len(reqs), [x for x in out if x is not None])
+    step = max(1, chunk)
+    done = len(reqs) - len(todo)
+    for start in range(0, len(todo), step):
+        idx = todo[start:start + step]
+        prompts = [
+            Prompt("enrich", PROMPT_VERSION, SYSTEM,
+                   {"requirement": normalize_plain_text(reqs[i][1]), "domain_vocabulary": vocab},
+                   output_model=ExpansionOut)
+            for i in idx
+        ]
+        results = gateway.map(
+            prompts, lambda p: mock_expansion(p.data["requirement"], p.data["domain_vocabulary"]),
+            provider)
+        for i, res in zip(idx, results, strict=True):
+            rid, text = reqs[i]
+            try:
+                parsed = parse_expansion(res.output.model_dump())
+            except ValueError as e:
+                out[i] = Expansion(rid, status="failed", source=res.source, error=str(e))
+                continue
+            quality = evaluate_expansion_quality(text, parsed.expanded_text, parsed.domain_terms,
+                                                 parsed.confidence)
+            out[i] = Expansion(
+                rid, parsed.expanded_text, parsed.domain_terms, parsed.functional_intent,
+                parsed.mentioned_components, parsed.assumptions, parsed.confidence,
+                _dedupe([*parsed.warnings, *quality["warnings"]]), "succeeded", res.source,
+                res.error)
+        done += len(idx)
+        if on_chunk:
+            on_chunk(done, len(reqs), [out[i] for i in idx])
     return out  # type: ignore[return-value]
