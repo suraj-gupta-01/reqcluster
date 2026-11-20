@@ -81,4 +81,29 @@ def session_scope() -> Iterator[Session]:
 def init_db() -> None:
     from reqcluster.models import Base
 
-    Base.metadata.create_all(get_engine())
+    engine = get_engine()
+    _check_schema(engine, Base.metadata)
+    Base.metadata.create_all(engine)
+
+
+def _check_schema(engine: Engine, metadata) -> None:
+    """Fail fast when an existing database predates the current models.
+
+    create_all only creates missing tables; it never adds columns, so an older database would
+    500 on every query. There are no migrations: the data is left untouched and the operator decides.
+    """
+    from sqlalchemy import inspect
+
+    insp = inspect(engine)
+    existing = set(insp.get_table_names())
+    missing = []
+    for table in metadata.sorted_tables:
+        if table.name in existing:
+            have = {c["name"] for c in insp.get_columns(table.name)}
+            missing += [f"{table.name}.{c.name}" for c in table.columns if c.name not in have]
+    if missing:
+        raise RuntimeError(
+            f"The database at {engine.url.render_as_string(hide_password=True)} was created by an "
+            f"older ReqCluster version (missing columns: {', '.join(missing[:8])}"
+            f"{' ...' if len(missing) > 8 else ''}). Move that database file aside (or point "
+            "DATABASE_URL at a new database) and restart; ReqCluster creates a fresh schema.")

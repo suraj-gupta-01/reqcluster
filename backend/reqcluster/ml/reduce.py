@@ -60,13 +60,14 @@ def _umap(X: np.ndarray, seed: int, n: int) -> tuple[np.ndarray, np.ndarray]:
     nn = min(80, max(15, n // 100), n - 1)
     x10 = umap.UMAP(
         n_components=10, metric="cosine", n_neighbors=nn, min_dist=0.0, n_epochs=200,
-        init="random", random_state=seed, compatibility_layout=True,
+        init="random", random_state=seed, n_jobs=1, compatibility_layout=True,  # seeded = 1 thread
         precomputed_knn=(_exact_knn(X, nn) if EXACT_KNN_MIN <= n <= EXACT_KNN_MAX
                          else (None, None, None)),
     ).fit_transform(X)
     # viz only: 100 epochs at 10k rows 28.9s -> 5.4s (vs 200); clustering uses x10
     xy = umap.UMAP(
         n_components=2, metric="euclidean", n_neighbors=min(15, n - 1), min_dist=0.1,
-        n_epochs=_viz_epochs(n), init="random", random_state=seed, compatibility_layout=True,
+        n_epochs=_viz_epochs(n), init="random", random_state=seed, n_jobs=1,
+        compatibility_layout=True,
     ).fit_transform(x10)
     return x10.astype(np.float32), xy.astype(np.float32)

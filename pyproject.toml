@@ -24,7 +24,10 @@ reqcluster-api = "reqcluster.app:main"
 [project.optional-dependencies]
 # Each extra is lazily imported with a fallback, so the app runs without it.
 fast = ["hnswlib>=0.8.0"]                 # ANN similarity graph; falls back to exact kNN
-nlp = ["spacy>=3.8"]                      # dependency-parse artifacts; falls back to regex
+nlp = [                                  # dependency-parse artifacts; falls back to regex
+    "spacy>=3.8",
+    "en-core-web-sm>=3.8",                # model wheel URL: see tool.uv.sources
+]
 charts = ["matplotlib>=3.9"]              # charts inside the PDF report
 postgres = ["psycopg[binary]>=3.2"]  # DATABASE_URL=postgresql://... (SQLAlchemy 2.1 default driver is psycopg 3)
 eval = ["pyyaml>=6.0", "pandas>=2.2.3"]
@@ -42,6 +45,7 @@ default-groups = ["dev"]
 conflicts = [[{ extra = "cpu" }, { extra = "gpu" }]]
 
 [tool.uv.sources]
+en-core-web-sm = { url = "https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl" }
 torch = [
     { index = "pytorch-cpu", extra = "cpu" },
     { index = "pytorch-cu126", extra = "gpu" },

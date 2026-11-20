@@ -82,16 +82,16 @@ sequenceDiagram
 erDiagram
   sessions ||--o{ requirements : has
   sessions ||--o{ runs : has
-  sessions ||--o{ feedback : has
-  sessions ||--o{ constraints : has
-  sessions ||--o{ audit : has
+  sessions ||--o{ enrichments : has
   sessions ||--o{ jobs : has
   runs ||--o{ assignments : has
   runs ||--o{ clusters : has
   runs ||--o{ suggestions : has
-  runs ||--o{ enrichments : has
+  runs ||--o{ feedback : has
+  runs ||--o{ constraints : has
+  runs ||--o{ audit : has
   runs ||--o{ dependency_trees : has
-  dependency_trees ||--o{ dependency_explanations : has
+  runs ||--o{ dependency_explanations : has
   requirements ||--o{ assignments : "assigned in"
   runs {
     int revision
@@ -103,17 +103,21 @@ erDiagram
   }
 ```
 
-Run-scoped (replaced or versioned by a new run): `assignments`, `clusters`, `suggestions`, `enrichments`, `dependency_trees`, `dependency_explanations`. Session-scoped (survive re-clustering): `requirements`, `feedback`, `constraints`, `audit`, `jobs`. A run records `revision`, `edit_seq` (manual edits) and `max_cluster_id` so edited cluster ids stay stable.
+Run-scoped (a re-cluster starts clean, so stale data is never served): `assignments`, `clusters`, `suggestions`, `feedback`, `constraints`, `audit`, `dependency_trees`, `dependency_explanations`; a constrained re-cluster carries its constraints into the new run. Session-scoped (survive re-clustering): `requirements`, `enrichments`, `jobs`. A run records `revision`, `edit_seq` (manual edits) and `max_cluster_id` so edited cluster ids stay stable.
 
 ## Quick start
 
+One command (needs [uv](https://docs.astral.sh/uv/) and Node.js 20+):
+
 ```bash
-uv sync --extra all --extra cpu          # Python 3.12; use --extra gpu for CUDA torch
-cd frontend && npm install && cd ..
-uv run python scripts/dev.py             # backend :8000 + frontend :5173
+./start.sh        # Linux / macOS
+.\start.ps1       # Windows (PowerShell)
 ```
 
-`./start.sh` wraps the same launcher. Copy `.env.example` to `.env` to change settings.
+It installs the Python deps (CUDA torch when an NVIDIA GPU is found, else CPU; override with
+`REQCLUSTER_TORCH=cpu|gpu`) and the frontend deps on first run, starts Ollama if
+`REQCLUSTER_LLM_PROVIDER=local`, starts the backend (:8000) and frontend (:5173), and opens the
+browser. Ctrl+C stops everything it started. Copy `.env.example` to `.env` to change settings.
 
 ### Docker
 

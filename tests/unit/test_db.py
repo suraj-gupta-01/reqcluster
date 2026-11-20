@@ -34,3 +34,21 @@ def test_rollback_on_error():
         raise RuntimeError
     with db.session_scope() as s:
         assert s.get(SessionRow, 1) is None
+
+
+def test_init_db_refuses_a_database_from_an_older_schema(tmp_path):
+    # an older build's DB lacked new columns: create_all never adds them, so every query 500'd
+    import sqlite3
+
+    import pytest
+
+    from reqcluster import db
+
+    path = tmp_path / "old.db"
+    con = sqlite3.connect(path)
+    con.execute("CREATE TABLE runs (id INTEGER PRIMARY KEY, session_id INTEGER)")  # missing columns
+    con.commit()
+    con.close()
+    db.configure(f"sqlite:///{path.as_posix()}")
+    with pytest.raises(RuntimeError, match="runs.*(max_cluster_id|revision)"):
+        db.init_db()

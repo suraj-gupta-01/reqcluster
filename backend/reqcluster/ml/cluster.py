@@ -16,7 +16,8 @@ def hdbscan(x10: np.ndarray, min_cluster_size: int, min_samples: int) -> tuple[n
         return np.full(n, -1, np.int64), np.zeros(n, np.float32)
     mcs = max(2, min_cluster_size)
     ms = min(max(1, min_samples), max(1, n - 1))
-    model = HDBSCAN(min_cluster_size=mcs, min_samples=ms, cluster_selection_method="eom")
+    # copy=True: never modify the caller's array in place (and the future sklearn default)
+    model = HDBSCAN(min_cluster_size=mcs, min_samples=ms, cluster_selection_method="eom", copy=True)
     raw = model.fit_predict(np.asarray(x10, dtype=np.float64))
     return L.relabel_contiguous(raw), np.asarray(model.probabilities_, dtype=np.float32)
 

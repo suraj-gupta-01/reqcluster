@@ -9,7 +9,7 @@ uv sync --extra all --extra cpu     # Python 3.12 env (.venv); use --extra gpu f
 uv run pytest -q                    # backend tests
 uv run ruff check backend tests     # lint
 cd frontend && npm install && npm run build && npm run lint
-uv run python scripts/dev.py        # dev: backend :8000 + frontend :5173 (./start.sh wraps it)
+./start.sh                          # installs if needed, runs backend :8000 + frontend :5173 (+ Ollama), opens browser (start.ps1 on Windows)
 uv run python -m eval --help        # evaluation harness
 ```
 
