@@ -16,7 +16,7 @@ MIN_TEXT_CHARS = 6  # legacy rule: text length > 5
 ID_NAMES = ["id", "req_id", "requirement_id", "req id", "identifier"]
 TEXT_NAMES = ["text", "requirement", "description", "requirement text", "req text", "content", "shall"]
 _TAGS = re.compile(r"</?[A-Za-z][A-Za-z0-9:-]*(\s[^<>]*)?/?>")
-_CTRL = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
+_CTRL = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f]")  # C0 + DEL + C1 controls
 _WS = re.compile(r"\s+")
 
 

@@ -135,3 +135,9 @@ def test_inequalities_survive_tag_stripping():
 
     assert _clean("Latency shall be < 10 ms when load > 50%.") == "Latency shall be < 10 ms when load > 50%."
     assert _clean("<b>Pump</b> shall start") == "Pump shall start"
+
+
+def test_c1_control_characters_are_stripped():
+    # \x80-\x9f are invisible control codes (cp1252/latin-1 mojibake); they reached cluster labels
+    r = parse("text\nThe pump\x85 shall\x90 start within 5 s\n".encode(), "a.csv").requirements[0]
+    assert r.text == "The pump shall start within 5 s"

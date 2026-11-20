@@ -1,7 +1,9 @@
 """Print-friendly PDF clustering report (reportlab; matplotlib chart optional)."""
 from __future__ import annotations
 
+import functools
 import io
+import re
 from collections import defaultdict
 
 from reportlab.lib import colors
@@ -23,6 +25,24 @@ def _esc(v) -> str:
     return xml_safe(v).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
+_CHART_CTRL = re.compile(r"[\x00-\x1f\x7f-\x9f]")
+
+
+@functools.lru_cache(maxsize=1)
+def _chart_glyphs() -> frozenset[int]:
+    from matplotlib import font_manager, ft2font
+
+    return frozenset(ft2font.FT2Font(font_manager.findfont("DejaVu Sans")).get_charmap())
+
+
+def _chart_label(text: str) -> str:
+    """Chart text is drawn with DejaVu Sans: drop control chars, '?' for glyphs it lacks (else
+    matplotlib draws empty boxes and warns per glyph), escape "$" (mathtext)."""
+    glyphs = _chart_glyphs()
+    clean = "".join(ch if ord(ch) in glyphs else "?" for ch in _CHART_CTRL.sub("", text))
+    return clean.replace("$", r"\$")
+
+
 def _bar_png(clusters):
     top = sorted(clusters, key=lambda c: c.size, reverse=True)[:15]
     if not top:
@@ -36,8 +56,7 @@ def _bar_png(clusters):
     fig, ax = plt.subplots(figsize=(6.6, max(2.2, 0.28 * len(top) + 0.6)), dpi=150)
     ax.barh(range(len(top)), [c.size for c in top], color="#0D8175")
     ax.set_yticks(range(len(top)))
-    # "$" would trigger matplotlib mathtext on labels
-    ax.set_yticklabels([c.label[:26].replace("$", r"\$") for c in top], fontsize=7.5)
+    ax.set_yticklabels([_chart_label(c.label[:26]) for c in top], fontsize=7.5)
     ax.invert_yaxis()
     ax.set_title("Largest clusters", fontsize=9)
     buf = io.BytesIO()

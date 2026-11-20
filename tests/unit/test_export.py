@@ -151,3 +151,17 @@ def test_csv_guards_attribute_header_names():
     sid = sessions.create(res, "a").id
     header = to_csv(build(sid)).decode("utf-8-sig").splitlines()[0]
     assert ",'=cmd" in header
+
+
+def test_pdf_chart_labels_render_without_missing_glyph_warnings():
+    # hostile/foreign labels made matplotlib warn per glyph (150x in the hardening suite)
+    import warnings
+
+    from reqcluster.export.bundle import ExportCluster
+    from reqcluster.export.pdf import _bar_png
+
+    clusters = [ExportCluster(i, f"x\r\x80\x90中{i}$", ["k"], 10 - i) for i in range(3)]
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")  # any warning fails the test
+        png = _bar_png(clusters)
+    assert png  # chart still rendered
