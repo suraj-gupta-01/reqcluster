@@ -47,3 +47,23 @@ def test_params_validation():
     for bad in ({"sim_threshold": 1.5}, {"min_samples": 0}, {"bogus": 1}):
         with pytest.raises(ValidationError):
             ClusteringParams(**bad)
+
+
+def test_env_example_matches_defaults():
+    from dataclasses import fields
+    from pathlib import Path
+
+    ex = Path(__file__).resolve().parents[2] / ".env.example"
+    a, b = load_settings(env={}, dotenv=ex), load_settings(env={}, dotenv=None)
+    for f in fields(a):
+        if f.name != "home":
+            assert getattr(a, f.name) == getattr(b, f.name), f.name
+
+
+def test_dotenv_quotes_and_seed_bounds(tmp_path):
+    p = tmp_path / ".env"
+    p.write_text('REQCLUSTER_API_KEY="a # b"\nREQCLUSTER_HOST=\n')
+    s = load_settings(env={}, dotenv=p)
+    assert s.api_key == "a # b" and s.host == "127.0.0.1"
+    with pytest.raises(ValueError):
+        load_settings(env={"REQCLUSTER_SEED": str(2**32)}, dotenv=None)

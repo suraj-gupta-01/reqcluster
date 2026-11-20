@@ -116,11 +116,21 @@ class JobRunner:
                 delay = min(delay * 2, 1.0)
 
     def _execute(self, job_id: str, fn: Callable[[JobContext], Any]) -> None:
-        with session_scope() as s:
-            row = s.get(JobRow, job_id)
-            if row is None or row.status != "queued":
-                return
-            row.status, row.started_at = "running", _now()
+        try:
+            with session_scope() as s:
+                started = s.execute(
+                    update(JobRow).where(JobRow.id == job_id, JobRow.status == "queued")
+                    .values(status="running", started_at=_now())
+                ).rowcount
+        except Exception:
+            log.exception("job %s: start write failed", job_id)
+            with session_scope() as s:
+                s.execute(update(JobRow).where(JobRow.id == job_id, JobRow.status == "queued")
+                          .values(status="failed", error=GENERIC_ERROR, message=GENERIC_ERROR,
+                                  finished_at=_now()))
+            return
+        if not started:
+            return
         try:
             r = fn(JobContext(job_id))
             result = r.model_dump(mode="json") if isinstance(r, BaseModel) else r
@@ -154,13 +164,14 @@ class JobRunner:
 
     def cancel(self, job_id: str) -> Job:
         with session_scope() as s:
-            row = s.get(JobRow, job_id)
-            if row is None:
+            if s.get(JobRow, job_id) is None:
                 raise NotFound(f"job {job_id} not found")
-            if row.status == "queued":
-                row.status, row.finished_at = "cancelled", _now()
-            elif row.status == "running":
-                row.cancel_requested = True
+            if not s.execute(
+                update(JobRow).where(JobRow.id == job_id, JobRow.status == "queued")
+                .values(status="cancelled", finished_at=_now())
+            ).rowcount:
+                s.execute(update(JobRow).where(JobRow.id == job_id, JobRow.status == "running")
+                          .values(cancel_requested=True))
         return self.get(job_id)
 
     def sweep_on_startup(self) -> None:

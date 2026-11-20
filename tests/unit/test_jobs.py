@@ -125,7 +125,7 @@ def test_finish_retries_locked_db(monkeypatch):
 
     def flaky(*a, **kw):
         calls.append(1)
-        if len(calls) <= 2:
+        if 2 <= len(calls) <= 3:  # call 1 is the start write; fail the first two finish attempts
             raise OperationalError("UPDATE", {}, Exception("database is locked"))
         return real(*a, **kw)
 
@@ -149,3 +149,15 @@ def test_shutdown_nowait_drops_queued(monkeypatch):
     _wait(r, j1.id)
     time.sleep(0.2)
     assert r.get(j2.id).status == "queued"
+
+
+def test_cancelled_queued_job_never_starts(monkeypatch):
+    monkeypatch.setenv("REQCLUSTER_JOB_WORKERS", "1")
+    get_settings.cache_clear()
+    r = jobs.get_runner()
+    monkeypatch.setattr(r._cpu, "submit", lambda *a, **k: None)  # queued, no worker picks it up
+    j = r.submit("cluster", 1, lambda ctx: None)
+    assert r.cancel(j.id).status == "cancelled"
+    called = []
+    r._execute(j.id, lambda ctx: called.append(1))
+    assert not called and r.get(j.id).status == "cancelled"

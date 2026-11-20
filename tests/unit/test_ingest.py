@@ -128,3 +128,10 @@ def test_ids_headers_and_attribute_values_are_cleaned_like_text():
     blob = r.req_id + "".join(k + v for k, v in r.attributes.items())
     assert "\x00" not in blob and "\x07" not in blob
     assert r.req_id == "R1" and r.attributes == {"module": "Thermal"}
+
+
+def test_inequalities_survive_tag_stripping():
+    from reqcluster.ingest import _clean
+
+    assert _clean("Latency shall be < 10 ms when load > 50%.") == "Latency shall be < 10 ms when load > 50%."
+    assert _clean("<b>Pump</b> shall start") == "Pump shall start"

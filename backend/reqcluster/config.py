@@ -1,5 +1,6 @@
 """Typed settings. The only module that reads the environment."""
 import os
+import re
 import sys
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
@@ -77,7 +78,12 @@ def _read_dotenv(path: Path) -> dict[str, str]:
         k, v = line.split("=", 1)
         k = k.strip()
         if k:
-            out[k] = v.strip().strip("'\"")
+            v = v.strip()
+            if v[:1] and v[0] in "'\"" and v.count(v[0]) >= 2:
+                v = v[1 : v.index(v[0], 1)]
+            else:
+                v = re.sub(r"(^|\s+)#.*$", "", v)
+            out[k] = v
     return out
 
 
@@ -98,7 +104,7 @@ def load_settings(
 
     def get(name: str, default: Any, cast: Callable[[str], Any] = str, lo=None, hi=None):
         raw = merged.get(name)
-        if raw is None:
+        if raw is None or raw == "":
             return default
         try:
             val = cast(raw)
@@ -124,7 +130,7 @@ def load_settings(
         port=get("REQCLUSTER_PORT", 8000, int),
         api_key=get("REQCLUSTER_API_KEY", ""),
         job_workers=get("REQCLUSTER_JOB_WORKERS", 1, int, lo=0),
-        seed=get("REQCLUSTER_SEED", 42, int),
+        seed=get("REQCLUSTER_SEED", 42, int, lo=0, hi=2**32 - 1),
         threads=get("REQCLUSTER_THREADS", os.cpu_count() or 1, int, lo=1),
         embedding_model=get("REQCLUSTER_EMBEDDING_MODEL", "auto"),  # auto: gte on GPU, MiniLM on CPU
         embedding_revision=get("REQCLUSTER_EMBEDDING_REVISION", "1"),
