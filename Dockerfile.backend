@@ -20,8 +20,9 @@ RUN uv sync --frozen --no-dev $EXTRAS
 # Bake the SBERT model so first start needs no network.
 RUN uv run --no-sync python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')"
 
-# Warm numba's on-disk JIT cache (beside the installed umap/pynndescent) so a fresh container's
-# first clustering job skips the ~70 s recompile.
+# Warm numba's JIT cache so a fresh container's first clustering job skips a ~90 s recompile.
+# Its own dir: numba ignores the in-tree cache when site-packages is not writable (non-root user).
+ENV NUMBA_CACHE_DIR=/app/numba-cache
 RUN uv run --no-sync python -c "import numpy as np; from reqcluster.ml.reduce import reduce; r = np.random.default_rng(0); [reduce(r.standard_normal((n, 384)).astype('float32'), 0) for n in (60, 1200)]"  # both UMAP paths (<1k own kNN, >=1k precomputed)
 
 # Test suites and torch C++ headers are dead weight at runtime.
@@ -36,7 +37,10 @@ WORKDIR /app
 COPY --from=builder /app/.venv /app/.venv
 COPY --from=builder /app/backend /app/backend
 COPY --from=builder /app/var/cache/hf /app/var/cache/hf
-RUN useradd --create-home app && chown -R app /app/var
+# outside /app/var so a volume mounted there cannot hide the baked cache
+COPY --from=builder /app/numba-cache /app/numba-cache
+ENV NUMBA_CACHE_DIR=/app/numba-cache
+RUN useradd --create-home app && chown -R app /app/var /app/numba-cache
 USER app
 EXPOSE 8000
 HEALTHCHECK --interval=15s --timeout=5s --start-period=60s --retries=5 \
