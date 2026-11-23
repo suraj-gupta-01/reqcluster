@@ -22,8 +22,8 @@ Why the ARI ceiling differs per set: `promise` labels are requirement *types* an
 
 ## Open work (priority order)
 1. **Accuracy, next levers** (test on all labelled sets and several seeds, never tuned on one):
-   - Optional target cluster count `k` (users often know it). Candidate: cut the consensus co-association, or Ward on x10, at k.
-   - gte-modernbert on CPU: is it more accurate and is the speed acceptable (CPU ~17 texts/s vs MiniLM 150)?
+   - ~~Target cluster count `k`~~ tested 2026-11-24, **rejected**: Ward on x10 cut at the true k gives mean ARI gte .383 -> .413, MiniLM .374 -> .382, but wins only 10/16 model x set pairs (stress_600 .568 -> .459), and that is with an oracle k. Average-linkage on co-association collapses (ARI 0 on 2 sets). Ward on full embeddings is .93 on stress_600 but .735 vs .88 on the large sets. Data: `var/cache/gate/small_accuracy_k*.jsonl`.
+   - ~~gte on CPU~~ **rejected**: 7.9 texts/s vs MiniLM 77 on CPU for +.009 mean ARI. MiniLM stays the CPU default.
    - Enriched/hybrid text via the LLM (needs Ollama; slow).
    - Eval baselines are still the pre-consensus values. Re-baseline only when the user agrees.
 2. **Report findings still open:** #4 (the PDF caps listings at 25; CSV is complete), #12 (active learning ranks by margin: intended), architecture items 1-9 (provenance snapshot, artifact freshness, single-process job runner, separate SQL/npz lifecycles, no schema migration).

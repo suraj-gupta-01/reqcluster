@@ -11,6 +11,12 @@ Variants:
   vote5    same co-association; link pairs together in >= 3 of 5 runs, components < mcs = noise
   avg5     same co-association; average linkage cut at 0.5, clusters < mcs = noise
   cat3     hdbscan on the concatenated 10-D reductions of seeds s..s+2
+  Target-k variants (k = number of distinct gold labels, i.e. the user-supplied group count):
+  k_cons     average linkage on the cons5 co-association, cut to k clusters
+  k_ward10   Ward on the 10-D reduction of seed s, cut to k
+  k_wardX    Ward on the L2-normalised full embeddings, cut to k (seed-independent)
+  k_consward k_ward10, but rows that are noise in cons5+rescue are set to -1
+Env VARIANTS=a,b keeps only the listed variants in the output rows.
 Run: uv run python docs/redesign/findings/exp/small_accuracy.py [model ...]
 """
 import functools
@@ -36,6 +42,7 @@ MODELS = {"minilm": "all-MiniLM-L6-v2", "gte": "Alibaba-NLP/gte-modernbert-base"
 SEEDS = int(os.environ.get("SEEDS", 10))
 NAMES = os.environ["DS"].split(",") if os.environ.get("DS") else NAMES
 CONS = 5
+KEEP = set(os.environ["VARIANTS"].split(",")) if os.environ.get("VARIANTS") else None
 
 
 def load(name):
@@ -130,6 +137,12 @@ def task(args):
         Z = [reduce.reduce(X, s)[0] for s in range(SEEDS + CONS - 1)]
         np.save(zf, np.stack(Z))
     base = [cluster.hdbscan(z, mcs, 3)[0] for z in Z]
+    from scipy.cluster.hierarchy import fcluster, linkage
+    from scipy.spatial.distance import squareform
+
+    k = len(set(gold))
+    Xu = X / np.linalg.norm(X, axis=1, keepdims=True)
+    kwx = fcluster(linkage(Xu, "ward"), k, "maxclust").astype(int) - 1  # seed-independent
     rows = []
     for s in range(SEEDS):
         variants = {
@@ -147,7 +160,14 @@ def task(args):
         variants["vote5+rescue"] = rescue(X, variants["vote5"])
         variants["avg5+rescue"] = rescue(X, variants["avg5"])
         variants["ms1+rescue"] = rescue(X, variants["ms1"])
+        variants["k_cons"] = fcluster(linkage(squareform(D, checks=False), "average"), k,
+                                      "maxclust").astype(int) - 1
+        variants["k_ward10"] = fcluster(linkage(Z[s], "ward"), k, "maxclust").astype(int) - 1
+        variants["k_wardX"] = kwx
+        variants["k_consward"] = np.where(variants["cons5+rescue"] == -1, -1, variants["k_ward10"])
         for v, lab in variants.items():
+            if KEEP and v not in KEEP:
+                continue
             rows.append({"model": model, "ds": name, "n": n, "seed": s, "variant": v,
                          "ari": ari(gold, lab), "noise": float((lab == -1).mean()),
                          "k": int(len(set(lab[lab >= 0].tolist())))})
