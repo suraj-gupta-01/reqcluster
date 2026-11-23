@@ -22,6 +22,56 @@ def hdbscan(x10: np.ndarray, min_cluster_size: int, min_samples: int) -> tuple[n
     return L.relabel_contiguous(raw), np.asarray(model.probabilities_, dtype=np.float32)
 
 
+def consensus(runs: list[np.ndarray], min_cluster_size: int, min_samples: int, X: np.ndarray
+              ) -> tuple[np.ndarray, np.ndarray]:
+    """HDBSCAN on 1 - co-association (share of runs that put two rows in the same cluster), then
+    `rescue` in the embedding space X.
+
+    Probability = a row's mean co-association with the rest of its cluster: how often the runs
+    agree on it. Noise 0.
+    """
+    n = len(runs[0])
+    co = np.zeros((n, n))
+    for lab in runs:
+        co += (lab[:, None] == lab[None, :]) & (lab[:, None] >= 0)
+    co /= len(runs)
+    mcs = max(2, min_cluster_size)
+    ms = min(max(1, min_samples), max(1, n - 1))
+    raw = HDBSCAN(min_cluster_size=mcs, min_samples=ms, metric="precomputed", copy=True,
+                  cluster_selection_method="eom").fit_predict(1.0 - co)
+    labels = rescue(X, L.relabel_contiguous(raw))
+    return labels, _agreement(co, labels)
+
+
+def _agreement(co: np.ndarray, labels: np.ndarray) -> np.ndarray:
+    out = np.zeros(len(labels), np.float32)
+    for idx in L.groups(labels).values():
+        if len(idx) > 1:
+            sub = co[np.ix_(idx, idx)]
+            out[idx] = (sub.sum(axis=1) - sub.diagonal()) / (len(idx) - 1)
+    return out
+
+
+def rescue(X: np.ndarray, labels: np.ndarray) -> np.ndarray:
+    """Noise rows join their nearest cluster (cosine to centroid) only if they are at least as
+    close as that cluster's farthest member, i.e. inside its observed radius."""
+    labels = labels.copy()
+    noise = np.flatnonzero(labels == -1)
+    ids, _ = L.centroids(X, labels)
+    if not ids or not len(noise):
+        return labels
+    Xu = X / np.maximum(np.linalg.norm(X, axis=1, keepdims=True), 1e-12)
+    g = L.groups(labels)
+    C = np.stack([Xu[g[c]].mean(axis=0) for c in ids])
+    C /= np.maximum(np.linalg.norm(C, axis=1, keepdims=True), 1e-12)
+    radius = np.array([(Xu[g[c]] @ C[i]).min() for i, c in enumerate(ids)])
+    S = Xu[noise] @ C.T
+    best = S.argmax(axis=1)
+    ok = S[np.arange(len(noise)), best] >= radius[best]
+    labels[noise[ok]] = np.asarray(ids)[best[ok]]
+    return labels
+
+
 def membership(x: np.ndarray, labels: np.ndarray) -> np.ndarray:
     """Centroid silhouette (b - a) / max(a, b) clipped to [0, 1]: a = distance to the row's own
     centroid, b = to the nearest other one. 0 for noise, 1 when there is no other cluster."""

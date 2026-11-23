@@ -185,3 +185,39 @@ def test_membership_is_centroid_silhouette():
     assert np.isclose(m[3], 1 - 0.05 / (10.0 - 1 / 3))
     assert (membership(x, np.array([0, 0, 0, 0, 0, -1]))[:5] == 1.0).all()
     assert (membership(x, np.full(6, -1)) == 0).all()
+
+
+def test_consensus_keeps_agreed_groups_and_scores_agreement():
+    from reqcluster.ml.cluster import consensus
+
+    X = np.vstack([np.eye(3)[[0]].repeat(6, 0), np.eye(3)[[1]].repeat(6, 0), np.eye(3)[[2]]])
+    a = np.array([0] * 6 + [1] * 6 + [-1])
+    b = a.copy()
+    b[5] = 1  # one run disagrees about row 5
+    labels, probs = consensus([a, a, a, a, b], 3, 1, X)
+    assert len(set(labels[:6].tolist())) == 1 and len(set(labels[6:12].tolist())) == 1
+    assert labels[0] != labels[6] and labels[12] == -1 and probs[12] == 0
+    assert probs[0] > probs[5] > 0.5  # row 5 is where one run disagreed
+
+
+def test_rescue_only_within_cluster_radius():
+    from reqcluster.ml.cluster import rescue
+
+    X = np.array([[1, 0.0], [1, 0.2], [1, -0.2], [1, 0.1], [0, 1.0]])
+    lab = np.array([0, 0, 0, -1, -1])
+    assert rescue(X, lab).tolist() == [0, 0, 0, 0, -1]  # inside the radius joins; far row stays
+
+
+def test_small_runs_use_seed_consensus(monkeypatch):
+    from reqcluster.ml import cluster
+
+    seen = []
+    real = cluster.consensus
+    monkeypatch.setattr(cluster, "consensus", lambda runs, *a: seen.append(len(runs)) or real(runs, *a))
+    X, t = blobs()
+    a = pipeline.run(X, t, P(), seed=7)
+    assert seen == [pipeline.CONSENSUS_RUNS]
+    assert (a.labels == pipeline.run(X, t, P(), seed=7).labels).all()  # deterministic per seed
+    pipeline.run(X, t, P(clusterer="ward"), seed=7)
+    pipeline.run(*rand(pipeline.CONSENSUS_MIN - 1), P(), seed=7)
+    assert len(seen) == 2  # ward and tiny sets skip consensus
