@@ -137,7 +137,8 @@ def test_ward_no_noise_k_in_range_and_deterministic():
     X, t = blobs()
     a = pipeline.run(X, t, P(clusterer="ward"), seed=3)
     b = pipeline.run(X, t, P(clusterer="ward"), seed=3)
-    assert (a.labels >= 0).all() and (a.probabilities == 1.0).all()
+    assert (a.labels >= 0).all() and ((a.probabilities >= 0) & (a.probabilities <= 1)).all()
+    assert len(set(a.probabilities.round(3).tolist())) > 1  # a real per-row score, not a constant
     assert 8 <= len(a.clusters) <= min(40, len(X) // 5)
     assert (a.labels == b.labels).all()
 
@@ -170,5 +171,17 @@ def test_ward_mode_keeps_hdbscan_outliers(monkeypatch):
     monkeypatch.setattr(cluster, "hdbscan", hdb_with_outliers)
     w = pipeline.run(X, t, P(clusterer="ward"), seed=3)
     assert set(np.flatnonzero(w.labels == -1)) == {3, 40, 77}  # same outliers as HDBSCAN
-    assert (w.probabilities[w.labels == -1] == 0).all() and (w.probabilities[w.labels >= 0] == 1).all()
+    assert (w.probabilities[w.labels == -1] == 0).all() and (w.probabilities[w.labels >= 0] > 0).any()
     assert len(w.clusters) >= 8  # groups still come from ward
+
+
+def test_membership_is_centroid_silhouette():
+    from reqcluster.ml.cluster import membership
+
+    x = np.array([[0.0], [0.1], [0.9], [10.0], [10.1], [5.0]])
+    lab = np.array([0, 0, 0, 1, 1, -1])
+    m = membership(x, lab)
+    assert m[5] == 0.0 and m[0] > m[2] > 0  # core row above edge row; noise none
+    assert np.isclose(m[3], 1 - 0.05 / (10.0 - 1 / 3))
+    assert (membership(x, np.array([0, 0, 0, 0, 0, -1]))[:5] == 1.0).all()
+    assert (membership(x, np.full(6, -1)) == 0).all()

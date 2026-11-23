@@ -17,7 +17,7 @@ def _cluster(x10, params: ClusteringParams, mcs: int, seed: int):
     w, _ = cluster.ward(x10, seed)
     noise = hdb == -1
     labels = L.relabel_contiguous(np.where(noise, -1, w))
-    return labels, np.where(noise, 0.0, 1.0).astype(np.float32)
+    return labels, cluster.membership(x10, labels)
 
 
 def run(embeddings, texts, params: ClusteringParams, *, seed: int, threads: int = 1,

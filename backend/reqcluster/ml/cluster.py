@@ -22,6 +22,27 @@ def hdbscan(x10: np.ndarray, min_cluster_size: int, min_samples: int) -> tuple[n
     return L.relabel_contiguous(raw), np.asarray(model.probabilities_, dtype=np.float32)
 
 
+def membership(x: np.ndarray, labels: np.ndarray) -> np.ndarray:
+    """Centroid silhouette (b - a) / max(a, b) clipped to [0, 1]: a = distance to the row's own
+    centroid, b = to the nearest other one. 0 for noise, 1 when there is no other cluster."""
+    x = np.asarray(x, dtype=np.float64)
+    out = np.zeros(len(labels), np.float32)
+    ids, cents = L.centroids(x, labels)
+    if not ids:
+        return out
+    if len(ids) == 1:
+        out[labels != -1] = 1.0
+        return out
+    rows = np.flatnonzero(labels != -1)
+    D = np.linalg.norm(x[rows, None, :] - cents[None, :, :], axis=2)
+    own = np.searchsorted(ids, labels[rows])
+    a = D[np.arange(len(rows)), own]
+    D[np.arange(len(rows)), own] = np.inf
+    b = D.min(axis=1)
+    out[rows] = np.clip((b - a) / np.maximum(np.maximum(a, b), 1e-12), 0.0, 1.0)
+    return out
+
+
 def ward(x10: np.ndarray, seed: int) -> tuple[np.ndarray, np.ndarray]:
     """Ward linkage, k by sampled silhouette over [8, min(40, n // 5)]; never any noise."""
     n = len(x10)
@@ -39,4 +60,5 @@ def ward(x10: np.ndarray, seed: int) -> tuple[np.ndarray, np.ndarray]:
             best, best_s = lab, s
     if best is None:
         best = np.zeros(n, np.int64)
-    return L.relabel_contiguous(best.astype(np.int64)), np.ones(n, np.float32)
+    labels = L.relabel_contiguous(best.astype(np.int64))
+    return labels, membership(x, labels)
