@@ -176,3 +176,24 @@ def test_move_to_noise_stores_zero_membership():
     feedback.submit(sid, rid, None, "", "me")
     item = next(i for i in sessions.requirements(sid)[0] if i.id == rid)
     assert item.is_noise and item.probability == 0.0
+
+
+def test_later_move_supersedes_contradicting_constraints():
+    sid = clustered()
+    a, _, dst = two_clusters(sid)
+    feedback.submit(sid, a, dst)
+    pair = next(p for p in feedback.constraints(sid).constraint_pairs if p.kind == "cannot")
+    b = pair.b if pair.a == a else pair.a
+    fb = feedback.submit(sid, b, dst)  # the user now puts b with a: cannot(a, b) is overridden
+    lab = labels(sid)
+    cons = feedback.constraints(sid)
+    assert cons.conflicts == [] and pair not in cons.constraint_pairs
+    for p in cons.constraint_pairs:
+        assert (p.kind == "must") == (lab[p.a] == lab[p.b] != -1), p
+    feedback.review(sid, fb.feedback_id, False)  # rejecting the override revives cannot(a, b)
+    assert pair in feedback.constraints(sid).constraint_pairs
+    feedback.submit(sid, b, dst)
+    job = feedback.recluster(sid)
+    assert job.status == "succeeded", job
+    lab = labels(sid)
+    assert lab[a] == lab[b] != -1

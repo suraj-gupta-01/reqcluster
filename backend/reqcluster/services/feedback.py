@@ -101,6 +101,21 @@ def _ordered(s, run_id: int, sid: int):
             np.array([r[2] for r in rows], dtype=np.int64))
 
 
+def _active(s, run_id: int) -> list[ConstraintRow]:
+    """Constraints the current placement agrees with.
+
+    Every placement change is a human edit, so one that contradicts an older constraint is the
+    newer intent and supersedes it; rejecting that edit restores the placement and revives the
+    constraint. The active set always has a witness (the placement itself), so it can never
+    contradict itself, directly or transitively.
+    """
+    cid = dict(s.execute(select(AssignmentRow.requirement_id, AssignmentRow.cluster_id)
+                         .where(AssignmentRow.run_id == run_id)).all())
+    rows = s.scalars(select(ConstraintRow).where(ConstraintRow.run_id == run_id)
+                     .order_by(ConstraintRow.id)).all()
+    return [r for r in rows if (r.kind == "must") == (cid[r.a_id] == cid[r.b_id] != -1)]
+
+
 def _check_idle(sid: int) -> None:
     job = get_runner().latest(sid, ("cluster", "recluster"))
     if job is not None and job.status in ("queued", "running"):
@@ -202,10 +217,8 @@ def queue(sid: int, status: str | None = None) -> list[FeedbackOut]:
 def constraints(sid: int) -> ConstraintsOut:
     with session_scope() as s:
         run = _current_run(s, sid)
-        rows = s.scalars(select(ConstraintRow).where(ConstraintRow.run_id == run.id)
-                         .order_by(ConstraintRow.id)).all()
         pairs = [ConstraintPair(a=r.a_id, b=r.b_id, kind=r.kind, feedback_id=r.feedback_id)
-                 for r in rows]
+                 for r in _active(s, run.id)]
     kinds: dict[tuple[int, int], set[str]] = {}
     for p in pairs:
         kinds.setdefault((p.a, p.b), set()).add(p.kind)
@@ -249,15 +262,16 @@ def _recluster(ctx: JobContext, sid: int) -> ReclusterSummary:
         pks, texts, labels = _ordered(s, rid, sid)
         cons = s.execute(select(ConstraintRow.a_id, ConstraintRow.b_id, ConstraintRow.kind,
                                 ConstraintRow.feedback_id)
-                         .where(ConstraintRow.run_id == rid)).all()
+                         .where(ConstraintRow.run_id == rid)).all()  # all carried, as history
+        active = [(r.a_id, r.b_id, r.kind) for r in _active(s, rid)]
         db_probs = dict(s.execute(select(AssignmentRow.requirement_id, AssignmentRow.probability)
                                   .where(AssignmentRow.run_id == rid)).all())
     npz = load_run_arrays(rid)
     x10, xy = npz["x10"], npz["xy"]
     probs = np.array([1.0 if db_probs[pk] is None else db_probs[pk] for pk in pks])
     pos = {pk: i for i, pk in enumerate(pks)}
-    must = [(pos[a], pos[b]) for a, b, k, _ in cons if k == "must"]
-    cannot = [(pos[a], pos[b]) for a, b, k, _ in cons if k == "cannot"]
+    must = [(pos[a], pos[b]) for a, b, k in active if k == "must"]
+    cannot = [(pos[a], pos[b]) for a, b, k in active if k == "cannot"]
 
     ctx.progress(0.1, "embedding")
     warnings: list[str] = []
