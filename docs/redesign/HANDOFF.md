@@ -1,4 +1,4 @@
-# Handoff (2026-11-23)
+# Handoff (2026-11-24)
 
 Read this first when resuming. The branch is `overhaul`; it is pushed to `origin/overhaul`. Then read `docs/redesign/README.md` (status) and `docs/system-test-and-debug.md` (the latest external review with experiments).
 
@@ -7,38 +7,27 @@ Read this first when resuming. The branch is `overhaul`; it is pushed to `origin
 - Commits have **no** `Co-Authored-By` trailer. Push only to `overhaul`, and only when the user asks. Open no PR unless asked.
 - Keep UMAP. Do not swap the reducer.
 - Never touch the user's own `pg` Postgres container.
-- Agent routing per `CLAUDE.md`: scout (haiku), builder (sonnet), architect (opus).
+- Agent routing per `CLAUDE.md`, **actually used**: scout (haiku), builder (sonnet), architect (opus). Builder specs carry a token budget (pipe output through `tail`/grep, no full-file reads, no exploration).
+- If a question to the user goes unanswered for about a minute, take the recommended option and continue.
 
-## State
-- Last pushed commits: `1c75b99` (UI fixes), then `12952f0` and `167127c` from teammate Codexhack286. Those two add the system-test report and fix PDF coverage, single-cluster Hungarian accuracy and the explanation cache. They were reviewed and are correct.
-- The next commit (see git log) fixes 5 more findings from that report:
-  - **#5:** the run records the effective seed. A null request seed used to be stored as null.
-  - **#6:** `REQCLUSTER_EMBEDDING_REVISION` (default now `main`) is passed to the model loader, so a commit hash pins the weights. It also keys the embedding cache. The old default `"1"` was a cache version only, not a real Hugging Face ref.
-  - **#7:** feedback whose constraints a recluster carries moves to the new run, so it stays reviewable and rejectable.
-  - **#10:** export bundles drop dependency edges when the tree is stale.
-  - **#11:** a requirement moved to noise stores probability 0.0 instead of 1.0.
-  - **Latent crash fixed:** the embedding-dimension lookup evaluated the deprecated method name eagerly.
-- Tests: unit+api 345 pass; acceptance+hardening 175 pass; ruff is clean. CI (ubuntu, windows, postgres, frontend, eval) was green at `1c75b99`.
+## State (2026-11-24)
+Local commits on `overhaul`, **not pushed**:
+- `805a54c` A later human edit supersedes older constraints it contradicts. Moving two items out of one cluster stored cannot(a,b) and then must(a,b), and recluster failed. Constraints are active only while the placement agrees with them. Also adds `tests/api/test_workflows.py`: chained workflows cross-checking requirements, clusters, detail, graph, metrics, session and CSV after every step, including the 0- and 1-cluster states.
+- `47f081e` Eval gates `accuracy_noise_inclusive_pct` on every labelled fast dataset (finding #3). `data/sample_requirements.csv` had 2 rows with unquoted commas; a test now checks every data CSV.
+- `9e59610` Ward membership is a centroid silhouette, not a 1.0 placeholder.
+- `fcc1fed` For 20-2000 rows (hdbscan): consensus of 5 UMAP seeds plus radius rescue. On 8 labelled sets x 10 seeds, mean ARI MiniLM .311 -> .374, gte .348 -> .383, noise ~12% -> ~4%. The eval fast suite passes; noise-inclusive accuracy bit_control 43 -> 49, aerospace 58 -> 70, multidomain 74 -> 81. Experiment: `docs/redesign/findings/exp/small_accuracy.py` (caches in `var/cache/gate/`).
+- Tests: unit+api 375, acceptance+hardening 175, eval 15, all pass; ruff clean.
 
-## Why earlier reviews missed these
-The earlier tests checked one feature at a time and asserted "no 500 / no data loss". The bugs sat between features: feedback, then recluster, then review; tree, then edit, then export. They returned 200 with wrong content. **New rule:** add workflow tests that chain steps and assert the *content* is true. Also check metrics and reports on degenerate input (0 or 1 cluster, not yet clustered).
+Why the ARI ceiling differs per set: `promise` labels are requirement *types* and `dependency_gold` labels are dependency *roles*. Topic clustering cannot match those, so low ARI there is expected. `bit_control`'s 8 groups overlap in theme.
 
 ## Open work (priority order)
-1. **Workflow-correctness tests:** multi-step API sequences that assert the content, not just the status codes.
-2. **Accuracy on small real uploads.** The weak spot is `data/bit_control_requirements.xlsx` (100 reqs, 8 groups): ARI about 0.19 (range 0.13-0.24 over seeds), with 0-22 noise depending on the seed. Large synthetic sets are already at 0.96-0.998. Ideas to test with the eval harness, on several datasets and seeds, never tuned on one:
-   - Seed-stability: run several UMAP seeds and take consensus labels.
-   - `min_samples` and `min_cluster_size` defaults for N < 200 (report Experiment B).
-   - Enriched/hybrid text.
-   - A top-2 candidate cluster for noise rows.
-
-   Measure with noise-inclusive metrics. ARI can't exceed 1, so "100x" is not possible; aim for higher and more stable ARI plus less spurious noise.
-3. **Report findings still open:**
-   - #3: eval gates should include noise-inclusive accuracy.
-   - #4: the PDF caps each listing at 25 and says so; CSV is the complete export.
-   - #12: active-learning ranks by centroid margin. That is documented and intended.
-   - Ward's membership values are placeholders of 1.0.
-   - Architecture items 1-9: provenance snapshot, artifact freshness, single-process job runner, separate SQL and npz lifecycles, no automatic schema migration.
-4. **Frontend:** a browser click-through of the actions (accept a suggestion, move a requirement, export downloads, feedback). Page rendering is verified; the action buttons are not.
+1. **Accuracy, next levers** (test on all labelled sets and several seeds, never tuned on one):
+   - Optional target cluster count `k` (users often know it). Candidate: cut the consensus co-association, or Ward on x10, at k.
+   - gte-modernbert on CPU: is it more accurate and is the speed acceptable (CPU ~17 texts/s vs MiniLM 150)?
+   - Enriched/hybrid text via the LLM (needs Ollama; slow).
+   - Eval baselines are still the pre-consensus values. Re-baseline only when the user agrees.
+2. **Report findings still open:** #4 (the PDF caps listings at 25; CSV is complete), #12 (active learning ranks by margin: intended), architecture items 1-9 (provenance snapshot, artifact freshness, single-process job runner, separate SQL/npz lifecycles, no schema migration).
+3. **Frontend:** browser click-through of the action buttons (accept suggestion, move requirement, export download, feedback). Rendering is verified; the actions are not.
 
 ## Environment notes
 - **Headroom** token-saving proxy, v0.43.1 (`uv tool`), runs as the systemd user service `headroom.service` on `127.0.0.1:8787`, with telemetry off.
