@@ -157,3 +157,22 @@ def test_graph_cache_invalidated_by_edit():
     g2 = sessions.graph(sid)
     assert g2 is not g and g2.edit_seq == g.edit_seq + 1
     assert g2.nodes.cluster_id[g2.nodes.id.index(rid)] == dst
+
+
+def test_pending_feedback_stays_reviewable_after_recluster():
+    # recluster carried its constraints but left the row on the old run: unreviewable, unrejectable
+    sid = clustered()
+    rid, src, dst = two_clusters(sid)
+    fb = feedback.submit(sid, rid, dst, "", "me")
+    assert feedback.recluster(sid).status == "succeeded"
+    assert [f.id for f in feedback.queue(sid, "pending")] == [fb.feedback_id]
+    feedback.review(sid, fb.feedback_id, False)
+    assert not [p for p in feedback.constraints(sid).constraint_pairs]
+
+
+def test_move_to_noise_stores_zero_membership():
+    sid = clustered()
+    rid = next(iter(labels(sid)))
+    feedback.submit(sid, rid, None, "", "me")
+    item = next(i for i in sessions.requirements(sid)[0] if i.id == rid)
+    assert item.is_noise and item.probability == 0.0

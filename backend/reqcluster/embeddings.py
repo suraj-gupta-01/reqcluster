@@ -54,10 +54,11 @@ class SbertEmbedder:
                 device = "cuda" if torch.cuda.is_available() else "cpu"
             self.device = device
             # float32 always: some models default to fp16, which runs ~5x slower on CPU
-            self._model = SentenceTransformer(model_name, device=device,
+            self._model = SentenceTransformer(model_name, device=device, revision=revision,
                                               model_kwargs={"dtype": torch.float32})
             m = self._model  # get_embedding_dimension in sentence-transformers >= 6 (old name deprecated)
-            self.dim = int(getattr(m, "get_embedding_dimension", m.get_sentence_embedding_dimension)())
+            get_dim = getattr(m, "get_embedding_dimension", None) or m.get_sentence_embedding_dimension
+            self.dim = int(get_dim())
         except Exception as exc:
             raise Unavailable(f"embedding model {model_name!r} could not be loaded: {exc}") from exc
 

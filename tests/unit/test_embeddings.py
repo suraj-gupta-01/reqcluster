@@ -104,3 +104,21 @@ def test_auto_model_follows_device(monkeypatch, cuda, expected):
     assert E.resolve_model("auto", "auto") == (expected, "cuda" if cuda else "cpu")
     assert E.resolve_model("auto", "cpu") == ("all-MiniLM-L6-v2", "cpu")  # forced CPU stays fast
     assert E.resolve_model("my/model", "auto")[0] == "my/model"  # explicit choice wins
+
+
+def test_sbert_passes_revision_to_loader(monkeypatch):
+    # the configured revision keyed the cache but never reached the loader, so it pinned nothing
+    import sentence_transformers
+
+    seen = {}
+
+    class Fake:
+        def __init__(self, name, **kw):
+            seen.update(kw)
+
+        def get_embedding_dimension(self):
+            return 4
+
+    monkeypatch.setattr(sentence_transformers, "SentenceTransformer", Fake)
+    E.SbertEmbedder("m", "abc123", "cpu")
+    assert seen["revision"] == "abc123"

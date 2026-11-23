@@ -133,3 +133,13 @@ def test_run_embeddings_warns_on_model_change():
 def test_seed_out_of_range_rejected(seed):
     with pytest.raises(ValueError):
         ClusteringParams(seed=seed)
+
+
+def test_run_records_effective_seed():
+    # a null request seed was stored as null, so the run could not be reproduced later
+    from reqcluster.config import get_settings
+
+    sid = make()
+    clustering.start(sid, ClusteringParams())
+    with session_scope() as s:
+        assert s.scalar(select(RunRow.params).where(RunRow.session_id == sid))["seed"] == get_settings().seed

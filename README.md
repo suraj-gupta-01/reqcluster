@@ -154,7 +154,7 @@ Read from the environment and `.env`; real env vars win. All variables with comm
 | `REQCLUSTER_EMBEDDING_MODEL` | `auto` | gte-modernbert on NVIDIA GPU, MiniLM on CPU, or a pinned model |
 | `REQCLUSTER_EMBEDDING_DEVICE` | `auto` | `auto`, `cpu`, `cuda`. Pin `cpu` for reproducible clusters |
 | `REQCLUSTER_EMBEDDING_BACKEND` | `torch` | `torch` or `mock` |
-| `REQCLUSTER_EMBEDDING_REVISION` | 1 | Bump to invalidate the embedding cache |
+| `REQCLUSTER_EMBEDDING_REVISION` | main | Hugging Face branch, tag or commit of the model; a commit hash pins the weights (also keys the embedding cache) |
 | `REQCLUSTER_MAX_UPLOAD_MB` / `_MAX_ROWS` | 25 / 50000 | Upload caps |
 | `REQCLUSTER_LLM_PROVIDER` | `mock` | `mock`, `openai`, `local` |
 | `REQCLUSTER_LLM_BASE_URL`, `_API_KEY`, `_MODEL` | empty | OpenAI-compatible provider |

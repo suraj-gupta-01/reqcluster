@@ -133,7 +133,7 @@ def load_settings(
         seed=get("REQCLUSTER_SEED", 42, int, lo=0, hi=2**32 - 1),
         threads=get("REQCLUSTER_THREADS", os.cpu_count() or 1, int, lo=1),
         embedding_model=get("REQCLUSTER_EMBEDDING_MODEL", "auto"),  # auto: gte on GPU, MiniLM on CPU
-        embedding_revision=get("REQCLUSTER_EMBEDDING_REVISION", "1"),
+        embedding_revision=get("REQCLUSTER_EMBEDDING_REVISION", "main"),
         embedding_backend=lit("REQCLUSTER_EMBEDDING_BACKEND", "torch", Backend),
         embedding_device=lit("REQCLUSTER_EMBEDDING_DEVICE", "auto", Device),
         max_upload_mb=get("REQCLUSTER_MAX_UPLOAD_MB", 25, int),

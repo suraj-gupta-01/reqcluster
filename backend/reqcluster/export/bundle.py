@@ -13,7 +13,7 @@ from reqcluster.db import session_scope
 from reqcluster.domain import NOISE
 from reqcluster.errors import NotFound
 from reqcluster.models import (
-    AssignmentRow, ClusterRow, DependencyTreeRow, RequirementRow, SessionRow,
+    AssignmentRow, ClusterRow, DependencyTreeRow, RequirementRow, RunRow, SessionRow,
 )
 
 _XML_BAD = re.compile("[\x00-\x08\x0b\x0c\x0e-\x1f\ud800-\udfff￾￿]")
@@ -85,7 +85,7 @@ def build(sid: int) -> ExportBundle:
             pk_ids[r.id] = reqs[-1].req_id
         edges = []
         tree = s.get(DependencyTreeRow, run_id) if run_id is not None else None
-        if tree is not None:
+        if tree is not None and tree.params.get("edit_seq") == s.get(RunRow, run_id).edit_seq:
             edges = [(pk_ids[e["source"]], pk_ids[e["target"]], e["relation"], e["weight"])
                      for e in tree.edges]
         return ExportBundle(sid, row.name, reqs, clusters,

@@ -99,3 +99,17 @@ def test_regenerating_tree_invalidates_explanation_cache():
     regenerated = tree(sid)
     assert any(e["source"] == req.source and e["target"] == req.target for e in regenerated["edges"])
     assert dependencies.explain(sid, req).cached is False
+
+
+def test_export_drops_stale_dependency_edges():
+    from reqcluster.services import feedback
+
+    sid = make()
+    tree(sid)
+    assert build_bundle(sid).edges
+    items, _ = sessions.requirements(sid)
+    a = items[0]
+    other = next(i.cluster_id for i in items if i.cluster_id not in (a.cluster_id, -1))
+    feedback.submit(sid, a.id, other, "", "me")
+    assert dependencies.get(sid).stale
+    assert build_bundle(sid).edges == []  # exported edges must match the exported clusters

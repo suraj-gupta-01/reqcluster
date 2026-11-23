@@ -30,7 +30,7 @@ def reassign(s: Session, run: RunRow, moves: dict[int, int], *, action: str, act
     for cid, req_ids in by_target.items():
         s.execute(update(AssignmentRow)
                   .where(AssignmentRow.run_id == run.id, AssignmentRow.requirement_id.in_(req_ids))
-                  .values(cluster_id=cid, probability=1.0))  # a human decision is certain
+                  .values(cluster_id=cid, probability=0.0 if cid == -1 else 1.0))  # human: certain; noise: none
 
     rows = s.execute(select(AssignmentRow.cluster_id, RequirementRow.text)
                      .join(RequirementRow, RequirementRow.id == AssignmentRow.requirement_id)

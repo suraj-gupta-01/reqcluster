@@ -7,7 +7,7 @@ from dataclasses import asdict
 
 import numpy as np
 from pydantic import BaseModel
-from sqlalchemy import delete, func, insert, select
+from sqlalchemy import delete, func, insert, select, update
 
 from reqcluster import embeddings
 from reqcluster.config import get_settings
@@ -21,6 +21,7 @@ from reqcluster.models import (
     AssignmentRow,
     ClusterRow,
     ConstraintRow,
+    FeedbackRow,
     RequirementRow,
     RunRow,
     SessionRow,
@@ -108,7 +109,7 @@ def _run(ctx: JobContext, sid: int, params: ClusteringParams) -> ClusteringSumma
     edges = [[req_ids[i], req_ids[j], float(w)] for i, j, w in res.edges]
     reports = _reports(ctx, sid, params, texts, emb, res, seed, settings.threads)
     rid, revision = persist_run(sid, "cluster",
-                                {**params.model_dump(), "embedding_model": embeddings.get_embedder().name}, req_ids, res.labels,
+                                {**params.model_dump(), "seed": seed, "embedding_model": embeddings.get_embedder().name}, req_ids, res.labels,
                                 res.probabilities, res.x10, res.xy, res.clusters, edges, m,
                                 res.warnings, res.durations, reports=reports)
     return ClusteringSummary(run_id=rid, revision=revision, n_clusters=len(res.clusters),
@@ -171,6 +172,12 @@ def persist_run(sid, kind, params, req_ids, labels, probabilities, x10, xy, clus
                 s.execute(insert(ConstraintRow), [
                     {"run_id": rid, "a_id": a, "b_id": b, "kind": k, "feedback_id": f}
                     for a, b, k, f in constraints])
+                # the feedback behind carried constraints follows them: review/reject act on the
+                # current run only, and pruning the old run would orphan the constraints
+                fids = {f for *_, f in constraints if f is not None}
+                if fids:
+                    s.execute(update(FeedbackRow).where(FeedbackRow.id.in_(fids))
+                              .values(run_id=rid))
             _write_npz(rid, x10=x10, xy=xy, probabilities=probabilities,
                        edges=np.asarray(edges, dtype=np.float64).reshape(-1, 3))
             s.get(SessionRow, sid).current_run_id = rid
