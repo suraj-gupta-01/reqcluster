@@ -4,7 +4,7 @@ Date: 2026-11-23
 Baseline revision: `1c75b99` (`refine`, after the `origin/overhaul` fast-forward)  
 Scope: investigate clustering quality, report accuracy and related evaluation issues. Subsequent fixes are recorded below; the other findings remain open unless stated otherwise.
 
-**Repository state at documentation commit:** The fixes and regression tests listed below were verified in the working tree but were not included in the documentation-only commit. Apply or commit those code changes separately before relying on their fix status in another checkout.
+The fixes and regression tests listed below were verified in the working tree and are included in the subsequent code-fix commit.
 
 ## Fix status
 
@@ -307,6 +307,6 @@ The workbook is a small, single-label reference; engineering requirements can le
 
 1. Reproduce the supplied enriched runs with saved enriched texts, embeddings, model version, device, full parameters and effective seed; compare base/enriched/hybrid using identical seeds and inputs.
 2. Evaluate per-group correct-theme recall, noise rate, PID and output requirements, and cluster stability together. Avoid declaring success from coverage alone.
-3. Apply the verified working-tree fixes for pre-clustering coverage and single-cluster Hungarian accuracy if they have not yet been committed.
+3. Monitor the regression tests for pre-clustering coverage and single-cluster Hungarian accuracy as the application evolves.
 4. Clarify the meaning of Ward's membership values and noise policy; do not present placeholder values as calibrated confidence.
 5. Record complete provenance and use CSV rather than truncated PDFs for automated membership evaluation.

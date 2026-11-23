@@ -112,6 +112,7 @@ def _run(ctx: JobContext, sid: int, req: DependencyRequest) -> TreeOut:
     with session_scope() as s:
         if s.get(SessionRow, sid).current_run_id != run_id:
             raise Conflict("session was re-clustered while the tree was building")
+        s.execute(delete(DependencyExplanationRow).where(DependencyExplanationRow.run_id == run_id))
         s.execute(delete(DependencyTreeRow).where(DependencyTreeRow.run_id == run_id))
         s.add(DependencyTreeRow(run_id=run_id, params={**req.model_dump(exclude_none=True), "edit_seq": edit_seq},
                                 nodes=tree["nodes"], edges=tree["edges"], stats=tree["stats"],
@@ -141,7 +142,7 @@ def explain(sid: int, req: ExplainRequest) -> ExplanationOut:
             raise NotFound(f"no dependency edge {req.source} -> {req.target}")
         if not req.force:
             hit = s.get(DependencyExplanationRow, (run_id, req.source, req.target))
-            if hit is not None:
+            if hit is not None and hit.provider == (req.provider or get_settings().llm_provider):
                 return ExplanationOut(source=req.source, target=req.target,
                                       explanation=hit.explanation["text"],
                                       provider=hit.provider, cached=True)

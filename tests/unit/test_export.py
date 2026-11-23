@@ -132,6 +132,31 @@ def test_pdf_valid_and_empty_clusters():
     assert export(make(["a"], [-1]), "pdf")[0][:5] == b"%PDF-"
 
 
+def test_pdf_unclustered_session_has_zero_coverage(monkeypatch):
+    from reportlab import rl_config
+
+    monkeypatch.setattr(rl_config, "pageCompression", 0)
+    sid = make(["first", "second"], None)
+    pdf = export(sid, "pdf")[0]
+    assert b"2 requirements, 0 clusters, 0 noise, 0.0% coverage" in pdf
+
+
+def test_pdf_coverage_counts_only_assigned_requirements(monkeypatch):
+    from reportlab import rl_config
+    from reqcluster.export.bundle import ExportBundle, ExportReq
+    from reqcluster.export.pdf import export_pdf
+
+    monkeypatch.setattr(rl_config, "pageCompression", 0)
+    requirements = [
+        ExportReq("R1", "first", 0, "Topic", False, 0),
+        ExportReq("R2", "second", -1, "Noise", True, 1),
+        ExportReq("R3", "third", None, "Unclustered", False, 2),
+        ExportReq("R4", "fourth", None, "Unclustered", False, 3),
+    ]
+    pdf = export_pdf(ExportBundle(1, "mixed", requirements, [], "now"))
+    assert b"4 requirements, 0 clusters, 1 noise, 25.0% coverage" in pdf
+
+
 def test_errors():
     sid = make(["a"], None)
     with pytest.raises(Invalid):

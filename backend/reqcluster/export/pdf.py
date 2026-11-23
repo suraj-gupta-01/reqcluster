@@ -80,6 +80,7 @@ def export_pdf(b: ExportBundle) -> bytes:
     reqs = b.requirements
     n = len(reqs)
     noise = sum(r.is_noise for r in reqs)
+    assigned = sum(r.cluster_id is not None and not r.is_noise for r in reqs)
     avail = A4[0] - 32 * mm
     by = defaultdict(list)
     for r in reqs:
@@ -90,7 +91,7 @@ def export_pdf(b: ExportBundle) -> bytes:
         Paragraph(f"Session: {_esc(b.session_name or 'Untitled')}  ·  Generated: {_esc(b.generated_at)}", S["sub"]),
         Spacer(1, 6), HRFlowable(width="100%", color=LINE, thickness=1), Spacer(1, 8),
         Paragraph(f"{n} requirements, {len(b.clusters)} clusters, {noise} noise, "
-                  f"{round((n - noise) / n * 100, 1) if n else 0.0}% coverage", S["cell"]),
+                  f"{round(assigned / n * 100, 1) if n else 0.0}% coverage", S["cell"]),
     ]
     bar = _bar_png(b.clusters)
     if bar is not None:

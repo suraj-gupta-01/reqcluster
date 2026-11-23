@@ -70,3 +70,32 @@ def test_fallback_explanation_is_not_cached(monkeypatch):
                         lambda *a, **k: LLMResult("stand-in", "fallback", "openai", "down"))
     D.explain(sid, req)
     assert D.explain(sid, req).cached is False
+
+
+def test_explanation_cache_respects_requested_provider(monkeypatch):
+    from reqcluster.llm.gateway import LLMResult
+
+    sid = make()
+    e = tree(sid)["edges"][0]
+    req = dependencies.ExplainRequest(source=e["source"], target=e["target"], provider="mock")
+    assert dependencies.explain(sid, req).provider == "mock"
+    monkeypatch.setattr(
+        dependencies, "explain_edge",
+        lambda *args, **kwargs: LLMResult("openai explanation", "llm", "openai"),
+    )
+    result = dependencies.explain(sid, req.model_copy(update={"provider": "openai"}))
+    assert result.provider == "openai"
+    assert result.explanation == "openai explanation"
+    assert result.cached is False
+    assert dependencies.explain(sid, req.model_copy(update={"provider": "openai"})).cached is True
+
+
+def test_regenerating_tree_invalidates_explanation_cache():
+    sid = make()
+    edge = tree(sid)["edges"][0]
+    req = dependencies.ExplainRequest(source=edge["source"], target=edge["target"])
+    assert dependencies.explain(sid, req).cached is False
+    assert dependencies.explain(sid, req).cached is True
+    regenerated = tree(sid)
+    assert any(e["source"] == req.source and e["target"] == req.target for e in regenerated["edges"])
+    assert dependencies.explain(sid, req).cached is False

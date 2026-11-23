@@ -44,3 +44,9 @@ def test_noise_counts_as_wrong_in_inclusive_accuracy():
     m = compute(labels, x, 0, gt)
     assert m["hungarian_accuracy"] == 1.0  # non-noise points all matched
     assert m["accuracy_noise_inclusive"] == 5 / 8
+
+
+def test_single_cluster_hungarian_matches_largest_reference_group():
+    m = compute(np.array([0, 0, 0, 0]), None, 0, ["A", "A", "B", "B"])
+    assert m["hungarian_accuracy"] == 0.5
+    assert m["accuracy_noise_inclusive"] == 0.5

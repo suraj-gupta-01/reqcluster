@@ -21,9 +21,9 @@ def has_ground_truth(gt: list[str], n: int) -> bool:
 
 
 def _hungarian_matched(cl: np.ndarray, tr: np.ndarray) -> int:
-    """Points matched by the optimal 1-to-1 cluster->group assignment (0 if < 2 clusters)."""
+    """Points matched by the optimal 1-to-1 cluster->group assignment."""
     cids, gids = sorted(set(cl.tolist())), sorted(set(tr.tolist()))
-    if len(cids) < 2:
+    if not cids or not gids:
         return 0
     ci, gi = {c: i for i, c in enumerate(cids)}, {g: j for j, g in enumerate(gids)}
     cost = np.zeros((len(cids), len(gids)), dtype=np.int64)
