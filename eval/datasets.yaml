@@ -4,6 +4,10 @@ datasets:
     suite: fast
     ground_truth: module
     tolerances:
+      # noise-inclusive: noise rows count as wrong, so dropping rows to noise can't raise it
+      accuracy_noise_inclusive_pct:
+        floor: 30.0
+        delta: -8.0
       # Floors set after first run — update once baseline JSON is committed
       ari:
         floor: 0.05
@@ -24,6 +28,10 @@ datasets:
     suite: fast
     ground_truth: module
     tolerances:
+      # noise-inclusive: noise rows count as wrong, so dropping rows to noise can't raise it
+      accuracy_noise_inclusive_pct:
+        floor: 45.0
+        delta: -8.0
       accuracy_pct:
         floor: 55.0
         delta: -3.0
@@ -42,6 +50,10 @@ datasets:
     suite: fast
     ground_truth: module
     tolerances:
+      # noise-inclusive: noise rows count as wrong, so dropping rows to noise can't raise it
+      accuracy_noise_inclusive_pct:
+        floor: 92.0
+        delta: -2.0
       accuracy_pct:
         floor: 95.0
         delta: -1.5
@@ -64,6 +76,10 @@ datasets:
     suite: fast
     ground_truth: module
     tolerances:
+      # noise-inclusive: noise rows count as wrong, so dropping rows to noise can't raise it
+      accuracy_noise_inclusive_pct:
+        floor: 18.0
+        delta: -5.0
       parse_success_rate:
         floor: 0.90
         delta: -0.05
@@ -102,6 +118,10 @@ datasets:
     suite: fast
     ground_truth: module
     tolerances:
+      # noise-inclusive: noise rows count as wrong, so dropping rows to noise can't raise it
+      accuracy_noise_inclusive_pct:
+        floor: 65.0
+        delta: -5.0
       ari:
         floor: 0.62
         delta: -0.10
@@ -114,6 +134,10 @@ datasets:
     suite: fast
     ground_truth: module
     tolerances:
+      # noise-inclusive: noise rows count as wrong, so dropping rows to noise can't raise it
+      accuracy_noise_inclusive_pct:
+        floor: 20.0
+        delta: -5.0
       reference_recall:
         floor: 0.30
         delta: -0.15

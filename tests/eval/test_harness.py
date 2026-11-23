@@ -321,3 +321,16 @@ def test_extract_clustering_metrics_percent_names():
     assert m["accuracy_pct"] == m["purity_pct"] == pytest.approx(90.0)
     assert m["accuracy_noise_inclusive_pct"] == pytest.approx(70.0)
     assert m["hungarian_accuracy_pct"] == pytest.approx(80.0)
+
+
+def test_fast_suite_gates_noise_inclusive_accuracy():
+    """Assigned-only metrics ignore noise rows; each labelled fast dataset must also gate a
+    metric that counts noise as wrong, and its committed baseline must pass that gate."""
+    from eval.config import REPO_ROOT
+
+    registry = RegistryConfig.from_yaml(REPO_ROOT / "eval" / "datasets.yaml")
+    for ds in resolve_datasets(registry, suite="fast"):
+        tol = ds.tolerances.get("accuracy_noise_inclusive_pct")
+        assert tol is not None, ds.name
+        base = load_baseline(ds.name)["metrics"]["accuracy_noise_inclusive_pct"]
+        assert evaluate_metric_gate("accuracy_noise_inclusive_pct", base, base, tol)["verdict"] == "PASS"

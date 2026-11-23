@@ -31,7 +31,7 @@ REQ-029,The software watchdog timer shall trigger a system reset if the main loo
 REQ-030,All inter-process communication shall use CRC-32 checksums to detect data corruption,Software,Data Integrity
 REQ-031,The system shall comply with IEC 61508 SIL-2 for all safety-related functions,Safety,Standards
 REQ-032,A failure mode and effects analysis shall be performed for every functional block,Safety,FMEA
-REQ-033,The system shall achieve a minimum MTBF of 50,000 hours under nominal operating conditions,Safety,Reliability
+REQ-033,"The system shall achieve a minimum MTBF of 50,000 hours under nominal operating conditions",Safety,Reliability
 REQ-034,All safety-critical inputs shall be validated through a two-out-of-three voting logic,Safety,Voting Logic
 REQ-035,The system shall fail safe to a known safe state upon detection of any unrecoverable fault,Safety,Fail Safe
 REQ-036,Safety functions shall have a diagnostic coverage of at least 90% as defined in IEC 61508,Safety,Diagnostics
@@ -71,7 +71,7 @@ REQ-069,The system shall comply with DO-160G Category B for electrostatic discha
 REQ-070,Ground planes shall be uninterrupted beneath all analog signal traces,EMC,PCB Design
 REQ-071,The system shall operate continuously across an ambient temperature range of -40°C to +70°C,Environmental,Temperature
 REQ-072,The unit shall survive storage at temperatures from -55°C to +85°C without performance degradation,Environmental,Storage
-REQ-073,The system shall operate at altitudes from sea level to 15,000 feet without derating,Environmental,Altitude
+REQ-073,"The system shall operate at altitudes from sea level to 15,000 feet without derating",Environmental,Altitude
 REQ-074,The unit shall withstand 95% relative humidity at 40°C for 96 hours without corrosion,Environmental,Humidity
 REQ-075,The enclosure shall be rated to withstand salt fog exposure per ASTM B117,Environmental,Corrosion
 REQ-076,The system shall survive thermal cycling between -40°C and +70°C for a minimum of 100 cycles,Environmental,Thermal Cycling
