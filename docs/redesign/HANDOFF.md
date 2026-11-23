@@ -24,10 +24,10 @@ Why the ARI ceiling differs per set: `promise` labels are requirement *types* an
 1. **Accuracy, next levers** (test on all labelled sets and several seeds, never tuned on one):
    - ~~Target cluster count `k`~~ tested 2026-11-24, **rejected**: Ward on x10 cut at the true k gives mean ARI gte .383 -> .413, MiniLM .374 -> .382, but wins only 10/16 model x set pairs (stress_600 .568 -> .459), and that is with an oracle k. Average-linkage on co-association collapses (ARI 0 on 2 sets). Ward on full embeddings is .93 on stress_600 but .735 vs .88 on the large sets. Data: `var/cache/gate/small_accuracy_k*.jsonl`.
    - ~~gte on CPU~~ **rejected**: 7.9 texts/s vs MiniLM 77 on CPU for +.009 mean ARI. MiniLM stays the CPU default.
-   - Enriched/hybrid text via the LLM (needs Ollama; slow).
+   - ~~Enriched/hybrid text via the LLM~~ tested 2026-11-24, **rejected**: qwen3.5:4b (Ollama), MiniLM, seeds 0-9 on aerospace, bit_control, sample, uav_fms_phase2_audit. Mean ARI base .515, enriched .423, hybrid .458; enriched loses on all 4 sets and doubles noise. Hybrid gains only on bit_control (+.014) and uav_phase2 (+.021), within seed spread. The LLM output is mostly paraphrase (length x1.31) and costs ~15 s per requirement. Script: `docs/redesign/findings/exp/enriched_accuracy.py` (LLM cache `var/cache/gate/enriched_<name>.json`).
    - Eval baselines are still the pre-consensus values. Re-baseline only when the user agrees.
 2. **Report findings still open:** #4 (the PDF caps listings at 25; CSV is complete), #12 (active learning ranks by margin: intended), architecture items 1-9 (provenance snapshot, artifact freshness, single-process job runner, separate SQL/npz lifecycles, no schema migration).
-3. **Frontend:** browser click-through of the action buttons (accept suggestion, move requirement, export download, feedback). Rendering is verified; the actions are not.
+3. ~~**Frontend:** browser click-through of the action buttons~~ done 2026-11-24 (puppeteer): accept/reject suggestion, move requirement, export download, feedback, recluster all pass with no console or API errors. A stale suggestion disables both Accept and Reject; that is by design (the backend returns 409 Stale, an API test covers it).
 
 ## Environment notes
 - **Headroom** token-saving proxy, v0.43.1 (`uv tool`), runs as the systemd user service `headroom.service` on `127.0.0.1:8787`, with telemetry off.
