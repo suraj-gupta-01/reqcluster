@@ -33,10 +33,12 @@ class RequirementIn(BaseModel):
 class ClusteringParams(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
-    clusterer: Literal["hdbscan", "ward"] = Field(
+    clusterer: Literal["hdbscan", "ward", "llm"] = Field(
         default="hdbscan",
         description="ward: ward linkage draws the groups (silhouette-chosen k) while HDBSCAN "
-                    "still flags outliers; better on large mixed-domain sets, worse on uav2k.")
+                    "still flags outliers; better on large mixed-domain sets, worse on uav2k. "
+                    "llm: an LLM proposes topics and assigns every requirement (needs an LLM "
+                    "provider, ~2 s/requirement locally; best on small sets with ambiguous themes).")
     min_cluster_size: int | None = Field(default=None, ge=2)  # None = auto
     min_samples: int = Field(default=3, ge=1)
     sim_threshold: float | None = Field(default=None, ge=0.0, le=1.0)  # None = per-model default

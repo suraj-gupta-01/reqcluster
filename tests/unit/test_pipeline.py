@@ -232,3 +232,15 @@ def test_exact_duplicates_cluster_as_unique_rows():
         a = np.asarray(getattr(full, f)).reshape(len(base), 5, -1)
         assert (a == a[:, :1]).all()
     assert (np.asarray(full.labels)[::5] == np.asarray(uniq.labels)).all()
+
+
+def test_relabel_hook_replaces_labels_and_names():
+    X, t = two_blobs()
+    base = pipeline.run(X, t, P(), seed=0)
+    lab = np.array([5] * 30 + [3] * 30)
+    r = pipeline.run(X, t, P(), seed=0, relabel=lambda labels, x10: (lab, {5: "Alpha", 3: "Beta"}))
+    assert sorted(r.labels.tolist()) == [0] * 30 + [1] * 30
+    assert {c.label for c in r.clusters} == {"Alpha", "Beta"}
+    assert ((r.probabilities >= 0) & (r.probabilities <= 1)).all()
+    same = pipeline.run(X, t, P(), seed=0, relabel=lambda labels, x10: None)
+    assert (same.labels == base.labels).all()

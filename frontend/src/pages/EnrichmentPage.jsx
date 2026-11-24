@@ -218,6 +218,7 @@ function Enrichment({ sessionId, reloadSession }) {
               <select value={clusterOptions.clusterer} onChange={e => updateClusterOption('clusterer', e.target.value)} className="input text-sm w-full mt-1">
                 <option value="hdbscan">HDBSCAN (default, most robust)</option>
                 <option value="ward">Ward + outliers (large mixed-domain sets)</option>
+                <option value="llm">LLM topics (needs an LLM; ~2 s per requirement)</option>
               </select>
             </label>
             <div className="grid grid-cols-3 gap-3">

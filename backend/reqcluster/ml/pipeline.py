@@ -34,7 +34,7 @@ def _cluster(X, x10, params: ClusteringParams, mcs: int, seed: int):
 
 
 def run(embeddings, texts, params: ClusteringParams, *, seed: int, threads: int = 1,
-        progress=None) -> ClusteringResult:
+        progress=None, relabel=None) -> ClusteringResult:
     X = np.asarray(embeddings, dtype=np.float32)
     if X.ndim != 2 or len(X) == 0:
         raise Invalid("embeddings must be a non-empty 2-D array")
@@ -64,10 +64,20 @@ def run(embeddings, texts, params: ClusteringParams, *, seed: int, threads: int 
     mcs = params.min_cluster_size or cluster.auto_min_cluster_size(len(U))
     labels_u, probs_u = step("cluster", 0.4, lambda: _cluster(U, x10u, params, mcs, seed))
     labels, probs, x10, xy = labels_u[inv], probs_u[inv], x10u[inv], xyu[inv]
+    names: dict[int, str] = {}
+    out = relabel(labels, x10) if relabel else None
+    if out is not None:
+        raw, raw_names = out
+        labels = L.relabel_contiguous(np.asarray(raw))
+        names = {int(labels[i]): raw_names[int(raw[i])] for i in np.flatnonzero(labels >= 0)
+                 if int(raw[i]) in raw_names}
+        probs = cluster.membership(x10, labels)
     clusters = step("keywords", 0.7, lambda: keywords.label_clusters(texts, labels))
     edges = step("graph", 0.85, lambda: graph.build(
         X, labels, params.sim_threshold if params.sim_threshold is not None
         else calibration().graph, params.top_k, seed, threads))
+    for c in clusters:
+        c.label = names.get(c.cluster_id, c.label)
     if progress:
         progress(1.0, "done")
 

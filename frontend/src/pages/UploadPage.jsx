@@ -203,6 +203,7 @@ export default function UploadPage({ onSessionCreated }) {
                       className="input text-sm w-full">
                       <option value="hdbscan">HDBSCAN (default, most robust)</option>
                       <option value="ward">Ward + outliers (large mixed-domain sets)</option>
+                      <option value="llm">LLM topics (needs an LLM; ~2 s per requirement)</option>
                     </select>
                     {params.clusterer === 'ward' && <p className="text-xs text-gray-600 mt-1">Min cluster size and min samples only drive outlier detection.</p>}
                   </div>

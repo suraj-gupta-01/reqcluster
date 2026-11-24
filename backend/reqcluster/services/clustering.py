@@ -15,6 +15,8 @@ from reqcluster.db import session_scope
 from reqcluster.domain import ClusteringParams, Job
 from reqcluster import errors
 from reqcluster.errors import Invalid, NotFound
+from reqcluster.llm import topics as topics_mod
+from reqcluster.llm.gateway import get_gateway
 from reqcluster.jobs import JobContext, get_runner
 from reqcluster.ml import analysis, metrics, pipeline
 from reqcluster.models import (
@@ -31,6 +33,7 @@ from reqcluster.services.sessions import unlink_runs
 
 KEEP_RUNS = 5
 WARD_MAX = 20000
+LLM_MAX = 1000
 
 
 class ClusteringSummary(BaseModel):
@@ -44,6 +47,16 @@ class ClusteringSummary(BaseModel):
 
 
 def start(sid: int, params: ClusteringParams) -> Job:
+    if params.clusterer == "llm":
+        if get_settings().llm_provider == "mock":
+            raise Invalid("LLM topics need an LLM provider: set REQCLUSTER_LLM_PROVIDER to local "
+                          "or openai")
+        with session_scope() as s:
+            n = s.scalar(select(func.count()).select_from(RequirementRow)
+                         .where(RequirementRow.session_id == sid))
+        if n > LLM_MAX:
+            raise Invalid(f"llm topics support at most {LLM_MAX} requirements ({n} given); "
+                          "use hdbscan")
     if params.clusterer == "ward":  # linkage builds an O(n^2) pdist: 4.9 GB at 35k requirements
         with session_scope() as s:
             n = s.scalar(select(func.count()).select_from(RequirementRow)
@@ -101,8 +114,13 @@ def _run(ctx: JobContext, sid: int, params: ClusteringParams) -> ClusteringSumma
                                                          "embedding"))
     ctx.check_cancel()
     seed = params.seed if params.seed is not None else settings.seed
-    res = pipeline.run(emb, texts, params, seed=seed, threads=settings.threads,
-                       progress=lambda frac, step: ctx.progress(0.6 + 0.35 * frac, step))
+    llm_warnings: list[str] = []
+    use_llm = params.clusterer == "llm"
+    res = pipeline.run(emb, texts, params.model_copy(update={"clusterer": "hdbscan"})
+                       if use_llm else params, seed=seed, threads=settings.threads,
+                       progress=lambda frac, step: ctx.progress(0.6 + 0.35 * frac, step),
+                       relabel=_llm_relabel(ctx, texts, seed, llm_warnings) if use_llm else None)
+    res.warnings.extend(llm_warnings)
     ctx.check_cancel()
     m = metrics.compute(res.labels, res.x10, seed)
 
@@ -115,6 +133,28 @@ def _run(ctx: JobContext, sid: int, params: ClusteringParams) -> ClusteringSumma
     return ClusteringSummary(run_id=rid, revision=revision, n_clusters=len(res.clusters),
                              noise_count=int((res.labels == -1).sum()), warnings=res.warnings,
                              durations=res.durations, metrics=m)
+
+
+def _llm_relabel(ctx, texts, seed, warnings):
+    def relabel(labels, _x10):
+        gw = get_gateway()
+        topics = topics_mod.discover(gw, texts, seed=seed)
+        if topics is None:
+            warnings.append("LLM topics unavailable: used hdbscan clusters")
+            return None
+        ctx.progress(0.6, "classifying")
+        lab = topics_mod.classify(
+            gw, texts, topics,
+            progress=lambda done, total: ctx.progress(0.6 + 0.35 * done / max(total, 1),
+                                                      "classifying"))
+        for c in np.unique(labels[labels >= 0]):  # unassigned rows follow their hdbscan cluster
+            inside = labels == c
+            got = lab[inside & (lab >= 0)]
+            if len(got):
+                lab[inside & (lab < 0)] = np.bincount(got).argmax()
+        used = sorted(set(lab[lab >= 0].tolist()))
+        return lab, {i: topics[i].name for i in used}
+    return relabel
 
 
 def _reports(ctx, sid, params, texts, emb, res, seed, threads) -> dict:

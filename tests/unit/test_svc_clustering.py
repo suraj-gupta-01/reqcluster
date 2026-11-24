@@ -1,9 +1,10 @@
+import numpy as np
 import pytest
 
 from reqcluster import errors
 from reqcluster.domain import ClusteringParams, RequirementIn
 from reqcluster.ingest import IngestResult
-from reqcluster.models import RunRow
+from reqcluster.models import ClusterRow, RunRow
 from reqcluster.db import init_db, session_scope
 from reqcluster.services import clustering, sessions
 from sqlalchemy import func, select
@@ -143,3 +144,36 @@ def test_run_records_effective_seed():
     clustering.start(sid, ClusteringParams())
     with session_scope() as s:
         assert s.scalar(select(RunRow.params).where(RunRow.session_id == sid))["seed"] == get_settings().seed
+
+
+class _LLMSettings:
+    def __init__(self, base):
+        self._b = base
+        self.llm_provider = "local"
+
+    def __getattr__(self, k):
+        return getattr(self._b, k)
+
+
+def test_llm_clusterer(monkeypatch):
+    from reqcluster.llm import topics as T
+    sid = make()
+    with pytest.raises(errors.Invalid):  # mock provider
+        clustering.start(sid, ClusteringParams(clusterer="llm"))
+    base = clustering.get_settings()
+    monkeypatch.setattr(clustering, "get_settings", lambda: _LLMSettings(base))
+    monkeypatch.setattr(clustering, "get_gateway", lambda: None)
+    monkeypatch.setattr(T, "discover", lambda *a, **k: [T.Topic(name="Odd"), T.Topic(name="Even"),
+                                                         T.Topic(name="Unused")])
+    monkeypatch.setattr(T, "classify", lambda gw, texts, topics, **k:
+                        np.array([i % 2 for i in range(len(texts))]))
+    clustering.start(sid, ClusteringParams(clusterer="llm"))
+    with session_scope() as s:
+        run = s.scalars(select(RunRow)).one()
+        assert run.params["clusterer"] == "llm"
+        assert {c.label for c in s.scalars(select(ClusterRow))} == {"Odd", "Even"}
+    monkeypatch.setattr(T, "discover", lambda *a, **k: None)
+    clustering.start(sid, ClusteringParams(clusterer="llm"))
+    with session_scope() as s:
+        run = s.scalars(select(RunRow).order_by(RunRow.revision.desc())).first()
+        assert "LLM topics unavailable: used hdbscan clusters" in run.warnings
