@@ -1,4 +1,6 @@
 """Pure model-input text builder (no config/db)."""
+import math
+import re
 import unicodedata
 from collections.abc import Sequence
 
@@ -13,6 +15,25 @@ def _normalize_text(text: object) -> str:
 
 def _is_missing_enrichment(text: object) -> bool:
     return _normalize_text(text).strip() == ""
+
+
+def strip_boilerplate(texts: Sequence[str]) -> list[str]:
+    """Drop sentences templated across many rows; they swamp embeddings (evidence: uav_fms_stress_600)."""
+    split = [[p for p in re.split(r"(?<=[.!?;)])\s+", t) if p] for t in texts]
+
+    def key(s: str) -> str:
+        return re.sub(r"\d+", "#", s.lower()).strip(" \t\n.,;:!?()[]-")
+
+    rows: dict[str, int] = {}
+    for parts in split:
+        for k in {key(p) for p in parts}:
+            rows[k] = rows.get(k, 0) + 1
+    limit = max(5, math.ceil(0.05 * len(texts)))
+    out = []
+    for t, parts in zip(texts, split, strict=True):
+        kept = [p for p in parts if rows[key(p)] < limit]
+        out.append(t if len(kept) == len(parts) or not kept else " ".join(kept))
+    return out
 
 
 def build_texts(
@@ -31,8 +52,8 @@ def build_texts(
 
     out: list[str] = []
     missing = 0
-    for i, original in enumerate(originals):
-        base = _normalize_text(original)
+    bases = strip_boilerplate([_normalize_text(o) for o in originals])
+    for i, base in enumerate(bases):
         value = enriched[i] if enriched is not None else None
         if mode == "base":
             payload = base

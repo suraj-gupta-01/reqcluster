@@ -53,9 +53,17 @@ def run(embeddings, texts, params: ClusteringParams, *, seed: int, threads: int 
         durations[name] = time.perf_counter() - t
         return out
 
-    x10, xy = step("reduce", 0.0, lambda: reduce.reduce(X, seed))
-    mcs = params.min_cluster_size or cluster.auto_min_cluster_size(n)
-    labels, probs = step("cluster", 0.4, lambda: _cluster(X, x10, params, mcs, seed))
+    # Exact duplicates distort HDBSCAN density (uav_fms_stress_600): cluster unique rows, broadcast.
+    _, first, inv = np.unique(np.round(X, 4), axis=0, return_index=True, return_inverse=True)
+    order = np.argsort(first)  # keep first-occurrence order so unique data is unchanged
+    rank = np.empty_like(order)
+    rank[order] = np.arange(len(order))
+    inv = rank[inv.reshape(-1)]
+    U = X[first[order]]
+    x10u, xyu = step("reduce", 0.0, lambda: reduce.reduce(U, seed))
+    mcs = params.min_cluster_size or cluster.auto_min_cluster_size(len(U))
+    labels_u, probs_u = step("cluster", 0.4, lambda: _cluster(U, x10u, params, mcs, seed))
+    labels, probs, x10, xy = labels_u[inv], probs_u[inv], x10u[inv], xyu[inv]
     clusters = step("keywords", 0.7, lambda: keywords.label_clusters(texts, labels))
     edges = step("graph", 0.85, lambda: graph.build(
         X, labels, params.sim_threshold if params.sim_threshold is not None

@@ -221,3 +221,14 @@ def test_small_runs_use_seed_consensus(monkeypatch):
     pipeline.run(X, t, P(clusterer="ward"), seed=7)
     pipeline.run(*rand(pipeline.CONSENSUS_MIN - 1), P(), seed=7)
     assert len(seen) == 2  # ward and tiny sets skip consensus
+
+
+def test_exact_duplicates_cluster_as_unique_rows():
+    base, _ = two_blobs(n_per=20, seed=3)
+    dup = np.repeat(base, 5, axis=0)
+    full = pipeline.run(dup, [f"t{i}" for i in range(len(dup))], P(), seed=0)
+    uniq = pipeline.run(base, [f"t{i}" for i in range(len(base))], P(), seed=0)
+    for f in ("labels", "probabilities", "x10", "xy"):
+        a = np.asarray(getattr(full, f)).reshape(len(base), 5, -1)
+        assert (a == a[:, :1]).all()
+    assert (np.asarray(full.labels)[::5] == np.asarray(uniq.labels)).all()
